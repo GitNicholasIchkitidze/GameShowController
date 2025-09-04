@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <title>Question Lowerthird Template</title>
+    <style>
+        body {
+            width: 1920px;
+            height: 1080px;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: transparent;
+            color: white;
+            font-family: Arial, sans-serif;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        #question-container {
+            position: absolute;
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 1600px;
+            text-align: center;
+            padding: 0 50px;
+        }
+
+        #question-text-container {
+            background-color: #2a73a6; /* Blue color from the image */
+            padding: 30px;
+            font-size: 72px;
+            font-weight: bold;
+            transform: skewX(-20deg); /* Skew the shape */
+            position: relative;
+            margin-bottom: 20px;
+            border: 4px solid #fff;
+        }
+
+            #question-text-container > div {
+                transform: skewX(20deg); /* Un-skew the text */
+            }
+
+        #answers-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            justify-content: center;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .answer-item {
+            background-color: #2a73a6; /* Blue for answers A, B, D */
+            border: 4px solid #fff;
+            border-radius: 5px;
+            padding: 25px;
+            font-size: 48px;
+            font-weight: bold;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 120px;
+            text-align: center;
+            transition: background-color 0.3s, transform 0.3s;
+            transform: skewX(-20deg); /* Skew the answer shapes */
+        }
+
+            .answer-item > div {
+                transform: skewX(20deg); /* Un-skew the text inside */
+            }
+
+            /* Optional: Style for correct/wrong answers */
+            .answer-item.correct {
+                background-color: #008000; /* Green */
+            }
+
+            .answer-item.wrong {
+                background-color: #ff0000; /* Red */
+            }
+    </style>
+</head>
+<body>
+    <div id="question-container">
+        <div id="question-text-container">
+            <div id="question-text"></div>
+        </div>
+
+        <div id="answers-container"></div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

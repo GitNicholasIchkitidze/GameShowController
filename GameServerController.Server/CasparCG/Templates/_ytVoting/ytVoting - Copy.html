@@ -1,0 +1,145 @@
+﻿<!DOCTYPE html>
+<html lang="ka">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Vote Tally</title>
+    <!-- Tailwind CSS CDN-ის ჩართვა -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: transparent; /* CasparCG-ისთვის გამჭვირვალე ფონი */
+            display: flex;
+            justify-content: center;
+            align-items: flex-end; /* ელემენტების ქვედა ნაწილში განთავსება */
+            height: 100vh;
+            overflow: hidden;
+            padding-bottom: 2rem;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 100%;
+            border-radius: 9999px;
+            background-color: rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            border-radius: 9999px;
+            background-color: #2563eb;
+            transition: width 0.5s ease-in-out, background-color 0.3s ease-in-out;
+            position: absolute;
+            left: 0;
+            top: 0;
+        }
+
+        .progress-bar-label {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-weight: bold;
+            color: white;
+            z-index: 10;
+            text-shadow: 0 0 5px rgba(0,0,0,0.5);
+        }
+
+        .fade-in-out {
+            animation: fadeInOut 5s ease-in-out forwards;
+        }
+
+        @keyframes fadeInOut {
+            0% {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            10% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+
+            90% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+
+            100% {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white">
+
+    <div id="app" class="w-full max-w-5xl p-6 bg-slate-800 bg-opacity-70 rounded-2xl shadow-lg border border-slate-700">
+
+        <!-- საერთო კითხვა და ინფორმაცია -->
+        <div class="mb-6 text-center">
+            <h1 class="text-3xl font-extrabold text-white">YouTube ხმის მიცემა</h1>
+            <p id="question-text" class="mt-2 text-xl font-medium text-gray-300">მიმდინარეობს ხმის დათვლა...</p>
+        </div>
+
+        <!-- ხმების ვიზუალიზაცია -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <!-- ვარიანტი A -->
+            <div class="vote-option bg-slate-700 p-4 rounded-xl shadow-md border border-slate-600">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-lg font-bold">A</span>
+                    <span id="vote-count-A" class="text-lg font-bold text-lime-400">0 ხმა</span>
+                </div>
+                <div class="progress-bar-container h-8">
+                    <div id="progress-bar-A" class="progress-bar" style="width: 0%;"></div>
+                </div>
+            </div>
+
+            <!-- ვარიანტი B -->
+            <div class="vote-option bg-slate-700 p-4 rounded-xl shadow-md border border-slate-600">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-lg font-bold">B</span>
+                    <span id="vote-count-B" class="text-lg font-bold text-lime-400">0 ხმა</span>
+                </div>
+                <div class="progress-bar-container h-8">
+                    <div id="progress-bar-B" class="progress-bar" style="width: 0%;"></div>
+                </div>
+            </div>
+
+            <!-- ვარიანტი C -->
+            <div class="vote-option bg-slate-700 p-4 rounded-xl shadow-md border border-slate-600">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-lg font-bold">C</span>
+                    <span id="vote-count-C" class="text-lg font-bold text-lime-400">0 ხმა</span>
+                </div>
+                <div class="progress-bar-container h-8">
+                    <div id="progress-bar-C" class="progress-bar" style="width: 0%;"></div>
+                </div>
+            </div>
+
+            <!-- ვარიანტი D -->
+            <div class="vote-option bg-slate-700 p-4 rounded-xl shadow-md border border-slate-600">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-lg font-bold">D</span>
+                    <span id="vote-count-D" class="text-lg font-bold text-lime-400">0 ხმა</span>
+                </div>
+                <div class="progress-bar-container h-8">
+                    <div id="progress-bar-D" class="progress-bar" style="width: 0%;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ბოლო ხმის მიმცემი -->
+        <div class="mt-6 p-4 bg-slate-700 bg-opacity-50 rounded-xl shadow-inner border border-slate-600 text-center">
+            <p class="text-lg text-gray-400">ბოლო ხმის მიმცემი:</p>
+            <p id="last-voter" class="text-2xl font-bold text-lime-400 mt-1">-</p>
+        </div>
+
+    </div>
+
+    <script src="ytVoting.js"></script>    
+</body>
+</html>

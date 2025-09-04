@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <title>Countdown Template</title>
+    <style>
+        /* CSS ცვლადები მარტივი კონფიგურაციისთვის */
+        :root {
+            --countdown-top: 100px;
+            --countdown-left: 50%;
+            --countdown-transform-x: -50%;
+            --countdown-font-size: 150px;
+            --countdown-color: #ffcc00; /* ყვითელი ფერი */
+            --countdown-text-shadow: 4px 4px 8px rgba(0, 0, 0, 0.7);
+        }
+
+        body {
+            width: 1920px;
+            height: 1080px;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: transparent;
+            color: white;
+            font-family: Arial, sans-serif;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        #countdown-container {
+            position: absolute;
+            top: var(--countdown-top);
+            left: var(--countdown-left);
+            transform: translateX(var(--countdown-transform-x));
+            z-index: 10;
+            text-align: center;
+        }
+
+        #countdown-text {
+            font-size: var(--countdown-font-size);
+            font-weight: bold;
+            color: var(--countdown-color);
+            text-shadow: var(--countdown-text-shadow);
+        }
+    </style>
+</head>
+<body>
+    <div id="countdown-container">
+        <span id="countdown-text"></span>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

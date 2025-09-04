@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+      <head>
+            <title>Countdown</title>
+            <style>
+                  body {
+                        background-color: transparent;
+                        overflow: hidden;
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                        width: 100%;
+                        height: 100%;
+                  }
+                  #countdown-text {
+                        font-family: 'Arial Black', sans-serif;
+                        font-size: 150px;
+                        color: white;
+                        text-shadow: 4px 4px 8px rgba(0, 0, 0, 0.7);
+                        /* Add some transition for smooth updates */
+                        transition: all 0.5s ease-in-out;
+                  }
+            </style>
+      </head>
+      <body>
+            <div id="countdown-text"></div>
+
+            <script>
+                  // This is the CasparCG function that receives data from the server
+                  function onData(data) {
+                        try {
+                              // CasparCG sends data as an XML string, but we can parse it as JSON
+                              const jsonData = JSON.parse(data);
+
+                              // Get the countdown time from the received data
+                              const time = jsonData.time;
+
+                              // Update the HTML element
+                              document.getElementById(
+                                    'countdown-text'
+                              ).innerText = time;
+                        } catch (e) {
+                              console.error('Error parsing data:', e);
+                        }
+                  }
+            </script>
+      </body>
+</html>

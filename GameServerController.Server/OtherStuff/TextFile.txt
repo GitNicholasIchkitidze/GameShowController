@@ -1,0 +1,14 @@
+﻿
+CasparCg server 2.4> 
+
+casparcg.exe --use-gl=desktop
+
+<html>
+    <enable-gpu>true</enable-gpu>
+    <accelerated-compositing>true</accelerated-compositing>
+    <offscreen-rendering>true</offscreen-rendering>
+    <enable-vsync>true</enable-vsync>
+    <remote-debugging-port>8081</remote-debugging-port>
+    <allow-file-access-from-files>true</allow-file-access-from-files>
+    <cache-path>C:\CasparCG\cache</cache-path>
+</html>

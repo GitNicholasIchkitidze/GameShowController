@@ -1,0 +1,93 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Services\CasparCGService.cs" />
+    <Compile Remove="Services\CasparCgTestClient.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="CasparCG\Templates\_ytVoting\ytVoting - Copy %282%29.html" />
+    <None Remove="CasparCG\Templates\_ytVoting\ytVoting - Copy %282%29.js" />
+    <None Remove="CasparCG\Templates\_ytVoting\ytVoting - Copy %283%29.html" />
+    <None Remove="CasparCG\Templates\_ytVoting\ytVoting - Copy %284%29.html" />
+    <None Remove="CasparCG\Templates\_ytVoting\ytVoting - Copy.html" />
+    <None Remove="CasparCG\Templates\_ytVoting\ytVoting - Copy.js" />
+    <None Remove="CasparCG\Templates\_ytVoting\ytVoting.js" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CasparCg.AmcpClient" Version="2.0.4" />
+    <PackageReference Include="Melanchall.DryWetMidi" Version="8.0.2" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR" Version="1.2.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Update="wwwroot\index.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="wwwroot\js\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\GameController.Shared\GameController.Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="CasparCG\Templates\_cDownF\index.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="CasparCG\Templates\_cDownF\script.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="CasparCG\Templates\_cDownF\style.css">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="CasparCG\Templates\_cFull\index.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="CasparCG\Templates\_cFull\script.js">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="CasparCG\Templates\_cLow\index.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="CasparCG\Templates\_lBoard\index.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="CasparCG\Templates\_qFull\index - Copy.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="CasparCG\Templates\_qFull\index.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="CasparCG\Templates\_qFull\script.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="CasparCG\Templates\_qFull\style.css">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="CasparCG\Templates\_qLow\indexGSAPdsk.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="CasparCG\Templates\_qLow\style.css">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="CasparCG\Templates\_ytVoting\ytVoting.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
+  </ItemGroup>
+
+</Project>

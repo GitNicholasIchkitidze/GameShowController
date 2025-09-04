@@ -1,0 +1,273 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Game Controller Client</title>
+</head>
+<body>
+    <h1 id="clientStatus">GameShow Player Console</h1>
+    <div id="status">Connecting...</div>
+    <div id="messages">...</div>
+    <div id="countdown"></div>
+    <h2 id="questionText"></h2>
+    <div id="answerButtons"></div>
+
+    <script src="js/signalr.min.js"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+            color: #333;
+        }
+
+        #status {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        #countdown {
+            font-size: 96px;
+            font-weight: bold;
+            color: #d9534f; /* წითელი ფერი */
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        #answerButtons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            width: 80%;
+            max-width: 800px;
+        }
+
+        #answerButtons button {
+            font-size: 2rem;
+            font-weight: bold;
+            padding: 20px;
+            border: 2px solid #5cb85c;
+            border-radius: 8px;
+            background-color: #f7f7f7;
+            color: #333;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+        #answerButtons button:disabled {
+            background-color: #ddd;
+            cursor: not-allowed;
+            color: #666;
+            border-color: #ddd;
+            transform: none;
+        }
+
+    </style>
+
+
+    <script>
+        const statusDiv = document.getElementById('status');
+        //const clientName = "Player1"; // Set the client name here for testing
+        let countdownInterval;
+        const questionTextElement = document.getElementById('questionText');
+        const answerButtonsContainer = document.getElementById('answerButtons');
+
+        
+  
+
+        // შეცვალეთ ეს ხაზი
+        // const clientName = "Player1";
+
+        // მიიღეთ კლიენტის სახელი URL-ის პარამეტრიდან
+        const urlParams = new URLSearchParams(window.location.search);
+        let clientName = urlParams.get('name');
+
+        // თუ სახელი არ არის მითითებული URL-ში, სთხოვეთ მომხმარებელს შეიყვანოს ის
+        if (!clientName) {
+            clientName = prompt("გთხოვთ შეიყვანოთ თქვენი სახელი:");
+        }
+
+        // დარწმუნდით, რომ სახელი არ არის ცარიელი
+        if (!clientName) {
+            clientName = `Player_${Math.floor(Math.random() * 1000)}`;
+            console.warn("სახელი არ არის შეყვანილი, გამოყენებულია ნაგულისხმევი სახელი.");
+        }
+
+
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl(`/gamehub?name=${encodeURIComponent(clientName)}`)
+            .build();
+
+
+        connection.on("StopCountdown", (stopMode) => {
+            clearInterval(countdownInterval);
+            console.log("Countdown Stopped." + stopMode);
+            const countdownElement = document.getElementById('countdown');
+            if (stopMode === "Reset")
+                countdownElement.innerText = "0";
+            else if (stopMode == "Pause")
+                countdownElement.innerText = countdownElement.innerText;
+            else if (stopMode == "TimeUp")
+                countdownElement.innerText = "დრო ამოოიწურა!";
+            else
+                countdownElement.innerText = "ups!";
+
+            document.querySelectorAll('#answerButtons button').forEach(button => {
+                button.disabled = true;
+            });
+            
+        });
+
+        connection.on("ReceiveCountdown", (endTimestamp) => {
+            clearInterval(countdownInterval); // Clear any existing timer
+
+            console.log("ReceiveCountdown.", endTimestamp);
+            const countdownElement = document.getElementById('countdown');
+            countdownElement.style.fontSize = "48px";
+            countdownElement.style.color = "red";
+
+            // Disable answer buttons while countdown is running
+            const answerButtons = document.querySelectorAll('#answerButtons button');
+            answerButtons.forEach(button => button.disabled = false);
+
+            countdownInterval = setInterval(() => {
+                const now = Date.now();
+                const timeLeft = endTimestamp - now;
+
+                if (timeLeft <= 0) {
+                    clearInterval(countdownInterval);
+                    countdownElement.innerText = "Time's Up!";
+
+                    // Disable all buttons when the time is up
+                    //answerButtons.forEach(button => button.disabled = true);
+
+                    document.querySelectorAll('#answerButtons button').forEach(button => {
+                        button.disabled = true;
+                    });
+
+                    return;
+                }
+
+                const seconds = Math.floor(timeLeft / 1000);
+                countdownElement.innerText = `Time left: ${seconds}s`;
+            }, 100);
+        });
+
+        
+
+        connection.onclose(error => {
+            statusDiv.innerHTML = 'Disconnected';
+            console.log("Connection closed.", error);
+        });
+
+        connection.onreconnecting(error => {
+            statusDiv.innerHTML = 'Reconnecting...';
+            console.log("Connection lost. Attempting to reconnect...", error);
+        });
+
+        connection.onreconnected(connectionId => {
+            statusDiv.innerHTML = 'Reconnected!';
+            console.log("Connection re-established. ConnectionId: ", connectionId);
+        });
+
+
+        connection.on("ReceiveCustomMessage", (senderName, message) => {
+            const messagesDiv = document.getElementById('messages');
+            const p = document.createElement('p');
+            p.textContent = `${senderName}: ${message}`;
+            messagesDiv.appendChild(p);
+        });
+
+        connection.on("RoundEnded", (action) => {
+            // Stop the countdown timer
+            // For simplicity, we'll just stop the timer and update the text
+            // A more advanced approach would involve a separate timer or a CSS animation.
+
+            if (action === "Reset") {
+                document.getElementById('countdown').innerText = "0s";
+                alert("Round Ended. The countdown has been reset.");
+            } else if (action === "Pause") {
+                alert("Round Ended. The countdown has been paused.");
+            }
+
+            // You can also disable the answer buttons here if needed
+            document.querySelectorAll('#answerButtons button').forEach(button => {
+                button.disabled = true;
+            });
+        });
+
+
+        connection.on("ReceiveQuestion", (question, disableInput) => {
+            questionTextElement.innerText = question.question;
+            answerButtonsContainer.innerHTML = ''; // Clear previous buttons
+
+            question.answers.forEach(answer => {
+                const button = document.createElement('button');
+                button.innerText = answer;
+                //button.disabled = disableInput;
+                button.addEventListener('click', () => {
+                    connection.invoke("SubmitAnswer", answer);
+                    // Disable all buttons after one is clicked to prevent multiple submissions
+
+                    //??Array.from(answerButtonsContainer.children).forEach(btn => btn.disabled = true);
+
+                    //connection.invoke("SubmitAnswer", answer); // მაშინვე რო დადიზებლდეს, მეორედ რო არ დააჭიროს
+                });
+                if (disableInput == false)
+                    answerButtonsContainer.appendChild(button);
+            });
+        });
+
+
+
+        connection.on("ReceiveAnswerStatus", (isCorrect) => {
+            if (isCorrect) {
+                console.log("Your answer was correct!");
+                // You can add visual feedback here
+            } else {
+                console.log("Your answer was incorrect.");
+                // You can add visual feedback here
+            }
+        });
+
+        connection.on("UpdateRegistrationStatus", (registered, name, connectionID, clientType) => {
+            if (registered) {
+                statusDiv.innerHTML = connectionID + ' Connected, Registered!';
+                clientStatus.innerHTML = clientType + ' ' + name ;
+                console.log("Connected, Registered!");
+                // You can add visual feedback here
+            } else {
+                statusDiv.innerHTML = 'Connected, Not Registered!';
+                console.log("Connected, Not Reegistered!");
+                // You can add visual feedback here
+            }
+        });
+
+        async function start() {
+            try {
+                await connection.start();
+                statusDiv.innerHTML = 'Connected, waiting for registration!';
+                
+                console.log("Connection successful!");
+            } catch (err) {
+                statusDiv.innerHTML = 'Connection failed!';
+                console.error(err);
+                setTimeout(start, 5000);
+            }
+        };
+
+        start();
+    </script>
+
+
+
+
+
+
+
+</body>
+</html>

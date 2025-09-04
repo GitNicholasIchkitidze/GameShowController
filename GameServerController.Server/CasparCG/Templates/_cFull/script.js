@@ -1,0 +1,92 @@
+﻿// Countdown.js
+const ws = new WebSocket('ws://localhost:5000/ws-casparcg');
+let countdownInterval;
+let endTime; // მიზნობრივი დასრულების დრო
+let isPaused = false;
+let pauseTime = 0;
+
+ws.onopen = () => {
+    console.log('WebSocket connection established to C# server from Countdown.');
+    const registrationMessage = JSON.stringify({
+        type: 'register',
+        templateName: 'Countdown',
+    });
+    ws.send(registrationMessage);
+};
+
+ws.onmessage = (event) => {
+    console.log('Received data for Countdown: ' + event.data);
+
+    try {
+        const jsonData = JSON.parse(event.data);
+
+        if (jsonData.type === 'start_countdown') {
+            // მივიღოთ დასრულების დრო სერვერიდან
+            // endTime არის მილიწამებში (UNIX timestamp)
+            endTime = jsonData.endTime;
+            isPaused = false;
+            pauseTime = 0;
+
+            // დავამატოთ ლოგიკა, რომელიც ითვლის დროს
+            startCountdownLogic();
+        } else if (jsonData.type === 'pause_countdown') {
+            // პაუზის ლოგიკა
+            if (!isPaused) {
+                isPaused = true;
+                pauseTime = Date.now(); // შევინახოთ პაუზის დრო
+                clearInterval(countdownInterval);
+                console.log('Countdown paused.');
+            }
+        } else if (jsonData.type === 'resume_countdown') {
+            // განახლების ლოგიკა
+            if (isPaused) {
+                isPaused = false;
+                // გამოვთვალოთ გასული დრო პაუზის დროს და გამოვაკლოთ endTime-ს
+                const timePassedDuringPause = Date.now() - pauseTime;
+                endTime += timePassedDuringPause;
+
+                startCountdownLogic();
+                console.log('Countdown resumed.');
+            }
+        }
+    } catch (e) {
+        console.error('Error parsing JSON data or updating elements:', e);
+    }
+};
+
+function startCountdownLogic() {
+    // გავაჩეროთ წინა კაუნტდაუნი, თუ არსებობს
+    if (countdownInterval) {
+        clearInterval(countdownInterval);
+    }
+
+    const countdownTextElement = document.getElementById('countdown-text');
+
+    if (!countdownTextElement) return;
+
+    // დავიწყოთ ახალი კაუნტდაუნი
+    countdownInterval = setInterval(() => {
+        const now = Date.now();
+        const timeLeft = Math.max(0, Math.floor((endTime - now) / 1000)); // წამებში
+
+        countdownTextElement.innerText = timeLeft;
+
+        if (timeLeft <= 0) {
+            clearInterval(countdownInterval);
+            countdownTextElement.innerText = '0';
+            console.log('Countdown finished.');
+            // აქ შეგიძლიათ დაამატოთ ლოგიკა, მაგალითად, ელემენტის დამალვა
+        }
+    }, 100); // 100ms განახლება უფრო ზუსტია
+}
+
+ws.onclose = () => {
+    console.log('WebSocket connection closed.');
+    if (countdownInterval) {
+        clearInterval(countdownInterval);
+    }
+};
+
+ws.onerror = (error) => {
+    console.error('WebSocket error:', error);
+};

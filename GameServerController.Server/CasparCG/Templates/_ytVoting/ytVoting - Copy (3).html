@@ -1,0 +1,243 @@
+﻿<!DOCTYPE html>
+<html lang="ka">
+<head>
+    <meta charset="UTF-8">
+    <title>Live Vote Tally</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: transparent;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            height: 100vh;
+            overflow: hidden;
+            padding-bottom: 2rem;
+            color: #fff;
+        }
+
+        .container {
+            max-width: 900px;
+            width: 100%;
+            padding: 24px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            text-align: center;
+            margin-bottom: 24px;
+            color: #facc15; /* yellow-400 */
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 32px;
+            color: #d1d5db; /* gray-300 */
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .vote-option {
+            background-color: #334155; /* slate-700 */
+            padding: 16px;
+            border-radius: 12px;
+            border: 1px solid #475569; /* slate-600 */
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        .vote-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+            .vote-header span {
+                font-size: 1.125rem;
+                font-weight: 700;
+            }
+
+        .vote-count {
+            color: #a3e635; /* lime-400 */
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 32px;
+            border-radius: 9999px;
+            background-color: rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-bar {
+            height: 100%;
+            border-radius: 9999px;
+            width: 0%;
+        }
+
+        .last-vote {
+            margin-top: 24px;
+            padding: 16px;
+            background-color: rgba(51,65,85,0.5);
+            border-radius: 12px;
+            border: 1px solid #475569;
+            text-align: center;
+            font-size: 1.125rem;
+            color: #9ca3af; /* gray-400 */
+        }
+
+        #last-voter {
+            margin-top: 8px;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #a3e635; /* lime-400 */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>ხმის მიცემის რეიტინგი</h1>
+        <h2 id="total-votes">სულ ხმა: 0</h2>
+
+        <div class="grid">
+            <div class="vote-option">
+                <div class="vote-header">
+                    <span>A</span>
+                    <span id="vote-count-A" class="vote-count">0 ხმა</span>
+                </div>
+                <div class="progress-bar-container">
+                    <div id="progress-bar-A" class="progress-bar" style="background-color:#ef4444"></div>
+                </div>
+            </div>
+
+            <div class="vote-option">
+                <div class="vote-header">
+                    <span>B</span>
+                    <span id="vote-count-B" class="vote-count">0 ხმა</span>
+                </div>
+                <div class="progress-bar-container">
+                    <div id="progress-bar-B" class="progress-bar" style="background-color:#22c55e"></div>
+                </div>
+            </div>
+
+            <div class="vote-option">
+                <div class="vote-header">
+                    <span>C</span>
+                    <span id="vote-count-C" class="vote-count">0 ხმა</span>
+                </div>
+                <div class="progress-bar-container">
+                    <div id="progress-bar-C" class="progress-bar" style="background-color:#3b82f6"></div>
+                </div>
+            </div>
+
+            <div class="vote-option">
+                <div class="vote-header">
+                    <span>D</span>
+                    <span id="vote-count-D" class="vote-count">0 ხმა</span>
+                </div>
+                <div class="progress-bar-container">
+                    <div id="progress-bar-D" class="progress-bar" style="background-color:#eab308"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="last-vote">
+            <p>ბოლო ხმა:</p>
+            <p id="last-voter">-</p>
+        </div>
+    </div>
+
+    <script>
+        const ws = new WebSocket('ws://localhost:5000/ws-casparcg');
+
+        const voteOptions = ['A', 'B', 'C', 'D'];
+
+        let previousResults = { A: 0, B: 0, C: 0, D: 0 };
+
+        function update(data) {
+            if (!data.Results || !Array.isArray(data.Results)) return;
+
+            const results = {};
+            data.Results.forEach(item => {
+                results[item.Answer] = item.Count;
+            });
+
+            const totalVotes = data.TotalVotes || 0;
+            const lastVoterName = data.VoterName || '';
+
+            // მოძებნე ბოლო პასუხი
+            let lastVoteAnswer = '';
+            for (const option of voteOptions) {
+                if ((results[option] || 0) > (previousResults[option] || 0)) {
+                    lastVoteAnswer = option;
+                    break;
+                }
+            }
+
+            // განახლება
+            voteOptions.forEach(option => {
+                const count = results[option] || 0;
+                const percentage = totalVotes > 0 ? (count / totalVotes) * 100 : 0;
+
+                const progressBar = document.getElementById(`progress-bar-${option}`);
+                const voteCountElement = document.getElementById(`vote-count-${option}`);
+
+                if (progressBar) {
+                    gsap.to(progressBar, { width: percentage + "%", duration: 0.8, ease: "power2.out" });
+                }
+                if (voteCountElement) {
+                    voteCountElement.innerText = `${count} ხმა`;
+                }
+            });
+
+            previousResults = { ...results };
+
+            // სულ ხმების განახლება
+            document.getElementById('total-votes').innerText = `სულ ხმა: ${totalVotes}`;
+
+            // ბოლო ხმა
+            const lastVoterElement = document.getElementById('last-voter');
+            if (lastVoterName && lastVoteAnswer) {
+                lastVoterElement.innerText = `${lastVoterName} (${lastVoteAnswer})`;
+                gsap.fromTo(lastVoterElement, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.6 });
+            } else if (lastVoteAnswer) {
+                lastVoterElement.innerText = `(ვარიანტი ${lastVoteAnswer})`;
+                gsap.fromTo(lastVoterElement, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.6 });
+            } else {
+                lastVoterElement.innerText = "-";
+            }
+        }
+
+        ws.onopen = () => {
+            const registrationMessage = JSON.stringify({ type: 'register', templateName: 'YTVote' });
+            ws.send(registrationMessage);
+            console.info("Registration Request Sent. " + registrationMessage);
+        };
+
+        ws.onmessage = (event) => {
+            try {
+                const data = JSON.parse(event.data);
+                update(data);
+            } catch (e) {
+                console.error('JSON parse Error:', e);
+            }
+        };
+
+        ws.onclose = (event) => {
+            console.log('WebSocket Connection Closed.', event.code, event.reason);
+        };
+
+        ws.onerror = (error) => {
+            console.error('WebSocket Error:', error);
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,309 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <title>Question Lowerthird Template with GSAP</title>
+
+    <script>
+        (function () {
+            if (typeof window.update !== 'function') {
+                window._initialUpdateData = null;
+                window.update = function (data) {
+                    window._initialUpdateData = data;
+                };
+            }
+
+            if (typeof window.handleShowAnswer !== 'function') {
+                window._initialShowAnswerData = null;
+                window.handleShowAnswer = function (data) {
+                    window._initialShowAnswerData = data;
+                };
+            }
+        })();
+    </script>
+
+    <style>
+        :root {
+            --main-color-bg: transparent;
+            --question-bg: #000033;
+            --answer-color-1: #ffb300;
+            --answer-color-2: #ff5722;
+            --answer-color-3: #4caf50;
+            --answer-color-4: #2196f3;
+            --text-color: #ffffff;
+            --container-bottom: 45px;
+            --container-left: 50%;
+            --container-transform-x: -50%;
+            --container-width: 1600px;
+            --container-padding: 0 50px;
+            --question-padding: 10px;
+            --question-font-size: 48px;
+            --question-margin-bottom: 20px;
+            --question-border-width: 4px;
+            --question-border-color: red;
+            --answers-gap: 5px;
+            --answers-padding: 5px;
+            --answers-font-size: 24px;
+            --answers-min-height: 50px;
+            --answers-border-width: 4px;
+            --answers-border-color: red;
+            --answers-border-radius: 12px;
+        }
+
+        body {
+            width: 1920px;
+            height: 1080px;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: transparent;
+            color: var(--text-color);
+            font-family: sans-serif;
+        }
+
+        #question-container, #question-text-container, .answer-item-wrapper {
+            will-change: transform, opacity;
+        }
+
+        #question-container {
+            position: absolute;
+            bottom: var(--container-bottom);
+            left: var(--container-left);
+            transform: translateX(var(--container-transform-x));
+            width: var(--container-width);
+            padding: var(--container-padding);
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        #question-text-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            background-color: var(--question-bg);
+            border: var(--question-border-width) solid var(--question-border-color);
+            border-radius: 20px;
+            padding: var(--question-padding);
+            font-size: var(--question-font-size);
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: var(--question-margin-bottom);
+            box-sizing: border-box;
+            min-height: 80px;
+        }
+
+        #answers-container {
+            width: 100%;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--answers-gap);
+        }
+
+        .answer-item-wrapper {
+            padding: var(--answers-padding);
+            font-size: var(--answers-font-size);
+            font-weight: bold;
+            min-height: var(--answers-min-height);
+            border: var(--answers-border-width) solid var(--answers-border-color);
+            border-radius: var(--answers-border-radius);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .answer-marker {
+            margin: 0 15px;
+            color: #ccc;
+        }
+
+        .answer-text {
+            flex-grow: 1;
+            text-align: center;
+        }
+
+        .answer-item-wrapper.correct {
+            background-color: #008000 !important;
+            border-color: #008000 !important;
+            color: white;
+            transform: scale(1.05);
+        }
+
+        .answer-item-wrapper.wrong {
+            background-color: #ff0000 !important;
+            border-color: #ff0000 !important;
+            color: white;
+            opacity: 0.5;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+</head>
+<body>
+    <div id="question-container">
+        <div id="question-text-container"><div id="question-text"></div></div>
+        <div id="answers-container"></div>
+    </div>
+
+    <script>
+        let isFirstQuestion = true;
+        let currentAnimation;
+        const showDemoWhenLoad = true;
+        const animationConfig = {
+            firstQuestion: {
+                container: { duration: 0.4, y: 0, opacity: 1, ease: 'back.out(1.7)' },
+                question: { duration: 0.3, opacity: 1, ease: 'power2.out' },
+                answers: { duration: 0.3, opacity: 1, ease: 'power2.out' }
+            },
+            subsequentQuestions: {
+                question: {
+                    out: { duration: 0.05, opacity: 0, ease: 'power1.in' },
+                    in: { duration: 0.05, opacity: 1, ease: 'power1.out', delay: 0.05 }
+                },
+                answers: {
+                    out: { duration: 0.05, opacity: 0, ease: 'power1.in' },
+                    in: { duration: 0.05, opacity: 1, y: 0, ease: 'power2.out', delay: 0.2 }
+                }
+            },
+            correctAnswer: { duration: 0.3, scale: 1.05, repeat: 2, yoyo: true, ease: 'power1.inOut' }
+        };
+
+        const ws = new WebSocket('ws://192.168.0.3:5000/ws-casparcg');
+        ws.onopen = () => {
+            const registrationMessage = JSON.stringify({ type: 'register', templateName: 'QuestionLower' });
+            ws.send(registrationMessage);
+        };
+        ws.onmessage = (event) => {
+            try {
+                const jsonData = JSON.parse(event.data);
+                if (jsonData.type === 'show_answer') {
+                    handleShowAnswer(jsonData);
+                } else if (jsonData.type === 'show_question') {
+                    update(jsonData);
+                }
+            } catch (e) { }
+        };
+
+        function safeTo(tl, targets, vars, position) {
+            if (!tl || !targets || !vars || (targets.length !== undefined && targets.length === 0)) return;
+            tl.to(targets, vars, position);
+        }
+
+        window.update = function (data) {
+            if (!data || Object.keys(data).length === 0) return;
+            if (isFirstQuestion) {
+                updateQuestionContent(data);
+                animateFirstQuestion();
+                isFirstQuestion = false;
+            } else {
+                animateSubsequentQuestion(data);
+            }
+        };
+
+        window.handleShowAnswer = function (data) { _impl_handleShowAnswer(data); };
+
+        (function replayEarlyCalls() {
+            if (window._initialUpdateData) { window.update(window._initialUpdateData); window._initialUpdateData = null; }
+            if (window._initialShowAnswerData) { window.handleShowAnswer(window._initialShowAnswerData); window._initialShowAnswerData = null; }
+            if (showDemoWhenLoad) {
+                const demoData = {
+                    Question: "Demo Question",
+                    Answers: ["Answer A", "Answer B", "Answer C", "Answer D"]
+                };
+                window.update(demoData);
+            }
+        })();
+
+        function updateQuestionContent(data) {
+            const questionTextElement = document.getElementById('question-text');
+            if (questionTextElement) questionTextElement.innerText = data.Question || '';
+            const answersContainer = document.getElementById('answers-container');
+            if (answersContainer) {
+                answersContainer.innerHTML = '';
+                const markers = ['A', 'B', 'C', 'D'];
+                if (data.Answers && data.Answers.forEach) {
+                    data.Answers.forEach((answer, index) => {
+                        const answerWrapper = document.createElement('div');
+                        answerWrapper.className = 'answer-item-wrapper';
+                        const marker = document.createElement('span');
+                        marker.className = 'answer-marker';
+                        marker.innerText = (markers[index] || '') + '.';
+                        const answerText = document.createElement('span');
+                        answerText.className = 'answer-text';
+                        answerText.innerText = (answer !== null && answer !== undefined) ? answer : '';
+                        answerWrapper.appendChild(marker);
+                        answerWrapper.appendChild(answerText);
+                        answersContainer.appendChild(answerWrapper);
+                    });
+                }
+            }
+        }
+
+        function animateFirstQuestion() {
+            if (currentAnimation) currentAnimation.kill();
+            const questionContainer = document.getElementById('question-container');
+            const questionTextContainer = document.getElementById('question-text-container');
+            const answerItems = document.querySelectorAll('.answer-item-wrapper');
+
+            gsap.set(questionContainer, { visibility: 'visible', y: 300, opacity: 0 });
+            gsap.set([questionTextContainer, ...answerItems], { opacity: 0 });
+
+            currentAnimation = gsap.timeline();
+            safeTo(currentAnimation, questionContainer, animationConfig.firstQuestion.container);
+            safeTo(currentAnimation, questionTextContainer, animationConfig.firstQuestion.question, '-=0.2');
+            safeTo(currentAnimation, answerItems, animationConfig.firstQuestion.answers, '-=0.2');
+        }
+
+        function animateSubsequentQuestion(data) {
+            if (currentAnimation) currentAnimation.kill();
+            const questionTextElement = document.getElementById('question-text');
+            const answerItems = document.querySelectorAll('.answer-item-wrapper');
+            const answerTexts = document.querySelectorAll('.answer-text');
+
+            currentAnimation = gsap.timeline();
+            safeTo(currentAnimation, questionTextElement, animationConfig.subsequentQuestions.question.out);
+            safeTo(currentAnimation, answerTexts, animationConfig.subsequentQuestions.answers.out, '<');
+
+            currentAnimation.call(() => {
+                if (questionTextElement) questionTextElement.innerText = data.Question || '';
+                if (data.Answers && data.Answers.forEach) {
+                    const markers = ['A', 'B', 'C', 'D'];
+                    data.Answers.forEach((answer, index) => {
+                        if (answerItems[index]) {
+                            const answerText = answerItems[index].querySelector('.answer-text');
+                            const marker = answerItems[index].querySelector('.answer-marker');
+                            if (answerText) answerText.innerText = (answer !== null && answer !== undefined) ? answer : '';
+                            if (marker) marker.innerText = (markers[index] || '') + '.';
+                            answerItems[index].classList.remove('correct', 'wrong');
+                        }
+                    });
+                }
+            });
+
+            safeTo(currentAnimation, questionTextElement, animationConfig.subsequentQuestions.question.in);
+            safeTo(currentAnimation, answerTexts, animationConfig.subsequentQuestions.answers.in, '<');
+        }
+
+        function _impl_handleShowAnswer(data) {
+            const answers = document.querySelectorAll('.answer-item-wrapper');
+            if (!answers || answers.length === 0) return;
+
+            [].forEach.call(answers, item => item.classList.remove('correct', 'wrong'));
+
+            const idx = data && typeof data.correctAnswerIndex !== 'undefined' ? parseInt(data.correctAnswerIndex, 10) : NaN;
+            if (isNaN(idx)) return;
+
+            const correctAnswer = answers[idx];
+            if (correctAnswer) {
+                correctAnswer.classList.add('correct');
+                gsap.to(correctAnswer, animationConfig.correctAnswer);
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Leaderboard</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: transparent;
+            color: white;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .leaderboard-container {
+            width: 100%;
+            height: 200vh;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .leaderboard-title {
+            font-size: 36px;
+            text-align: center;
+            margin-bottom: 30px;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+
+        .player-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 10px 20px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 5px;
+        }
+
+        .player-name {
+            font-size: 44px;
+            flex: 2;
+        }
+
+        .player-score {
+            font-size: 58px;
+            font-weight: bold;
+            flex: 1;
+            text-align: right;
+        }
+
+        .player-position {
+            font-size: 40px;
+            margin-right: 15px;
+            flex: 0.5;
+            text-align: center;
+        }
+
+        /* Animation for score changes */
+        @keyframes scoreUpdate {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.2);
+                color: yellow;
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .score-updated {
+            animation: scoreUpdate 0.5s ease;
+        }
+
+        /* Final results style */
+        .final-results .player-row {
+            background: rgba(0, 100, 0, 0.5);
+            border: 2px solid gold;
+        }
+    </style>
+</head>
+<body>
+    <div class="leaderboard-container" id="leaderboard">
+        <div class="leaderboard-title" id="title">LEADERBOARD</div>
+        <div id="players-container"></div>
+    </div>
+
+    <script>
+        let currentPlayers = [];
+        let isFinalResults = false;
+
+        // WebSocket connection to server
+        const socket = new WebSocket('ws://192.168.0.3:5000/ws-casparcg');
+
+        socket.addEventListener('open', function (event) {
+            // Register this template with the server
+            socket.send(JSON.stringify({
+                type: 'register',
+                templateName: 'Leaderboard'
+            }));
+            console.info(
+                'Registration Request Sent. ' + 'register' + ' ' + 'Leaderboard';
+                
+            );
+        });
+
+        socket.addEventListener('message', function (event) {
+            const data = JSON.parse(event.data);
+
+            if (data.type === 'update_leaderboard') {
+                updateLeaderboard(data.players, false);
+            }
+            else if (data.type === 'show_final_results') {
+                updateLeaderboard(data.players, true);
+            }
+            else if (data.type === 'clear') {
+                clearLeaderboard();
+            }
+        });
+
+
+        window.update = function (data) {
+            console.log('update');
+
+        }
+
+        function updateLeaderboard(players, finalResults) {
+            isFinalResults = finalResults;
+
+            // Update title if final results
+            document.getElementById('title').textContent =
+                finalResults ? 'FINAL RESULTS' : 'LEADERBOARD';
+
+            // Update container class for styling
+            const container = document.getElementById('leaderboard');
+            if (finalResults) {
+                container.classList.add('final-results');
+            } else {
+                container.classList.remove('final-results');
+            }
+
+            // Sort players by score (descending)
+            players.sort((a, b) => b.score - a.score);
+
+            const playersContainer = document.getElementById('players-container');
+            playersContainer.innerHTML = '';
+
+            players.forEach((player, index) => {
+                const playerRow = document.createElement('div');
+                playerRow.className = 'player-row';
+
+                const position = document.createElement('div');
+                position.className = 'player-position';
+                position.textContent = `${index + 1}.`;
+
+                const name = document.createElement('div');
+                name.className = 'player-name';
+                name.textContent = player.name;
+
+                const score = document.createElement('div');
+                score.className = 'player-score';
+                score.textContent = player.score;
+
+                // Check if score changed for animation
+                const existingPlayer = currentPlayers.find(p => p.id === player.id);
+                if (existingPlayer && existingPlayer.score !== player.score) {
+                    score.classList.add('score-updated');
+                    setTimeout(() => score.classList.remove('score-updated'), 500);
+                }
+
+                playerRow.appendChild(position);
+                playerRow.appendChild(name);
+                playerRow.appendChild(score);
+
+                playersContainer.appendChild(playerRow);
+            });
+
+            currentPlayers = players;
+        }
+
+        function clearLeaderboard() {
+            document.getElementById('players-container').innerHTML = '';
+            currentPlayers = [];
+        }
+    </script>
+</body>
+</html>

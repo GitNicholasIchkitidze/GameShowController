@@ -1,0 +1,377 @@
+﻿<!DOCTYPE html>
+<html lang="ka">
+      <head>
+            <meta charset="UTF-8" />
+            <title>Live Vote Tally</title>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+            <style>
+                :root {
+                    /* ფერები */
+                    --bg-color: transparent;
+                    --primary-color: #facc15; /* სათაურის ფერი */
+                    --secondary-color: #d1d5db; /* ქვესათაურის ფერი */
+                    --option-bg-color: #e9c317;
+                    --option-border-color: #475569;
+                    --vote-count-color: #1a220c; /* ხმის რაოდენობის ფერი */
+                    --last-vote-bg-color: rgba(51, 65, 85, 0.5);
+                    --last-vote-text-color: #9ca3af;
+                    --last-voter-name-color: #a3e635;
+                    --last-vote-padding: 6px;
+                    --last-vote-margin-top: 14px;
+                    --progress-bar-A: #ef4444;
+                    --progress-bar-B: #22c55e;
+                    --progress-bar-C: #3b82f6;
+                    --progress-bar-D: #292005;
+                    /* ზომები და შრიფტი */
+                    --container-width: 1200px;
+                    --padding: 24px;
+                    --font-family: 'Inter', sans-serif;
+                    --main-title-size: 1.5rem;
+                    --subtitle-size: 1rem;
+                    --option-padding: 10px;
+                    --option-gap: 16px;
+                    --border-radius: 12px;
+                    --progress-bar-height: 10px;
+                    --last-voter-avatar-size: 38px;
+                    /* პოზიციონირება */
+                    --container-position-x: 50%;
+                    --container-position-y: 100%;
+                    --container-transform-x: -50%;
+                    --container-transform-y: -70rem; /* padding-bottom-ის მაგივრად */
+                }
+
+                body {
+                    font-family: var(--font-family);
+                    /*background-color: var(--bg-color);*/
+                    background-image: url("image.jpg");
+                    background-size: cover;
+                    display: flex;
+                    justify-content: center;
+                    align-items: flex-end;
+                    height: 100vh;
+                    overflow: hidden;
+                    padding-bottom: 2rem;
+                    color: #fff;
+                }
+
+                .container {
+                    max-width: var(--container-width);
+                    width: 100%;
+                    padding: var(--padding);
+                    /* პოზიციონირებისთვის დაამატეთ აბსოლუტური პოზიცია */
+                    position: absolute;
+                    left: var(--container-position-x);
+                    top: var(--container-position-y);
+                    transform: translate( var(--container-transform-x), var(--container-transform-y) );
+                    transform-origin: bottom center; /* ანიმაციისთვის */
+                }
+
+                h1 {
+                    font-size: var(--main-title-size);
+                    font-weight: 800;
+                    text-align: center;
+                    margin-bottom: 10px;
+                    color: var(--primary-color);
+                }
+
+                h2 {
+                    font-size: var(--subtitle-size);
+                    font-weight: 600;
+                    text-align: center;
+                    margin-bottom: 12px;
+                    color: var(--secondary-color);
+                }
+
+                .grid {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: var(--option-gap);
+                }
+
+                .vote-option {
+                    background-color: var(--option-bg-color);
+                    padding: var(--option-padding);
+                    border-radius: var(--border-radius);
+                    border: 1px solid var(--option-border-color);
+                    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+                }
+
+                .vote-header {
+                    display: flex;
+                    justify-content: space-between;
+                    margin-bottom: 8px;
+                }
+
+                    .vote-header span {
+                        font-size: 1.125rem;
+                        font-weight: 700;
+                    }
+
+                .vote-count {
+                    color: var(--vote-count-color);
+                }
+
+                .progress-bar-container {
+                    width: 100%;
+                    height: var(--progress-bar-height);
+                    border-radius: 9999px;
+                    background-color: rgba(255, 255, 255, 0.1);
+                    overflow: hidden;
+                    position: relative;
+                }
+
+                .progress-bar {
+                    height: 100%;
+                    border-radius: 9999px;
+                    width: 0%;
+                }
+
+                #progress-bar-A {
+                    background-color: var(--progress-bar-A);
+                }
+
+                #progress-bar-B {
+                    background-color: var(--progress-bar-B);
+                }
+
+                #progress-bar-C {
+                    background-color: var(--progress-bar-C);
+                }
+
+                #progress-bar-D {
+                    background-color: var(--progress-bar-D);
+                }
+
+                .last-vote {
+                    margin-top: var(--last-vote-margin-top);
+                    padding: var(--last-vote-padding);
+                    background-color: var(--last-vote-bg-color);
+                    border-radius: var(--border-radius);
+                    border: 1px solid var(--option-border-color);
+                    text-align: center;
+                    font-size: 1.125rem;
+                    color: var(--last-vote-text-color);
+                }
+
+                #total-votes {
+                    font-size: 1.25rem;
+                    font-weight: 700;
+                    color: var(--last-voter-name-color);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+
+                #last-voter {
+                    margin-top: 8px;
+                    font-size: 1.25rem;
+                    font-weight: 700;
+                    color: var(--last-voter-name-color);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 12px;
+                }
+
+                    #last-voter img {
+                        width: var(--last-voter-avatar-size);
+                        height: var(--last-voter-avatar-size);
+                        border-radius: 50%;
+                        border: 2px solid var(--last-voter-name-color);
+                        object-fit: cover;
+                    }
+            </style>
+      </head>
+      <body>
+            <div class="container">
+                  <h1>online ხმის მიცემის რეიტინგი</h1>
+                  <h2 id="total-votes">სულ ხმა: 0</h2>
+
+                  <div class="grid">
+                        <div class="vote-option">
+                              <div class="vote-header">
+                                    <span>A</span>
+                                    <span id="vote-count-A" class="vote-count"
+                                          >0 ხმა</span
+                                    >
+                              </div>
+                              <div class="progress-bar-container">
+                                    <div
+                                          id="progress-bar-A"
+                                          class="progress-bar"
+                                    ></div>
+                              </div>
+                        </div>
+
+                        <div class="vote-option">
+                              <div class="vote-header">
+                                    <span>B</span>
+                                    <span id="vote-count-B" class="vote-count"
+                                          >0 ხმა</span
+                                    >
+                              </div>
+                              <div class="progress-bar-container">
+                                    <div
+                                          id="progress-bar-B"
+                                          class="progress-bar"
+                                    ></div>
+                              </div>
+                        </div>
+
+                        <div class="vote-option">
+                              <div class="vote-header">
+                                    <span>C</span>
+                                    <span id="vote-count-C" class="vote-count"
+                                          >0 ხმა</span
+                                    >
+                              </div>
+                              <div class="progress-bar-container">
+                                    <div
+                                          id="progress-bar-C"
+                                          class="progress-bar"
+                                    ></div>
+                              </div>
+                        </div>
+
+                        <div class="vote-option">
+                              <div class="vote-header">
+                                    <span>D</span>
+                                    <span id="vote-count-D" class="vote-count"
+                                          >0 ხმა</span
+                                    >
+                              </div>
+                              <div class="progress-bar-container">
+                                    <div
+                                          id="progress-bar-D"
+                                          class="progress-bar"
+                                    ></div>
+                              </div>
+                        </div>
+                  </div>
+
+                  <div class="last-vote">
+                        <p>ბოლო ხმა:</p>
+                        <div id="last-voter">
+                              <span>-</span>
+                        </div>
+                  </div>
+            </div>
+
+            <script>
+                  const ws = new WebSocket('ws://192.168.0.3:5000/ws-casparcg');
+                  const voteOptions = ['A', 'B', 'C', 'D'];
+                  let previousResults = { A: 0, B: 0, C: 0, D: 0 };
+
+                  function update(data) {
+                        if (!data.Results || !Array.isArray(data.Results))
+                              return;
+
+                        const results = {};
+                        data.Results.forEach((item) => {
+                              results[item.Answer] = item.Count;
+                        });
+
+                        const totalVotes = data.TotalVotes || 0;
+                        const lastVoterName = data.VoterName || '';
+                        const profileImage = data.ProfileImageUrl || '';
+
+                        // ბოლო პასუხი
+                        let lastVoteAnswer = '';
+                        for (const option of voteOptions) {
+                              if (
+                                    (results[option] || 0) >
+                                    (previousResults[option] || 0)
+                              ) {
+                                    lastVoteAnswer = option;
+                                    break;
+                              }
+                        }
+
+                        // update bars & counts
+                        voteOptions.forEach((option) => {
+                              const count = results[option] || 0;
+                              const percentage =
+                                    totalVotes > 0
+                                          ? (count / totalVotes) * 100
+                                          : 0;
+                              const progressBar = document.getElementById(
+                                    `progress-bar-${option}`
+                              );
+                              const voteCountElement = document.getElementById(
+                                    `vote-count-${option}`
+                              );
+
+                              if (progressBar) {
+                                    gsap.to(progressBar, {
+                                          width: percentage + '%',
+                                          duration: 0.8,
+                                          ease: 'power2.out',
+                                    });
+                              }
+                              if (voteCountElement) {
+                                    voteCountElement.innerText = `${count} ხმა`;
+                              }
+                        });
+
+                        previousResults = { ...results };
+                        document.getElementById(
+                              'total-votes'
+                        ).innerText = `სულ ხმა: ${totalVotes}`;
+
+                        // ბოლო ხმის გამომსახველი
+                        const lastVoterElement =
+                              document.getElementById('last-voter');
+                        if (lastVoterName && lastVoteAnswer) {
+                              lastVoterElement.innerHTML = `
+                        ${
+                              profileImage
+                                    ? `<img src="${profileImage}" alt="profile">`
+                                    : ''
+                        }
+                        <span>${lastVoterName} (${lastVoteAnswer})</span>
+                    `;
+                              gsap.fromTo(
+                                    lastVoterElement,
+                                    { opacity: 0, y: 10 },
+                                    { opacity: 1, y: 0, duration: 0.6 }
+                              );
+                        } else {
+                              lastVoterElement.innerHTML = `<span>-</span>`;
+                        }
+                  }
+
+                  ws.onopen = () => {
+                        const registrationMessage = JSON.stringify({
+                              type: 'register',
+                              templateName: 'YTVote',
+                        });
+                        ws.send(registrationMessage);
+                        console.info(
+                              'Registration Request Sent. ' +
+                                    registrationMessage
+                        );
+                  };
+
+                  ws.onmessage = (event) => {
+                        try {
+                              const data = JSON.parse(event.data);
+                              update(data);
+                        } catch (e) {
+                              console.error('JSON parse Error:', e);
+                        }
+                  };
+
+                  ws.onclose = (event) => {
+                        console.log(
+                              'WebSocket Connection Closed.',
+                              event.code,
+                              event.reason
+                        );
+                  };
+
+                  ws.onerror = (error) => {
+                        console.error('WebSocket Error:', error);
+                  };
+            </script>
+      </body>
+</html>
