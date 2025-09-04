@@ -12,3 +12,5 @@ casparcg.exe --use-gl=desktop
     <allow-file-access-from-files>true</allow-file-access-from-files>
     <cache-path>C:\CasparCG\cache</cache-path>
 </html>
+
+
