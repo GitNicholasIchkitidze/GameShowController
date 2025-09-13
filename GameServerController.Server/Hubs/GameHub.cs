@@ -7,6 +7,7 @@ using GameController.Shared.Enums;
 using GameController.Shared.Models;
 using GameController.Shared.Models.Connection;
 using GameController.Shared.Models.YouTube;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -15,6 +16,7 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Concurrent;
 using System.Net;
+using System.Net.WebSockets;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime;
@@ -49,11 +51,12 @@ namespace GameController.Server.Hubs
 		private static bool _isRapidFireActive = false;
 		private static string? _operatorConnectionId;
 		private static string? _ytVoterManagerConnectionId;
+		private static string? _fbVoterManagerConnectionId;
 		private bool trackerLog = true;
 
 		//private readonly CasparCGService _casparCGService;
 		private readonly CasparCGSettings _cgSettings;
-		private static bool _isLeaderboardActive = false; // Add this static variable to track state
+		private static bool _isLeaderBoardActive = false; // Add this static variable to track state
 		private static List<PlayerScore> _finalScores = new List<PlayerScore>();
 
 		private static bool _isCountdownActiveOnCG = false; // To track if the CG countdown is running
@@ -171,12 +174,12 @@ namespace GameController.Server.Hubs
 		#endregion
 
 		#region CasparCG LeaderBoard
-		// Update leaderboard in real-time
-		public async Task CGSWUpdateLeaderboard(bool isFinal = false)
+		// Update LeaderBoard in real-time
+		public async Task CGSWUpdateLeaderBoard(bool isFinal = false)
 		{
-			_logger.LogInformation($"{Environment.NewLine}{DateTime.Now}  UpdateLeaderboard isFinal '{isFinal}'");
+			_logger.LogInformation($"{Environment.NewLine}{DateTime.Now}  UpdateLeaderBoard isFinal '{isFinal}'");
 
-			if (!_isLeaderboardActive && !isFinal) return;
+			if (!_isLeaderBoardActive && !isFinal) return;
 
 			var players = _gameService.ConnectedPlayers.Values
 				.OrderByDescending(p => p.Score)
@@ -185,11 +188,11 @@ namespace GameController.Server.Hubs
 
 			var message = new
 			{
-				type = isFinal ? "show_final_results" : "update_leaderboard",
+				type = isFinal ? "show_final_results" : "update_LeaderBoard",
 				players = players
 			};
 
-			await _casparCGWsService.SendDataToTemplateAsync("Leaderboard", message);
+			await _casparCGWsService.SendDataToTemplateAsync("LeaderBoard", message);
 		}
 
 		public async Task CGSWStoreFinalResults()
@@ -225,29 +228,29 @@ namespace GameController.Server.Hubs
 				players = players
 			};
 
-			await _casparCGWsService.SendDataToTemplateAsync("Leaderboard", message);
+			await _casparCGWsService.SendDataToTemplateAsync("LeaderBoard", message);
 		}
 
-		public async Task CGSWToggleLeaderboard(bool isVisible)
+		public async Task CGSWToggleLeaderBoard(bool isVisible)
 		{
-			_isLeaderboardActive = isVisible;
+			_isLeaderBoardActive = isVisible;
 
 			if (!isVisible)
 			{
 				var message = new { type = "clear" };
-				await _casparCGWsService.SendDataToTemplateAsync("Leaderboard", message);
+				await _casparCGWsService.SendDataToTemplateAsync("LeaderBoard", message);
 			}
 			else
 			{
-				await CGSWUpdateLeaderboard();
+				await CGSWUpdateLeaderBoard();
 			}
 		}
 
 		private async Task CGSWOnPlayerScoreChanged()
 		{
-			if (_isLeaderboardActive)
+			if (_isLeaderBoardActive)
 			{
-				await CGSWUpdateLeaderboard();
+				await CGSWUpdateLeaderBoard();
 			}
 		}
 
@@ -277,7 +280,7 @@ namespace GameController.Server.Hubs
 			{
 				channel = _cgSettings.CountDown.Channel;
 			}
-			else if (templateType == CGTemplateEnums.Leaderboard)
+			else if (templateType == CGTemplateEnums.LeaderBoard)
 			{
 				channel = _cgSettings.LeaderBoard.Channel;
 			}
@@ -287,8 +290,9 @@ namespace GameController.Server.Hubs
 			}
 			await _caspar.ClearChannel(channel);
 		}
-		public async Task CGLoadTemplate(CGTemplateEnums templateType)
+		public async Task<OperationResult> CGLoadTemplate(CGTemplateEnums templateType)
 		{
+			var res = new OperationResult(true);
 			var templateName = string.Empty;
 			var layer = -1;
 			var channel = -1;
@@ -317,7 +321,7 @@ namespace GameController.Server.Hubs
 				layer = _cgSettings.CountDown.Layer;
 				layerCg = _cgSettings.CountDown.LayerCg;
 			}
-			else if (templateType == CGTemplateEnums.Leaderboard)
+			else if (templateType == CGTemplateEnums.LeaderBoard)
 			{
 				templateName = _cgSettings.LeaderBoard.TemplateName;
 				channel = _cgSettings.LeaderBoard.Channel;
@@ -336,7 +340,7 @@ namespace GameController.Server.Hubs
 
 
 			//_ = CGEnsureTemplateLoadedAsync(templateName, channel, layer);
-			await CGEnsureTemplateLoadedAsync(templateName, channel, layer);
+			return await CGEnsureTemplateLoadedAsync(templateName, channel, layer);
 
 			
 
@@ -408,14 +412,16 @@ namespace GameController.Server.Hubs
 		}
 
 
-		public async Task CGEnsureTemplateLoadedAsync(string templateName, int channel, int layer)
+		public async Task<OperationResult> CGEnsureTemplateLoadedAsync(string templateName, int channel, int layer)
 		{
+			var res = new OperationResult(true);
 			var key = $"{channel}-{layer}";
 			if (!_isTemplateLoaded.ContainsKey(key))
 			{
-				await _caspar.LoadTemplate(templateName, channel, layer, 1, false, null);
+				res = await _caspar.LoadTemplate(templateName, channel, layer, 1, false, null);
 
 			}
+			return res;
 		}
 
 		public async Task CGPlayClip(int channel, int layer, string templateName)
@@ -694,13 +700,15 @@ namespace GameController.Server.Hubs
 			var httpContext = Context.GetHttpContext();
 			var clientIp = httpContext?.Connection?.RemoteIpAddress?.ToString() ?? "Unknown";
 
-			_logger.LogInformation($"{Environment.NewLine}{DateTime.Now} Client connected: {Context.ConnectionId}, IP: {clientIp}");
+			
 
 			// Registration logic
 			var clientName = httpContext?.Request?.Query["name"].ToString(); // Assume name is passed as query parameter
 			//var isRegisteredClient = _registeredClients.FirstOrDefault(c => clientIp?.Contains(c.ip)  && c.clientName == clientName);
 			//// Replace this line:
 			//var isRegisteredClient = _registeredClients.FirstOrDefault(c => clientIp?.Contains(c.ip) && c.clientName == clientName);
+
+			_logger.LogInformation($"{Environment.NewLine}{DateTime.Now} Client connected. ConnectionId: {Context.ConnectionId}, IP: {clientIp}, Name: {clientName}");
 
 			// With this corrected version:
 			var isRegisteredClient = _registeredClients.FirstOrDefault(
@@ -736,11 +744,15 @@ namespace GameController.Server.Hubs
 				{
 					_ytVoterManagerConnectionId = Context.ConnectionId;
 				}
-					
+				if (newPlayer.ClientType == "FBVoteManager")
+				{
+					_fbVoterManagerConnectionId = Context.ConnectionId;
+				}
+
 
 				_gameService.ConnectedPlayers.AddOrUpdate(Context.ConnectionId, newPlayer, (key, existingPlayer) => newPlayer);
 
-				_logger.LogInformation($"{Environment.NewLine}{DateTime.Now} Client {Context.ConnectionId} '{isRegisteredClient.clientName}' from {clientIp} {isRegisteredClient.clientType} is registered. Total registered players: {_gameService.ConnectedPlayers.Count}");
+				_logger.LogInformation($"{Environment.NewLine}{DateTime.Now} Client {Context.ConnectionId} '{isRegisteredClient.clientName}' from {clientIp} {isRegisteredClient.clientType} is REGISTERED. Total registered players: {_gameService.ConnectedPlayers.Count}");
 
 				await Clients.Caller.SendAsync("UpdateRegistrationStatus", true, newPlayer.Name, Context.ConnectionId, isRegisteredClient.clientType);
 
@@ -926,7 +938,7 @@ namespace GameController.Server.Hubs
 						// Notify the operator UI that a player has answered.
 						await Clients.Client(GetOperatorConnectionId()).SendAsync("PlayerAnsweredInRapidFire");
 						await Clients.All.SendAsync("UpdatePlayerList", _gameService.ConnectedPlayers.Values.ToList());
-						if (_isLeaderboardActive)
+						if (_isLeaderBoardActive)
 						{
 							var players = _gameService.ConnectedPlayers.Values.OrderByDescending(p => p.Score).ToList();
 							await CGSWSendScoreboardToCaspar(players);
@@ -958,7 +970,7 @@ namespace GameController.Server.Hubs
 
 					await Clients.Caller.SendAsync("ReceiveAnswerStatus", selectedAnswer == _activeQuestion.CorrectAnswer);
 					await Clients.All.SendAsync("UpdatePlayerList", _gameService.ConnectedPlayers.Values.ToList());
-					if (_isLeaderboardActive)
+					if (_isLeaderBoardActive)
 					{
 						var players = _gameService.ConnectedPlayers.Values.OrderByDescending(p => p.Score).ToList();
 						await CGSWSendScoreboardToCaspar(players);
@@ -1056,7 +1068,7 @@ namespace GameController.Server.Hubs
 
 				
 				// NEW: Check if the scoreboard is currently active and update it
-				if (_isLeaderboardActive)
+				if (_isLeaderBoardActive)
 				{
 					var players = _gameService.ConnectedPlayers.Values.OrderByDescending(p => p.Score).ToList();
 					await CGSWSendScoreboardToCaspar(players);

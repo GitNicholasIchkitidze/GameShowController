@@ -96,10 +96,11 @@ namespace GameController.Server.Services
 				return;
 			}
 
+			ConnectionStatusChanged?.Invoke(this, false);
 			_midiOutputDevice!.Dispose();
 			_midiOutputDevice = null;
 			_logger.LogInformation($"{Environment.NewLine}{DateTime.Now} Successfully disconnected from MIDI device.");
-			ConnectionStatusChanged?.Invoke(this, false);
+			
 		}
 
 		// ვარიანტი 1: MIDI ნოტის ნომრით

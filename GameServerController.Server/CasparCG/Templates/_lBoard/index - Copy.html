@@ -4,7 +4,6 @@
     <meta charset="utf-8">
     <title>LeaderBoard</title>
     <style>
-        /* იგივე სტილები */
         body {
             font-family: 'Arial', sans-serif;
             background: transparent;
@@ -58,6 +57,7 @@
             text-align: center;
         }
 
+        /* Animation for score changes */
         @keyframes scoreUpdate {
             0% {
                 transform: scale(1);
@@ -77,6 +77,7 @@
             animation: scoreUpdate 0.5s ease;
         }
 
+        /* Final results style */
         .final-results .player-row {
             background: rgba(0, 100, 0, 0.5);
             border: 2px solid gold;
@@ -90,44 +91,43 @@
     </div>
 
     <script>
-        var currentPlayers = [];
-        var isFinalResults = false;
+        let currentPlayers = [];
+        let isFinalResults = false;
 
         // WebSocket connection to server
-        var socket = new WebSocket('ws://192.168.0.2:5000/ws-casparcg');
+        const socket = new WebSocket('ws://192.168.0.2:5000/ws-casparcg');
 
         socket.addEventListener('open', function (event) {
             // Register this template with the server
-            var registrationMessage = JSON.stringify({
+            const registrationMessage = JSON.stringify({
                 type: 'register',
                 templateName: 'LeaderBoard'
             });
 
             socket.send(registrationMessage);
-            console.log('Registration Request Sent. ' + registrationMessage);
+            console.info('Registration Request Sent. ' + registrationMessage);
         });
 
-        socket.addEventListener('message', function (event) {
-            try {
-                var data = JSON.parse(event.data);
 
-                if (data.type === 'update_LeaderBoard') {
-                    updateLeaderBoard(data.players, false);
-                }
-                else if (data.type === 'show_final_results') {
-                    updateLeaderBoard(data.players, true);
-                }
-                else if (data.type === 'clear') {
-                    clearLeaderBoard();
-                }
-            } catch (e) {
-                console.error('Error parsing message:', e, event.data);
+        socket.addEventListener('message', function (event) {
+            const data = JSON.parse(event.data);
+
+            if (data.type === 'update_LeaderBoard') {
+                updateLeaderBoard(data.players, false);
+            }
+            else if (data.type === 'show_final_results') {
+                updateLeaderBoard(data.players, true);
+            }
+            else if (data.type === 'clear') {
+                clearLeaderBoard();
             }
         });
 
+
         window.update = function (data) {
             console.log('update');
-        };
+
+        }
 
         function updateLeaderBoard(players, finalResults) {
             isFinalResults = finalResults;
@@ -137,7 +137,7 @@
                 finalResults ? 'FINAL RESULTS' : 'LeaderBoard';
 
             // Update container class for styling
-            var container = document.getElementById('LeaderBoard');
+            const container = document.getElementById('LeaderBoard');
             if (finalResults) {
                 container.classList.add('final-results');
             } else {
@@ -145,44 +145,32 @@
             }
 
             // Sort players by score (descending)
-            players.sort(function (a, b) {
-                return b.score - a.score;
-            });
+            players.sort((a, b) => b.score - a.score);
 
-            var playersContainer = document.getElementById('players-container');
+            const playersContainer = document.getElementById('players-container');
             playersContainer.innerHTML = '';
 
-            for (var i = 0; i < players.length; i++) {
-                var player = players[i];
-                var playerRow = document.createElement('div');
+            players.forEach((player, index) => {
+                const playerRow = document.createElement('div');
                 playerRow.className = 'player-row';
 
-                var position = document.createElement('div');
+                const position = document.createElement('div');
                 position.className = 'player-position';
-                position.textContent = (i + 1) + '.';
+                position.textContent = `${index + 1}.`;
 
-                var name = document.createElement('div');
+                const name = document.createElement('div');
                 name.className = 'player-name';
                 name.textContent = player.name;
 
-                var score = document.createElement('div');
+                const score = document.createElement('div');
                 score.className = 'player-score';
                 score.textContent = player.score;
 
                 // Check if score changed for animation
-                var existingPlayer = null;
-                for (var j = 0; j < currentPlayers.length; j++) {
-                    if (currentPlayers[j].id === player.id) {
-                        existingPlayer = currentPlayers[j];
-                        break;
-                    }
-                }
-
+                const existingPlayer = currentPlayers.find(p => p.id === player.id);
                 if (existingPlayer && existingPlayer.score !== player.score) {
                     score.classList.add('score-updated');
-                    setTimeout(function () {
-                        score.classList.remove('score-updated');
-                    }, 500);
+                    setTimeout(() => score.classList.remove('score-updated'), 500);
                 }
 
                 playerRow.appendChild(position);
@@ -190,7 +178,7 @@
                 playerRow.appendChild(score);
 
                 playersContainer.appendChild(playerRow);
-            }
+            });
 
             currentPlayers = players;
         }

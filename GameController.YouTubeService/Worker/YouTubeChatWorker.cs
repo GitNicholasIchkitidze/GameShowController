@@ -2,7 +2,7 @@
 using GameController.Shared.Models.YouTube;
 using GameController.YouTubeService.Services;
 using Google.Apis.YouTube.v3;
-using Google.Apis.YouTube.v3.Data; 
+using Google.Apis.YouTube.v3.Data;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
@@ -51,7 +51,7 @@ namespace GameController.YouTubeService.Worker
 
 		}
 
-		
+
 
 		protected override async Task ExecuteAsync(CancellationToken stoppingToken)
 		{
@@ -84,7 +84,7 @@ namespace GameController.YouTubeService.Worker
 						var wasRegisteredAnswer = await FetchAndProcessChatMessages(stoppingToken);
 						if (wasRegisteredAnswer)
 							await SendLiveVoteUpdateAsync(_chatMessages.LastOrDefault());
-						
+
 					}
 				}
 				catch (Exception ex)
@@ -102,7 +102,7 @@ namespace GameController.YouTubeService.Worker
 			_signalRClient.VotingStateChanged += OnVotingStateChanged;
 		}
 
-		
+
 
 		public async Task SendVotingStartedChatMessage()
 		{
@@ -120,7 +120,7 @@ namespace GameController.YouTubeService.Worker
 
 		public async Task<bool> FetchAndProcessChatMessages(CancellationToken stoppingToken)
 		{
-			
+
 			var res = false;
 			_lastVoterName = string.Empty;
 			var result = await _youTubeService.GetLiveChatMessagesAsync(_liveChatId, _nextPageToken);
@@ -148,7 +148,7 @@ namespace GameController.YouTubeService.Worker
 
 								var isValidChannel = true; // აქ უნდა გაკეტდეს რომ ახალი შექმნილი ეკაუნტიდან არ მივიღოთ მესიჯები  await IsChannelOldEnoughAsync(msg.AuthorChannelId);
 
-								if (isValidChannel && Array.Exists(_validAnswers, answer => answer.Equals(msg.MessageText?.Trim().ToUpper(), StringComparison.OrdinalIgnoreCase)) )
+								if (isValidChannel && Array.Exists(_validAnswers, answer => answer.Equals(msg.MessageText?.Trim().ToUpper(), StringComparison.OrdinalIgnoreCase)))
 								{
 									if (!string.IsNullOrEmpty(msg.AuthorChannelId) && !string.IsNullOrEmpty(msg.MessageText) && !string.IsNullOrEmpty(msg.UserName))
 									{
@@ -156,7 +156,7 @@ namespace GameController.YouTubeService.Worker
 										{
 											await _youTubeService.SendLiveChatMessageAsync(_liveChatId, $"@{msg.UserName} თქვენი პასუხი რეგისტრირებულია.");
 											res = true;
-											_lastVoterName= msg.UserName;
+											_lastVoterName = msg.UserName;
 										}
 										else
 										{
@@ -171,15 +171,15 @@ namespace GameController.YouTubeService.Worker
 
 								_chatMessages.Enqueue(msg);
 							}
-							
+
 						}
 						catch (Exception ex)
 						{
 							_logger.LogError($"{Environment.NewLine}{DateTime.Now} not valid data. {ex.Message}");
 
-							
+
 						}
-						
+
 					}
 					_logger.LogInformation($"{Environment.NewLine}{DateTime.Now} Received {result.Items.Count} new chat messages. Total messages: {_chatMessages.Count}.");
 				}
@@ -240,7 +240,7 @@ namespace GameController.YouTubeService.Worker
 				_votedUsers.Clear(); // Clear the list of users who have already voted
 
 				await _youTubeService.SendLiveChatMessageAsync(_liveChatId, "📊 ვოტინგი ჩართულია");
-				
+
 				//await SendVotingStartedChatMessage();
 			}
 			else
@@ -251,7 +251,7 @@ namespace GameController.YouTubeService.Worker
 
 				chatMessageBuilder.AppendLine("📊 ვოტინგი დასრულდა!");
 
-				chatMessageBuilder.AppendLine($"🗳️ სულ დარეგისტრირდა {results.Sum(x=> x.Count)} პასუხი:");
+				chatMessageBuilder.AppendLine($"🗳️ სულ დარეგისტრირდა {results.Sum(x => x.Count)} პასუხი:");
 
 				foreach (var result in results)
 				{
@@ -262,7 +262,7 @@ namespace GameController.YouTubeService.Worker
 				chatMessageBuilder.AppendLine("🙏 გმადლობთ მონაწილეობისთვის!");
 				await _youTubeService.SendLiveChatMessageAsync(_liveChatId, chatMessageBuilder.ToString());
 
-				
+
 				var totalVotes = _votedUsers.Count;
 
 				var voteResultsMessage = new VoteResultsMessage
@@ -281,8 +281,8 @@ namespace GameController.YouTubeService.Worker
 		}
 
 
-		
-		
+
+
 
 
 

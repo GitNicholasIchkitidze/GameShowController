@@ -21,7 +21,7 @@ namespace GameController.YouTubeService.Worker
 		private readonly string _clientId;
 		private readonly string _clientSecret;
 
-		
+
 
 		public YouTubeService(ILogger<YouTubeService> logger, IConfiguration configuration)
 		{
@@ -54,12 +54,12 @@ namespace GameController.YouTubeService.Worker
 				}
 
 
-			_youtubeService = new Google.Apis.YouTube.v3.YouTubeService(new BaseClientService.Initializer()
-			{
-				ApiKey = _configuration["YouTubeApiKey"],
-				HttpClientInitializer = credential,
-				ApplicationName = "Game Controller"
-			});
+				_youtubeService = new Google.Apis.YouTube.v3.YouTubeService(new BaseClientService.Initializer()
+				{
+					ApiKey = _configuration["YouTubeApiKey"],
+					HttpClientInitializer = credential,
+					ApplicationName = "Game Controller"
+				});
 				_logger.LogInformation($"{Environment.NewLine}{DateTime.Now} OAuth Done");
 			}
 			catch (Exception ex)
@@ -91,8 +91,8 @@ namespace GameController.YouTubeService.Worker
 		public async Task<LiveChatMessage> SendLiveChatMessageAsync(string liveChatId, string messageText)
 		{
 
-			bool quotaSaveMode = _configuration.GetValue<bool>("YouTubeQuotaSaveMode",true);
-			
+			bool quotaSaveMode = _configuration.GetValue<bool>("YouTubeQuotaSaveMode", true);
+
 			var liveChatMessage = new LiveChatMessage()
 			{
 				Snippet = new LiveChatMessageSnippet()

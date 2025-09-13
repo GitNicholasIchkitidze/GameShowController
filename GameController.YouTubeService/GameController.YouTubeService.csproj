@@ -9,6 +9,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Services\ITokenManagerService.cs" />
+    <Compile Remove="Services\TokenManagerService.cs" />
+    <Compile Remove="Services\YouTubeService_Old.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Google.Apis.YouTube.v3" Version="1.70.0.3847" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="9.0.8" />
   </ItemGroup>

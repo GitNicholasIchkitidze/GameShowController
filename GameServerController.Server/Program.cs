@@ -14,8 +14,19 @@ using System.Text;
 var builder = WebApplication.CreateBuilder(args);
 
 
-Console.OutputEncoding = Encoding.UTF8;
-Console.InputEncoding = Encoding.UTF8;
+
+try
+{
+	
+	Console.OutputEncoding = Encoding.UTF8;
+	Console.InputEncoding = Encoding.UTF8;
+}
+catch (Exception ex)
+{
+
+	Console.WriteLine($"Encoding setup error: {ex.Message}");
+	
+}
 
 // Add services to the container.
 builder.Services.AddSignalR();
@@ -108,7 +119,7 @@ app.UseStaticFiles();
 //app.Urls.Add("http://0.0.0.0:7172");
 
 
-// ახალი ჩამატებული: დაამატე ეს სექცია, რომ CasparCG ტემპლეიტები სერვერმა მოემსახუროს
+
 var templatesPath = Path.Combine(builder.Environment.ContentRootPath, "CasparCG", "Templates");
 if (Directory.Exists(templatesPath))
 {

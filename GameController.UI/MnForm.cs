@@ -84,11 +84,11 @@ namespace GameShowCtrl
 
 
 			var operatorName = _config["ServerSettings:Operator"] ?? "Operator";
-			PnlRapidFire.Enabled = false; 
+			PnlRapidFire.Enabled = false;
 
 			_hubConnection = new HubConnectionBuilder()
 
-						.WithUrl($"{_serverBaseUrl}gamehub?name={operatorName}")								
+						.WithUrl($"{_serverBaseUrl}gamehub?name={operatorName}")
 								.WithAutomaticReconnect()
 				.Build();
 
@@ -178,12 +178,19 @@ namespace GameShowCtrl
 			try
 			{
 				AppendLog($"[WinForms UI]\tიწყება CG თემლეიტების ჩატვირთვა");
-				await _hubConnection.InvokeAsync("CGLoadTemplate", CGTemplateEnums.QuestionFull);
-				await _hubConnection.InvokeAsync("CGLoadTemplate", CGTemplateEnums.Leaderboard);
-				await _hubConnection.InvokeAsync("CGLoadTemplate", CGTemplateEnums.QuestionLower);
-				await _hubConnection.InvokeAsync("CGLoadTemplate", CGTemplateEnums.Countdown);
 
-				await _hubConnection.InvokeAsync("CGLoadTemplate", CGTemplateEnums.YTVote);
+
+
+				var resultQF = await _hubConnection.InvokeAsync<OperationResult>("CGLoadTemplate", CGTemplateEnums.QuestionFull);
+				AppendLog($"[WinForms UI] <- Hub QuestionFull - ის ჩატვირთვა: {resultQF.Message}");
+				var resultLB = await _hubConnection.InvokeAsync<OperationResult>("CGLoadTemplate", CGTemplateEnums.LeaderBoard);
+				AppendLog($"[WinForms UI] <- Hub LeaderBoard - ის ჩატვირთვა: {resultLB.Message}");
+				var resultQL = await _hubConnection.InvokeAsync<OperationResult>("CGLoadTemplate", CGTemplateEnums.QuestionLower);
+				AppendLog($"[WinForms UI] <- Hub QuestionLower - ის ჩატვირთვა: {resultQL.Message}");
+				var resultCD = await _hubConnection.InvokeAsync<OperationResult>("CGLoadTemplate", CGTemplateEnums.Countdown);
+				AppendLog($"[WinForms UI] <- Hub Countdown - ის ჩატვირთვა: {resultCD.Message}");
+				var resultYT = await _hubConnection.InvokeAsync<OperationResult>("CGLoadTemplate", CGTemplateEnums.YTVote);
+				AppendLog($"[WinForms UI] <- Hub YTVote - ის ჩატვირთვა: {resultYT.Message}");
 			}
 			catch (Exception ex)
 			{
@@ -728,7 +735,7 @@ namespace GameShowCtrl
 					targetClients = allPlayers;
 				}
 
-				if ( targetClients == null ||  disableInput && (targetClients.Count != 1) )
+				if (targetClients == null || disableInput && (targetClients.Count != 1))
 				{
 					MessageBox.Show("Please select a One Player to Play with.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
 					return;
@@ -776,7 +783,7 @@ namespace GameShowCtrl
 				targetClients = allPlayers.Where(p => p.IsInPlay).ToList();
 			}
 
-			if (targetClients.Count == 0)
+			if (targetClients.Count == 0 && !disableInput)
 			{
 				targetClients = allPlayers;
 			}
@@ -822,7 +829,7 @@ namespace GameShowCtrl
 			//	await _hubConnection.InvokeAsync("EndRound");
 			//}
 
-			await _hubConnection.InvokeAsync("OperatorConfirmAnswer", true);
+			await _hubConnection.InvokeAsync("OperatorConfirmAnswer", false);
 
 		}
 
@@ -840,7 +847,7 @@ namespace GameShowCtrl
 			//	await _hubConnection.InvokeAsync("EndRound");
 			//}
 
-			await _hubConnection.InvokeAsync("OperatorConfirmAnswer", false);
+			await _hubConnection.InvokeAsync("OperatorConfirmAnswer", true);
 
 		}
 
@@ -851,17 +858,17 @@ namespace GameShowCtrl
 			//btnShowCorrect.Visible = cBoxDisableInput.Checked;
 		}
 
-		private async void btnShowLeaderboard_Click(object sender, EventArgs e)
+		private async void btnShowLeaderBoard_Click(object sender, EventArgs e)
 		{
 
 			// Toggle the state on the server
-			await _hubConnection.InvokeAsync("SetLeaderboardActive", true);
+			await _hubConnection.InvokeAsync("SetLeaderBoardActive", true);
 
 			// Get the current player list from the server to send to CasparCG immediately
 			//await _hubConnection.InvokeAsync("RequestScoreboardUpdate");
 		}
 
-		private async void btnHideLeaderboard_Click(object sender, EventArgs e)
+		private async void btnHideLeaderBoard_Click(object sender, EventArgs e)
 		{
 			///var configuration = new ConfigurationBuilder()
 			///	.SetBasePath(Directory.GetCurrentDirectory())
@@ -870,7 +877,7 @@ namespace GameShowCtrl
 			///
 			///var _cgSettings = configuration.GetSection("CG").Get<CasparCGSettings>();
 			// Toggle the state on the server
-			await _hubConnection.InvokeAsync("SetLeaderboardActive", false);
+			await _hubConnection.InvokeAsync("SetLeaderBoardActive", false);
 
 			// Send a command to CasparCG to clear the layer
 
@@ -948,7 +955,7 @@ namespace GameShowCtrl
 			await Task.Delay(50);
 			await _hubConnection.InvokeAsync("CGClearChannel", CGTemplateEnums.Countdown);
 			await Task.Delay(50);
-			await _hubConnection.InvokeAsync("CGClearChannel", CGTemplateEnums.Leaderboard);
+			await _hubConnection.InvokeAsync("CGClearChannel", CGTemplateEnums.LeaderBoard);
 			await Task.Delay(50);
 			await _hubConnection.InvokeAsync("CGClearChannel", CGTemplateEnums.YTVote);
 			await Task.Delay(50);
@@ -1010,31 +1017,31 @@ namespace GameShowCtrl
 
 		private async void button8_Click(object sender, EventArgs e)
 		{
-			await _hubConnection.InvokeAsync("CGLoadTemplate", CGTemplateEnums.Leaderboard);
+			await _hubConnection.InvokeAsync("CGLoadTemplate", CGTemplateEnums.LeaderBoard);
 			await Task.Delay(500);
 		}
 
-		private async void btnShowLeaderboard_Click_1(object sender, EventArgs e)
+		private async void btnShowLeaderBoard_Click_1(object sender, EventArgs e)
 		{
 			var button = sender as Button;
 			if (button == null)
 				return;
 
-			if (button.Text == "Show Leaderboard")
+			if (button.Text == "Show LeaderBoard")
 			{
-				await _hubConnection.InvokeAsync("CGSWToggleLeaderboard", true);
-				button.Text = "Hide Leaderboard";
+				await _hubConnection.InvokeAsync("CGSWToggleLeaderBoard", true);
+				button.Text = "Hide LeaderBoard";
 			}
 			else
 			{
-				button.Text = "Show Leaderboard";
-				await _hubConnection.InvokeAsync("CGSWToggleLeaderboard", false);
+				button.Text = "Show LeaderBoard";
+				await _hubConnection.InvokeAsync("CGSWToggleLeaderBoard", false);
 			}
 		}
 
-		private async void btnHideLeaderboard_Click_1(object sender, EventArgs e)
+		private async void btnHideLeaderBoard_Click_1(object sender, EventArgs e)
 		{
-			await _hubConnection.InvokeAsync("CGSWToggleLeaderboard", false);
+			await _hubConnection.InvokeAsync("CGSWToggleLeaderBoard", false);
 
 		}
 
@@ -1322,29 +1329,32 @@ namespace GameShowCtrl
 
 		private async void button10_Click_1(object sender, EventArgs e)
 		{
-			await _hubConnection.InvokeAsync("CGLoadTemplate", CGTemplateEnums.YTVote);
+
 		}
 
 		private async void BtnLoadFullQuestion_Click(object sender, EventArgs e)
 		{
-			await _hubConnection.InvokeAsync("CGLoadTemplate", CGTemplateEnums.QuestionFull);
+			var result = await _hubConnection.InvokeAsync<OperationResult>("CGLoadTemplate", CGTemplateEnums.QuestionFull);
+			AppendLog($"[WinForms UI] <- Hub QuestionFull - ის ჩატვირთვა: {result.Message}");
 		}
 
 		private async void BtnLoadLeaderBoard_Click(object sender, EventArgs e)
 		{
-			await _hubConnection.InvokeAsync("CGLoadTemplate", CGTemplateEnums.Leaderboard);
+			var result = await _hubConnection.InvokeAsync<OperationResult>("CGLoadTemplate", CGTemplateEnums.LeaderBoard);
+			AppendLog($"[WinForms UI] <- Hub LeaderBoard - ის ჩატვირთვა: {result.Message}");
 		}
 
 		private async void BtnLoadLowerQuestion_Click(object sender, EventArgs e)
 		{
-			await _hubConnection.InvokeAsync("CGLoadTemplate", CGTemplateEnums.QuestionLower);
-
+			var result = await _hubConnection.InvokeAsync<OperationResult>("CGLoadTemplate", CGTemplateEnums.QuestionLower);
+			AppendLog($"[WinForms UI] <- Hub QuestionLower - ის ჩატვირთვა: {result.Message}");
 
 		}
 
 		private async void BtnLoadCountDown_Click(object sender, EventArgs e)
 		{
-			await _hubConnection.InvokeAsync("CGLoadTemplate", CGTemplateEnums.Countdown);
+			var result = await _hubConnection.InvokeAsync<OperationResult>("CGLoadTemplate", CGTemplateEnums.Countdown);
+			AppendLog($"[WinForms UI] <- Hub Countdown - ის ჩატვირთვა: {result.Message}");
 		}
 
 		private async void btnLoadBackGround_Click(object sender, EventArgs e)
@@ -1368,6 +1378,11 @@ namespace GameShowCtrl
 					//await _hubConnection.InvokeAsync("CGLoadTemplate", CGTemplateEnums.YTVote);
 				}
 			}
+		}
+
+		private async void BtnLoadYutubeVote_Click(object sender, EventArgs e)
+		{
+			await _hubConnection.InvokeAsync("CGLoadTemplate", CGTemplateEnums.YTVote);
 		}
 	}
 }

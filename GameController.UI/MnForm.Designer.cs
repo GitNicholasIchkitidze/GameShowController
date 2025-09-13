@@ -59,7 +59,7 @@
 			btn_ConnectLightDevice = new Button();
 			flowLayoutPanel2 = new FlowLayoutPanel();
 			rf_BtnLoadQuestions = new Button();
-			btnShowLeaderboard = new Button();
+			btnShowLeaderBoard = new Button();
 			btnShowFinalResults = new Button();
 			btnStoreResults = new Button();
 			tableLayoutPanel3 = new TableLayoutPanel();
@@ -78,21 +78,25 @@
 			dgvQuestions = new DataGridView();
 			dgvContestants = new DataGridView();
 			tableLayoutPanel4 = new TableLayoutPanel();
+			flowLayoutPanelYutubeButtons = new FlowLayoutPanel();
+			tabControl1 = new TabControl();
+			tabPage1 = new TabPage();
+			flowLayoutPanelLoads = new FlowLayoutPanel();
+			BtnLoadFullQuestion = new Button();
+			BtnLoadLowerQuestion = new Button();
+			BtnLoadCountDown = new Button();
+			BtnLoadLeaderBoard = new Button();
+			BtnLoadYutubeVote = new Button();
+			btnClearGraphics = new Button();
+			btnLoadBackGround = new Button();
+			tabPage2 = new TabPage();
 			groupBox2 = new GroupBox();
 			richTextBox1 = new RichTextBox();
 			flowLayoutPanel1 = new FlowLayoutPanel();
 			btn_ytVotingOnOFF = new Button();
 			button11 = new Button();
 			button12 = new Button();
-			flowLayoutPanelYutubeButtons = new FlowLayoutPanel();
-			flowLayoutPanelLoads = new FlowLayoutPanel();
-			BtnLoadFullQuestion = new Button();
-			BtnLoadLowerQuestion = new Button();
-			BtnLoadCountDown = new Button();
-			BtnLoadLeaderBoard = new Button();
-			button10 = new Button();
-			btnClearGraphics = new Button();
-			btnLoadBackGround = new Button();
+			tabPage3 = new TabPage();
 			panel1 = new Panel();
 			cmbCountdownMode = new ComboBox();
 			lblPollingCountdown = new Label();
@@ -101,6 +105,8 @@
 			listBoxClients = new ListBox();
 			playerBindingSource = new BindingSource(components);
 			countdownTimer = new System.Windows.Forms.Timer(components);
+			tabPage4 = new TabPage();
+			button1 = new Button();
 			PnlRapidFire.SuspendLayout();
 			tabControlMain.SuspendLayout();
 			tPageTest.SuspendLayout();
@@ -117,12 +123,16 @@
 			((System.ComponentModel.ISupportInitialize)dgvQuestions).BeginInit();
 			((System.ComponentModel.ISupportInitialize)dgvContestants).BeginInit();
 			tableLayoutPanel4.SuspendLayout();
+			tabControl1.SuspendLayout();
+			tabPage1.SuspendLayout();
+			flowLayoutPanelLoads.SuspendLayout();
+			tabPage2.SuspendLayout();
 			groupBox2.SuspendLayout();
 			flowLayoutPanel1.SuspendLayout();
-			flowLayoutPanelLoads.SuspendLayout();
 			panel1.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)CountdownDuration).BeginInit();
 			((System.ComponentModel.ISupportInitialize)playerBindingSource).BeginInit();
+			tabPage4.SuspendLayout();
 			SuspendLayout();
 			// 
 			// labelActiveConnections
@@ -421,7 +431,7 @@
 			// 
 			cBoxUseAudioControl.AutoSize = true;
 			cBoxUseAudioControl.Enabled = false;
-			cBoxUseAudioControl.Location = new Point(6, 118);
+			cBoxUseAudioControl.Location = new Point(12, 114);
 			cBoxUseAudioControl.Name = "cBoxUseAudioControl";
 			cBoxUseAudioControl.Size = new Size(142, 24);
 			cBoxUseAudioControl.TabIndex = 75;
@@ -442,7 +452,7 @@
 			// cBoxDisableInput
 			// 
 			cBoxDisableInput.AutoSize = true;
-			cBoxDisableInput.Location = new Point(16, 38);
+			cBoxDisableInput.Location = new Point(12, 35);
 			cBoxDisableInput.Margin = new Padding(3, 4, 3, 4);
 			cBoxDisableInput.Name = "cBoxDisableInput";
 			cBoxDisableInput.Size = new Size(131, 24);
@@ -464,7 +474,7 @@
 			// flowLayoutPanel2
 			// 
 			flowLayoutPanel2.Controls.Add(rf_BtnLoadQuestions);
-			flowLayoutPanel2.Controls.Add(btnShowLeaderboard);
+			flowLayoutPanel2.Controls.Add(btnShowLeaderBoard);
 			flowLayoutPanel2.Controls.Add(btnShowFinalResults);
 			flowLayoutPanel2.Controls.Add(btnStoreResults);
 			flowLayoutPanel2.Dock = DockStyle.Fill;
@@ -484,15 +494,15 @@
 			rf_BtnLoadQuestions.UseVisualStyleBackColor = true;
 			rf_BtnLoadQuestions.Click += rf_BtnLoadQuestions_Click;
 			// 
-			// btnShowLeaderboard
+			// btnShowLeaderBoard
 			// 
-			btnShowLeaderboard.Location = new Point(3, 82);
-			btnShowLeaderboard.Name = "btnShowLeaderboard";
-			btnShowLeaderboard.Size = new Size(475, 69);
-			btnShowLeaderboard.TabIndex = 67;
-			btnShowLeaderboard.Text = "Show Leaderboard";
-			btnShowLeaderboard.UseVisualStyleBackColor = true;
-			btnShowLeaderboard.Click += btnShowLeaderboard_Click_1;
+			btnShowLeaderBoard.Location = new Point(3, 82);
+			btnShowLeaderBoard.Name = "btnShowLeaderBoard";
+			btnShowLeaderBoard.Size = new Size(475, 69);
+			btnShowLeaderBoard.TabIndex = 67;
+			btnShowLeaderBoard.Text = "Show LeaderBoard";
+			btnShowLeaderBoard.UseVisualStyleBackColor = true;
+			btnShowLeaderBoard.Click += btnShowLeaderBoard_Click_1;
 			// 
 			// btnShowFinalResults
 			// 
@@ -562,7 +572,7 @@
 			// btnShowCorrect
 			// 
 			btnShowCorrect.BackColor = Color.Tan;
-			btnShowCorrect.Location = new Point(928, 118);
+			btnShowCorrect.Location = new Point(934, 27);
 			btnShowCorrect.Name = "btnShowCorrect";
 			btnShowCorrect.Size = new Size(166, 72);
 			btnShowCorrect.TabIndex = 60;
@@ -572,13 +582,13 @@
 			// 
 			// btnIncorrectAnswer
 			// 
-			btnIncorrectAnswer.BackColor = Color.Green;
+			btnIncorrectAnswer.BackColor = Color.Red;
 			btnIncorrectAnswer.ForeColor = SystemColors.ControlText;
-			btnIncorrectAnswer.Location = new Point(627, 18);
+			btnIncorrectAnswer.Location = new Point(396, 18);
 			btnIncorrectAnswer.Name = "btnIncorrectAnswer";
-			btnIncorrectAnswer.Size = new Size(133, 81);
+			btnIncorrectAnswer.Size = new Size(364, 81);
 			btnIncorrectAnswer.TabIndex = 16;
-			btnIncorrectAnswer.Text = "button2";
+			btnIncorrectAnswer.Text = "NO";
 			btnIncorrectAnswer.UseVisualStyleBackColor = false;
 			btnIncorrectAnswer.Visible = false;
 			btnIncorrectAnswer.Click += btnIncorrectAnswer_Click;
@@ -587,33 +597,35 @@
 			// 
 			rf_CBoxRapidFireMode.DropDownStyle = ComboBoxStyle.DropDownList;
 			rf_CBoxRapidFireMode.FormattingEnabled = true;
-			rf_CBoxRapidFireMode.Location = new Point(485, 208);
+			rf_CBoxRapidFireMode.Location = new Point(885, 225);
 			rf_CBoxRapidFireMode.Margin = new Padding(3, 2, 3, 2);
 			rf_CBoxRapidFireMode.Name = "rf_CBoxRapidFireMode";
 			rf_CBoxRapidFireMode.Size = new Size(165, 28);
 			rf_CBoxRapidFireMode.TabIndex = 1;
+			rf_CBoxRapidFireMode.Visible = false;
 			// 
 			// btnCorrectAnswer
 			// 
-			btnCorrectAnswer.BackColor = Color.Red;
+			btnCorrectAnswer.BackColor = Color.Green;
 			btnCorrectAnswer.ForeColor = SystemColors.ControlText;
-			btnCorrectAnswer.Location = new Point(609, 134);
+			btnCorrectAnswer.Location = new Point(396, 134);
 			btnCorrectAnswer.Name = "btnCorrectAnswer";
-			btnCorrectAnswer.Size = new Size(122, 81);
+			btnCorrectAnswer.Size = new Size(364, 81);
 			btnCorrectAnswer.TabIndex = 15;
-			btnCorrectAnswer.Text = "CORRECT";
+			btnCorrectAnswer.Text = "YES";
 			btnCorrectAnswer.UseVisualStyleBackColor = false;
 			btnCorrectAnswer.Visible = false;
 			btnCorrectAnswer.Click += btnCorrectAnswer_Click;
 			// 
 			// button4
 			// 
-			button4.Location = new Point(385, 100);
+			button4.Location = new Point(1056, 196);
 			button4.Name = "button4";
 			button4.Size = new Size(74, 72);
 			button4.TabIndex = 64;
 			button4.Text = "Stop";
 			button4.UseVisualStyleBackColor = true;
+			button4.Visible = false;
 			// 
 			// btnStartRapidFire
 			// 
@@ -627,12 +639,13 @@
 			// 
 			// button5
 			// 
-			button5.Location = new Point(308, 181);
+			button5.Location = new Point(802, 202);
 			button5.Name = "button5";
 			button5.Size = new Size(74, 72);
 			button5.TabIndex = 65;
 			button5.Text = "Resume";
 			button5.UseVisualStyleBackColor = true;
+			button5.Visible = false;
 			button5.Click += button5_Click;
 			// 
 			// button2
@@ -643,16 +656,18 @@
 			button2.TabIndex = 62;
 			button2.Text = "Start";
 			button2.UseVisualStyleBackColor = true;
+			button2.Visible = false;
 			button2.Click += button2_Click;
 			// 
 			// button3
 			// 
-			button3.Location = new Point(802, 143);
+			button3.Location = new Point(802, 114);
 			button3.Name = "button3";
 			button3.Size = new Size(74, 72);
 			button3.TabIndex = 63;
 			button3.Text = "Pause";
 			button3.UseVisualStyleBackColor = true;
+			button3.Visible = false;
 			button3.Click += button3_Click;
 			// 
 			// tableLayoutPanel5
@@ -705,94 +720,54 @@
 			tableLayoutPanel4.BackColor = Color.Gainsboro;
 			tableLayoutPanel4.ColumnCount = 1;
 			tableLayoutPanel4.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-			tableLayoutPanel4.Controls.Add(groupBox2, 0, 2);
-			tableLayoutPanel4.Controls.Add(flowLayoutPanel1, 0, 0);
 			tableLayoutPanel4.Controls.Add(flowLayoutPanelYutubeButtons, 0, 1);
-			tableLayoutPanel4.Controls.Add(flowLayoutPanelLoads, 0, 3);
+			tableLayoutPanel4.Controls.Add(tabControl1, 0, 4);
 			tableLayoutPanel4.Dock = DockStyle.Fill;
 			tableLayoutPanel4.Location = new Point(1951, 3);
 			tableLayoutPanel4.Name = "tableLayoutPanel4";
-			tableLayoutPanel4.RowCount = 5;
+			tableLayoutPanel4.RowCount = 6;
 			tableLayoutPanel4.RowStyles.Add(new RowStyle());
 			tableLayoutPanel4.RowStyles.Add(new RowStyle());
-			tableLayoutPanel4.RowStyles.Add(new RowStyle(SizeType.Percent, 50F));
+			tableLayoutPanel4.RowStyles.Add(new RowStyle(SizeType.Percent, 3.053435F));
 			tableLayoutPanel4.RowStyles.Add(new RowStyle());
-			tableLayoutPanel4.RowStyles.Add(new RowStyle(SizeType.Percent, 50F));
+			tableLayoutPanel4.RowStyles.Add(new RowStyle(SizeType.Percent, 96.94656F));
+			tableLayoutPanel4.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
 			tableLayoutPanel4.Size = new Size(481, 813);
 			tableLayoutPanel4.TabIndex = 2;
-			// 
-			// groupBox2
-			// 
-			groupBox2.Controls.Add(richTextBox1);
-			groupBox2.Dock = DockStyle.Fill;
-			groupBox2.Location = new Point(3, 291);
-			groupBox2.Name = "groupBox2";
-			groupBox2.Size = new Size(475, 110);
-			groupBox2.TabIndex = 66;
-			groupBox2.TabStop = false;
-			groupBox2.Text = "ONLINE AUDIENCE";
-			// 
-			// richTextBox1
-			// 
-			richTextBox1.Location = new Point(64, 34);
-			richTextBox1.Name = "richTextBox1";
-			richTextBox1.Size = new Size(248, 100);
-			richTextBox1.TabIndex = 0;
-			richTextBox1.Text = "A:\nB:\nC:\nD:";
-			// 
-			// flowLayoutPanel1
-			// 
-			flowLayoutPanel1.Controls.Add(btn_ytVotingOnOFF);
-			flowLayoutPanel1.Controls.Add(button11);
-			flowLayoutPanel1.Controls.Add(button12);
-			flowLayoutPanel1.Dock = DockStyle.Fill;
-			flowLayoutPanel1.Location = new Point(3, 3);
-			flowLayoutPanel1.Name = "flowLayoutPanel1";
-			flowLayoutPanel1.Size = new Size(475, 276);
-			flowLayoutPanel1.TabIndex = 81;
-			// 
-			// btn_ytVotingOnOFF
-			// 
-			btn_ytVotingOnOFF.BackColor = Color.LightCoral;
-			btn_ytVotingOnOFF.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-			btn_ytVotingOnOFF.Location = new Point(3, 2);
-			btn_ytVotingOnOFF.Margin = new Padding(3, 2, 3, 2);
-			btn_ytVotingOnOFF.Name = "btn_ytVotingOnOFF";
-			btn_ytVotingOnOFF.Size = new Size(196, 65);
-			btn_ytVotingOnOFF.TabIndex = 7;
-			btn_ytVotingOnOFF.Text = "YouTube VOTING";
-			btn_ytVotingOnOFF.UseVisualStyleBackColor = false;
-			btn_ytVotingOnOFF.Click += btn_ytVotingOnOFF_Click;
-			// 
-			// button11
-			// 
-			button11.Location = new Point(205, 2);
-			button11.Margin = new Padding(3, 2, 3, 2);
-			button11.Name = "button11";
-			button11.Size = new Size(196, 65);
-			button11.TabIndex = 58;
-			button11.Text = "Get YT Vote Result";
-			button11.UseVisualStyleBackColor = true;
-			// 
-			// button12
-			// 
-			button12.Location = new Point(3, 71);
-			button12.Margin = new Padding(3, 2, 3, 2);
-			button12.Name = "button12";
-			button12.Size = new Size(398, 65);
-			button12.TabIndex = 61;
-			button12.Text = "Show Result";
-			button12.UseVisualStyleBackColor = true;
 			// 
 			// flowLayoutPanelYutubeButtons
 			// 
 			flowLayoutPanelYutubeButtons.AutoSize = true;
 			flowLayoutPanelYutubeButtons.BackColor = Color.LightCoral;
 			flowLayoutPanelYutubeButtons.Dock = DockStyle.Top;
-			flowLayoutPanelYutubeButtons.Location = new Point(3, 285);
+			flowLayoutPanelYutubeButtons.Location = new Point(3, 3);
 			flowLayoutPanelYutubeButtons.Name = "flowLayoutPanelYutubeButtons";
 			flowLayoutPanelYutubeButtons.Size = new Size(475, 0);
 			flowLayoutPanelYutubeButtons.TabIndex = 79;
+			// 
+			// tabControl1
+			// 
+			tabControl1.Controls.Add(tabPage1);
+			tabControl1.Controls.Add(tabPage2);
+			tabControl1.Controls.Add(tabPage3);
+			tabControl1.Controls.Add(tabPage4);
+			tabControl1.Dock = DockStyle.Fill;
+			tabControl1.Location = new Point(3, 33);
+			tabControl1.Name = "tabControl1";
+			tabControl1.SelectedIndex = 0;
+			tabControl1.Size = new Size(475, 756);
+			tabControl1.TabIndex = 82;
+			// 
+			// tabPage1
+			// 
+			tabPage1.Controls.Add(flowLayoutPanelLoads);
+			tabPage1.Location = new Point(4, 29);
+			tabPage1.Name = "tabPage1";
+			tabPage1.Padding = new Padding(3);
+			tabPage1.Size = new Size(467, 723);
+			tabPage1.TabIndex = 0;
+			tabPage1.Text = "Graphics";
+			tabPage1.UseVisualStyleBackColor = true;
 			// 
 			// flowLayoutPanelLoads
 			// 
@@ -800,13 +775,13 @@
 			flowLayoutPanelLoads.Controls.Add(BtnLoadLowerQuestion);
 			flowLayoutPanelLoads.Controls.Add(BtnLoadCountDown);
 			flowLayoutPanelLoads.Controls.Add(BtnLoadLeaderBoard);
-			flowLayoutPanelLoads.Controls.Add(button10);
+			flowLayoutPanelLoads.Controls.Add(BtnLoadYutubeVote);
 			flowLayoutPanelLoads.Controls.Add(btnClearGraphics);
 			flowLayoutPanelLoads.Controls.Add(btnLoadBackGround);
-			flowLayoutPanelLoads.Location = new Point(3, 407);
+			flowLayoutPanelLoads.Location = new Point(9, 23);
 			flowLayoutPanelLoads.Name = "flowLayoutPanelLoads";
 			flowLayoutPanelLoads.Size = new Size(475, 286);
-			flowLayoutPanelLoads.TabIndex = 80;
+			flowLayoutPanelLoads.TabIndex = 81;
 			// 
 			// BtnLoadFullQuestion
 			// 
@@ -848,20 +823,20 @@
 			BtnLoadLeaderBoard.Name = "BtnLoadLeaderBoard";
 			BtnLoadLeaderBoard.Size = new Size(196, 65);
 			BtnLoadLeaderBoard.TabIndex = 66;
-			BtnLoadLeaderBoard.Text = "Load Leaderboard";
+			BtnLoadLeaderBoard.Text = "Load LeaderBoard";
 			BtnLoadLeaderBoard.UseVisualStyleBackColor = true;
 			BtnLoadLeaderBoard.Click += BtnLoadLeaderBoard_Click;
 			// 
-			// button10
+			// BtnLoadYutubeVote
 			// 
-			button10.Location = new Point(3, 140);
-			button10.Margin = new Padding(3, 2, 3, 2);
-			button10.Name = "button10";
-			button10.Size = new Size(196, 68);
-			button10.TabIndex = 76;
-			button10.Text = "Load YT";
-			button10.UseVisualStyleBackColor = true;
-			button10.Click += button10_Click_1;
+			BtnLoadYutubeVote.Location = new Point(3, 140);
+			BtnLoadYutubeVote.Margin = new Padding(3, 2, 3, 2);
+			BtnLoadYutubeVote.Name = "BtnLoadYutubeVote";
+			BtnLoadYutubeVote.Size = new Size(196, 68);
+			BtnLoadYutubeVote.TabIndex = 76;
+			BtnLoadYutubeVote.Text = "Load YT";
+			BtnLoadYutubeVote.UseVisualStyleBackColor = true;
+			BtnLoadYutubeVote.Click += BtnLoadYutubeVote_Click;
 			// 
 			// btnClearGraphics
 			// 
@@ -882,6 +857,90 @@
 			btnLoadBackGround.Text = "Load BackGround";
 			btnLoadBackGround.UseVisualStyleBackColor = true;
 			btnLoadBackGround.Click += btnLoadBackGround_Click;
+			// 
+			// tabPage2
+			// 
+			tabPage2.Controls.Add(groupBox2);
+			tabPage2.Controls.Add(flowLayoutPanel1);
+			tabPage2.Location = new Point(4, 29);
+			tabPage2.Name = "tabPage2";
+			tabPage2.Padding = new Padding(3);
+			tabPage2.Size = new Size(467, 723);
+			tabPage2.TabIndex = 1;
+			tabPage2.Text = "YouTUBE";
+			tabPage2.UseVisualStyleBackColor = true;
+			// 
+			// groupBox2
+			// 
+			groupBox2.Controls.Add(richTextBox1);
+			groupBox2.Dock = DockStyle.Bottom;
+			groupBox2.Location = new Point(3, 376);
+			groupBox2.Name = "groupBox2";
+			groupBox2.Size = new Size(461, 344);
+			groupBox2.TabIndex = 83;
+			groupBox2.TabStop = false;
+			groupBox2.Text = "ONLINE AUDIENCE";
+			// 
+			// richTextBox1
+			// 
+			richTextBox1.Location = new Point(71, 59);
+			richTextBox1.Name = "richTextBox1";
+			richTextBox1.Size = new Size(248, 100);
+			richTextBox1.TabIndex = 0;
+			richTextBox1.Text = "A:\nB:\nC:\nD:";
+			// 
+			// flowLayoutPanel1
+			// 
+			flowLayoutPanel1.Controls.Add(btn_ytVotingOnOFF);
+			flowLayoutPanel1.Controls.Add(button11);
+			flowLayoutPanel1.Controls.Add(button12);
+			flowLayoutPanel1.Dock = DockStyle.Top;
+			flowLayoutPanel1.Location = new Point(3, 3);
+			flowLayoutPanel1.Name = "flowLayoutPanel1";
+			flowLayoutPanel1.Size = new Size(461, 185);
+			flowLayoutPanel1.TabIndex = 82;
+			// 
+			// btn_ytVotingOnOFF
+			// 
+			btn_ytVotingOnOFF.BackColor = Color.LightCoral;
+			btn_ytVotingOnOFF.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+			btn_ytVotingOnOFF.Location = new Point(3, 2);
+			btn_ytVotingOnOFF.Margin = new Padding(3, 2, 3, 2);
+			btn_ytVotingOnOFF.Name = "btn_ytVotingOnOFF";
+			btn_ytVotingOnOFF.Size = new Size(196, 65);
+			btn_ytVotingOnOFF.TabIndex = 7;
+			btn_ytVotingOnOFF.Text = "YouTube VOTING";
+			btn_ytVotingOnOFF.UseVisualStyleBackColor = false;
+			// 
+			// button11
+			// 
+			button11.Location = new Point(205, 2);
+			button11.Margin = new Padding(3, 2, 3, 2);
+			button11.Name = "button11";
+			button11.Size = new Size(196, 65);
+			button11.TabIndex = 58;
+			button11.Text = "Get YT Vote Result";
+			button11.UseVisualStyleBackColor = true;
+			// 
+			// button12
+			// 
+			button12.Location = new Point(3, 71);
+			button12.Margin = new Padding(3, 2, 3, 2);
+			button12.Name = "button12";
+			button12.Size = new Size(398, 65);
+			button12.TabIndex = 61;
+			button12.Text = "Show Result";
+			button12.UseVisualStyleBackColor = true;
+			// 
+			// tabPage3
+			// 
+			tabPage3.Location = new Point(4, 29);
+			tabPage3.Name = "tabPage3";
+			tabPage3.Padding = new Padding(3);
+			tabPage3.Size = new Size(467, 723);
+			tabPage3.TabIndex = 2;
+			tabPage3.Text = "FaceBOOK";
+			tabPage3.UseVisualStyleBackColor = true;
 			// 
 			// panel1
 			// 
@@ -950,6 +1009,26 @@
 			// 
 			countdownTimer.Tick += countdownTimer_Tick;
 			// 
+			// tabPage4
+			// 
+			tabPage4.Controls.Add(button1);
+			tabPage4.Location = new Point(4, 29);
+			tabPage4.Name = "tabPage4";
+			tabPage4.Padding = new Padding(3);
+			tabPage4.Size = new Size(467, 723);
+			tabPage4.TabIndex = 3;
+			tabPage4.Text = "DMX";
+			tabPage4.UseVisualStyleBackColor = true;
+			// 
+			// button1
+			// 
+			button1.Location = new Point(33, 32);
+			button1.Name = "button1";
+			button1.Size = new Size(229, 60);
+			button1.TabIndex = 80;
+			button1.Text = "DMX";
+			button1.UseVisualStyleBackColor = true;
+			// 
 			// MnForm
 			// 
 			AutoScaleDimensions = new SizeF(8F, 20F);
@@ -983,13 +1062,17 @@
 			((System.ComponentModel.ISupportInitialize)dgvContestants).EndInit();
 			tableLayoutPanel4.ResumeLayout(false);
 			tableLayoutPanel4.PerformLayout();
+			tabControl1.ResumeLayout(false);
+			tabPage1.ResumeLayout(false);
+			flowLayoutPanelLoads.ResumeLayout(false);
+			tabPage2.ResumeLayout(false);
 			groupBox2.ResumeLayout(false);
 			flowLayoutPanel1.ResumeLayout(false);
-			flowLayoutPanelLoads.ResumeLayout(false);
 			panel1.ResumeLayout(false);
 			panel1.PerformLayout();
 			((System.ComponentModel.ISupportInitialize)CountdownDuration).EndInit();
 			((System.ComponentModel.ISupportInitialize)playerBindingSource).EndInit();
+			tabPage4.ResumeLayout(false);
 			ResumeLayout(false);
 			PerformLayout();
 
@@ -1027,7 +1110,6 @@
 		private Button btnStartRapidFire;
 		private Button btnIncorrectAnswer;
 		private Button btnCorrectAnswer;
-		private Button btnClearGraphics;
 		private Button btnShowCorrect;
 		private Button button4;
 		private Button button3;
@@ -1035,7 +1117,7 @@
 		private Button button5;
 		private Button btnShowFinalResults;
 		private Button btnStoreResults;
-		private Button btnShowLeaderboard;
+		private Button btnShowLeaderBoard;
 		public DataGridView dgvContestants;
 		private BindingSource playerBindingSource;
 		private TextBox tbx_YTVideoId;
@@ -1061,21 +1143,28 @@
 		private FlowLayoutPanel flowLayoutPanel2;
 		private TableLayoutPanel tableLayoutPanel5;
 		private TableLayoutPanel tableLayoutPanel4;
+		private Button btnSendQuestion;
+		private FlowLayoutPanel flowLayoutPanelYutubeButtons;
+		private TabControl tabControl1;
+		private TabPage tabPage1;
 		private FlowLayoutPanel flowLayoutPanelLoads;
 		private Button BtnLoadFullQuestion;
 		private Button BtnLoadLowerQuestion;
 		private Button BtnLoadCountDown;
 		private Button BtnLoadLeaderBoard;
-		private Button button10;
-		private FlowLayoutPanel flowLayoutPanelYutubeButtons;
+		private Button BtnLoadYutubeVote;
+		private Button btnClearGraphics;
+		private Button btnLoadBackGround;
+		private TabPage tabPage2;
+		private GroupBox groupBox2;
+		private RichTextBox richTextBox1;
 		private FlowLayoutPanel flowLayoutPanel1;
 		private Button btn_ytVotingOnOFF;
 		private Button button11;
 		private Button button12;
-		private GroupBox groupBox2;
-		private RichTextBox richTextBox1;
-		private Button btnSendQuestion;
-		private Button btnLoadBackGround;
+		private TabPage tabPage3;
+		private TabPage tabPage4;
+		private Button button1;
 	}
 }
 

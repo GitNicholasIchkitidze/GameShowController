@@ -12,7 +12,7 @@ namespace GameController.Shared.Enums
 		QuestionFull,
 		QuestionLower,
 		Countdown,
-		Leaderboard,
+		LeaderBoard,
 		YTVote
 
 	}

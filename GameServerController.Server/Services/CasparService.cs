@@ -1,7 +1,9 @@
 ﻿using CasparCg.AmcpClient.Commands.Query.Common;
 using GameController.Server.Hubs;
+using GameController.Shared.Models;
 using Newtonsoft.Json;
 using System.Net.Sockets;
+using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
 using System.Xml.Linq;
@@ -35,14 +37,25 @@ namespace GameController.Server.Services
 			
 		}
 
-		public async Task SendCommand(string cmd)
+		public async Task<OperationResult> SendCommand(string cmd)
 		{
-			byte[] buffer = Encoding.UTF8.GetBytes(cmd + "\r\n");
-			lock (_lock)
+			var res = new OperationResult(true);
+			try
 			{
-				_stream.Write(buffer, 0, buffer.Length);
+				byte[] buffer = Encoding.UTF8.GetBytes(cmd + "\r\n");
+				lock (_lock)
+				{
+					//_stream.Write(buffer, 0, buffer.Length);
+					_stream.WriteAsync(buffer, 0, buffer.Length);
+				}
+				res.Message = "Command sent successfully";
 			}
-			await Task.CompletedTask;
+			catch (Exception ex)
+			{
+				res.SetError($"Failed to send command to CasparCG server {cmd}, error: {ex.Message} ");				
+			}			//await Task.CompletedTask;
+
+			return res;
 		}
 
 
@@ -58,7 +71,7 @@ namespace GameController.Server.Services
 			return SendCommand($"CG {channel}-{layer} ADD 1 \"{templateName}\" 1 \"{json}\"");
 		}
 
-		public Task LoadTemplate(string templateName, int channel, int layer, int layerCg, bool autoPlay, object? data)
+		public Task<OperationResult> LoadTemplate(string templateName, int channel, int layer, int layerCg, bool autoPlay, object? data)
 		{
 			_logger.LogInformation($"{Environment.NewLine}{DateTime.Now} Going to Load template '{templateName}' {channel}-{layer}");
 			string json = JsonSerializer.Serialize(data);

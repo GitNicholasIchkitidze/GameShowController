@@ -48,11 +48,14 @@ namespace GameController.Server.Services
 						_connectionIdToTemplateType[connectionId] = templateName;
 						_templateTypeToConnectionId[templateName] = connectionId;
 						_logger.LogInformation($"{Environment.NewLine}{DateTime.Now}  Template '{templateName}' successfully registered.{Environment.NewLine}");
+						//_logger.LogError($"{Environment.NewLine}{DateTime.Now}  error example");
+						//_logger.LogCritical($"{Environment.NewLine}{DateTime.Now}  LogCritical example");
+						//_logger.LogWarning($"{Environment.NewLine}{DateTime.Now}  LogWarning example");
 					}
 				}
 				catch (Exception ex)
 				{
-					_logger.LogInformation($"{Environment.NewLine}{DateTime.Now}  Failed to parse registration message from client {connectionId}: {ex.Message}");
+					_logger.LogError($"{Environment.NewLine}{DateTime.Now}  Failed to parse registration message from client {connectionId}: {ex.Message}");
 				}
 			}
 		}

@@ -1,0 +1,69 @@
+﻿<Window x:Class="GameController.WpfUI.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:GameController.WpfUI"
+        xmlns:vm="clr-namespace:GameController.WpfUI.ViewModels"
+        mc:Ignorable="d"
+        Title="Game Controller" Height="800" Width="1200">
+
+    <Window.DataContext>
+        <vm:MainWindowViewModel/>
+    </Window.DataContext>
+
+    <Grid x:Name="MainWindow1">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="10">
+            <TextBlock Text="Active Connections: " FontWeight="Bold"/>
+            <TextBlock Text="{Binding ActiveConnections}" Margin="5,0"/>
+            <TextBlock Text="Registered Connections: " FontWeight="Bold" Margin="20,0,0,0"/>
+            <TextBlock Text="{Binding RegisteredConnections}" Margin="5,0"/>
+        </StackPanel>
+
+        <TabControl Grid.Row="1" Margin="10">
+            <TabItem Header="Tests &amp; Rapid Fire" >
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <GroupBox Header="Test Section" Grid.Column="0" Margin="5">
+                        <StackPanel>
+                            <Button Content="Start Audience Voting" Command="{Binding StartAudienceVotingCommand}" Margin="5"/>
+                            <Button Content="Stop Audience Voting" Command="{Binding StopAudienceVotingCommand}" Margin="5"/>
+                            <StackPanel Orientation="Horizontal" Margin="5">
+                                <TextBlock Text="Countdown Duration (sec): " VerticalAlignment="Center"/>
+                                <TextBox Width="50" Text="{Binding AudienceCountdownDuration}" Margin="5,0,0,0"/>
+                            </StackPanel>
+                            <ListBox ItemsSource="{Binding VotingUsers}" Height="200" Margin="5"/>
+                        </StackPanel>
+                    </GroupBox>
+
+                    <GroupBox Header="Rapid Fire" Grid.Column="1" Margin="5">
+                        <StackPanel>
+                            <Button Content="Load Questions" Command="{Binding LoadQuestionsCommand}" Margin="5"/>
+                            <DataGrid ItemsSource="{Binding RapidFireQuestions}" AutoGenerateColumns="True" Height="400"/>
+                        </StackPanel>
+                    </GroupBox>
+                </Grid>
+            </TabItem>
+
+            <TabItem Header="Loads">
+                <Grid>
+                    <!-- Replacing invalid FlowLayoutPanel with a valid WPF Panel, e.g., WrapPanel -->
+                    <WrapPanel>
+                        <!-- Add your child controls here -->
+                    </WrapPanel>
+                </Grid>
+            </TabItem>
+
+        </TabControl>
+
+    </Grid>
+</Window>

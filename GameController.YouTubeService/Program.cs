@@ -32,6 +32,7 @@ try
 			services.AddSingleton<ISignalRClient, SignalRClient>();
 			services.AddHostedService<YouTubeChatWorker>();
 			services.AddSingleton<IYouTubeService, YouTubeService>();
+
 		})
 		.ConfigureLogging((context, logging) =>
 		{
@@ -39,6 +40,8 @@ try
 			logging.AddDebug();
 		})
 		.Build();
+
+	
 
 	await host.RunAsync();
 
