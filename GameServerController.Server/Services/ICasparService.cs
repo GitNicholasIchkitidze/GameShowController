@@ -9,6 +9,7 @@ namespace GameController.Server.Services
 
 		Task UnLoadTemplate(string templateName);
 		Task ClearChannel(int channel);
+		Task ClearChannelLayer(int channel, int layer);
 		Task PlayClip(int channel, int layer, string templateName);
 		Task UpdateTemplate(int channel, int layer, int layerCg, bool autoPlay, object? data);
 		Task InvokeTemplate(int channel, int layer, int layerCg, string methodeName, object? data);

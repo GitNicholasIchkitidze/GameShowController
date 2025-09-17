@@ -11,6 +11,7 @@ namespace GameController.Shared.Enums
 		// Countdown stops only when time runs out
 		QuestionFull,
 		QuestionLower,
+		QuestionVideo,
 		Countdown,
 		LeaderBoard,
 		YTVote

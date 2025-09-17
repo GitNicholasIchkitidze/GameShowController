@@ -42,6 +42,13 @@ namespace GameController.Server.Services
 			var res = new OperationResult(true);
 			try
 			{
+				
+				if (_stream == null)
+				{
+					res.SetError("გრაფიკის სერვერი არ არის კავშირზე.");
+					return res;
+				}
+
 				byte[] buffer = Encoding.UTF8.GetBytes(cmd + "\r\n");
 				lock (_lock)
 				{
@@ -135,6 +142,12 @@ namespace GameController.Server.Services
 			return SendCommand($"CLEAR {channel}");
 		}
 
+		public Task ClearChannelLayer(int channel, int layer)
+		{
+			_logger.LogInformation($"{Environment.NewLine}{DateTime.Now} Going to Clear Channel {channel}");
+			//string json = JsonSerializer.Serialize(data);
+			return SendCommand($"CLEAR {channel}-{layer}");
+		}
 
 	}
 }

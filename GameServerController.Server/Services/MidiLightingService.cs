@@ -1,6 +1,7 @@
 ﻿using GameController.Shared.Models;
 using Melanchall.DryWetMidi.Common;
 using Melanchall.DryWetMidi.Core;
+using Melanchall.DryWetMidi.Interaction;
 using Melanchall.DryWetMidi.Multimedia;
 using Melanchall.DryWetMidi.MusicTheory;
 using Microsoft.Extensions.Logging;
@@ -121,8 +122,11 @@ namespace GameController.Server.Services
 			// Note-ის ობიექტი შექმნა MIDI ნოტის ნომრიდან
 			try
 			{
-				var note = Melanchall.DryWetMidi.MusicTheory.Note.Get(new SevenBitNumber((byte)noteNumber));
-				_midiOutputDevice!.SendEvent(new NoteOnEvent(note.NoteNumber, new SevenBitNumber((byte)velocity)));
+				//var note = Melanchall.DryWetMidi.MusicTheory.Note.Get(new SevenBitNumber((byte)noteNumber));
+				var noteOn = new NoteOnEvent((SevenBitNumber)noteNumber, (SevenBitNumber)velocity);
+
+				_midiOutputDevice!.SendEvent(noteOn);
+				//_midiOutputDevice!.SendEvent(new NoteOnEvent(note.NoteNumber, new SevenBitNumber((byte)velocity)));
 				_logger.LogInformation($"MIDI device Was Sent {noteNumber}, {velocity}.");
 			}
 			catch (Exception ex)

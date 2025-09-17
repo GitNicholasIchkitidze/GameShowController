@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8" />
-    <title>Question Lowerthird Template</title>
+    <title>Question Full Template</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
@@ -18,14 +18,25 @@
             font-family: 'Inter', sans-serif;
         }
 
-        #question-container {
+        /* The main container for the entire template */
+        #main-container {
             position: absolute;
-            bottom: 50px;
+            width: 1920px;
+            height: 1080px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #question-box {
+            position: absolute;
             left: 50%;
             transform: translateX(-50%);
             width: 1600px;
             text-align: center;
             padding: 0 50px;
+            z-index: 2; /* To be on top of other elements */
         }
 
         #question-text-container {
@@ -34,19 +45,39 @@
             font-size: 56px;
             font-weight: 700;
             border-radius: 12px;
-            margin-bottom: 20px;
             border: 2px solid rgba(255, 255, 255, 0.3);
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
             backdrop-filter: blur(5px);
         }
 
+        #image-container {
+            position: absolute;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+            z-index: 1; /* Below the question and answers */
+        }
+
+        #question-image {
+            max-width: 1000px; /* Adjust as needed */
+            max-height: 700px; /* Adjust as needed */
+            object-fit: contain;
+            border-radius: 15px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+            opacity: 0; /* Initially hidden */
+        }
+
         #answers-container {
+            position: absolute;
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 20px;
             justify-content: center;
-            width: 100%;
-            margin-top: 20px;
+            width: 1600px;
+            padding: 0 50px;
+            z-index: 2;
         }
 
         .answer-item {
@@ -71,7 +102,6 @@
                 box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
             }
 
-            /* Style for correct/wrong answers */
             .answer-item.correct {
                 background-color: rgba(34, 197, 94, 0.85);
             }
@@ -86,17 +116,22 @@
     </style>
 </head>
 <body>
-    <div id="question-container">
-        <div id="question-text-container">
-            <div id="question-text"></div>
+    <div id="main-container">
+        <div id="question-box">
+            <div id="question-text-container">
+                <div id="question-text"></div>
+            </div>
+        </div>
+
+        <div id="image-container" class="hidden">
+            <img id="question-image" src="" alt="Question Image" />
         </div>
 
         <div id="answers-container" class="hidden"></div>
     </div>
 
     <script>
-        // WebSocket connection and functionality
-        const ws = new WebSocket('ws://192.168.0.2:5000/ws-casparcg');
+        const ws = new WebSocket('ws://192.168.0.3:5000/ws-casparcg');
 
         ws.onopen = () => {
             console.log('WebSocket connection established to C# server from QuestionFull.');
@@ -105,10 +140,7 @@
                 templateName: 'QuestionFull',
             });
             ws.send(registrationMessage);
-            console.info(
-                'Registration Request Sent. ' +
-                registrationMessage
-            );
+            console.info('Registration Request Sent. ' + registrationMessage);
         };
 
         ws.onmessage = (event) => {
@@ -116,8 +148,34 @@
 
             try {
                 const jsonData = JSON.parse(event.data);
+                const questionBox = document.getElementById('question-box');
+                const answersContainer = document.getElementById('answers-container');
+                const imageContainer = document.getElementById('image-container');
+                const questionImage = document.getElementById('question-image');
 
-                // Update the question text with animation
+                // Check for question image
+                if (jsonData.QuestionImage && jsonData.QuestionImage.trim() !== '') {
+                    // With image
+                    questionImage.src = jsonData.QuestionImage;
+                    imageContainer.classList.remove('hidden');
+
+                    // Animate elements to new positions
+                    gsap.to(questionBox, { y: -380, duration: 0.8, ease: "power2.inOut" });
+                    gsap.to(answersContainer, { y: 320, duration: 0.8, ease: "power2.inOut" });
+                    gsap.to(questionImage, { opacity: 1, duration: 0.8, delay: 0.4 });
+                } else {
+                    // Without image
+                    gsap.to(questionImage, {
+                        opacity: 0, duration: 0.4, onComplete: () => {
+                            imageContainer.classList.add('hidden');
+                            questionImage.src = ''; // Clear image source
+                        }
+                    });
+                    gsap.to(questionBox, { y: 0, duration: 0.8, ease: "power2.inOut" });
+                    gsap.to(answersContainer, { y: 0, duration: 0.8, ease: "power2.inOut" });
+                }
+
+                // Update question text with animation
                 const questionTextElement = document.getElementById('question-text');
                 if (questionTextElement) {
                     gsap.to(questionTextElement, {
@@ -131,36 +189,27 @@
                     });
                 }
 
-                // Update the answers based on the new HTML structure
-                const answersContainer = document.getElementById('answers-container');
-                if (answersContainer) {
-                    // Check if we have answers
-                    if (jsonData.Answers && jsonData.Answers.length > 0 && jsonData.Answers.some(a => a.trim() !== '')) {
-                        answersContainer.classList.remove('hidden');
+                // Update answers
+                if (jsonData.Answers && jsonData.Answers.length > 0 && jsonData.Answers.some(a => a.trim() !== '')) {
+                    answersContainer.classList.remove('hidden');
+                    answersContainer.innerHTML = '';
 
-                        // Clear existing answers
-                        answersContainer.innerHTML = '';
+                    jsonData.Answers.forEach((answer, index) => {
+                        if (answer.trim() !== '') {
+                            const answerItem = document.createElement('div');
+                            answerItem.className = 'answer-item';
+                            answerItem.innerHTML = `<div>${answer}</div>`;
 
-                        // Add new answers with animation
-                        jsonData.Answers.forEach((answer, index) => {
-                            if (answer.trim() !== '') {
-                                const answerItem = document.createElement('div');
-                                answerItem.className = 'answer-item';
-                                answerItem.innerHTML = `<div>${answer}</div>`;
+                            gsap.fromTo(answerItem,
+                                { opacity: 0, y: 20 },
+                                { opacity: 1, y: 0, duration: 0.5, delay: index * 0.1 }
+                            );
 
-                                // Add entrance animation
-                                gsap.fromTo(answerItem,
-                                    { opacity: 0, y: 20 },
-                                    { opacity: 1, y: 0, duration: 0.5, delay: index * 0.1 }
-                                );
-
-                                answersContainer.appendChild(answerItem);
-                            }
-                        });
-                    } else {
-                        // Hide answers container if no answers
-                        answersContainer.classList.add('hidden');
-                    }
+                            answersContainer.appendChild(answerItem);
+                        }
+                    });
+                } else {
+                    answersContainer.classList.add('hidden');
                 }
             } catch (e) {
                 console.error('Error parsing JSON data or updating elements:', e);

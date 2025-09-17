@@ -64,6 +64,8 @@
 			btnStoreResults = new Button();
 			tableLayoutPanel3 = new TableLayoutPanel();
 			panel2 = new Panel();
+			btnPrepareNext = new Button();
+			btnUuupsAnswer = new Button();
 			btnSendQuestion = new Button();
 			btnShowCorrect = new Button();
 			btnIncorrectAnswer = new Button();
@@ -97,6 +99,11 @@
 			button11 = new Button();
 			button12 = new Button();
 			tabPage3 = new TabPage();
+			tabPage4 = new TabPage();
+			btn_SendMidiNote = new Button();
+			tBox_MidiVelocity = new TextBox();
+			tBox_MidiNote = new TextBox();
+			button1 = new Button();
 			panel1 = new Panel();
 			cmbCountdownMode = new ComboBox();
 			lblPollingCountdown = new Label();
@@ -105,8 +112,6 @@
 			listBoxClients = new ListBox();
 			playerBindingSource = new BindingSource(components);
 			countdownTimer = new System.Windows.Forms.Timer(components);
-			tabPage4 = new TabPage();
-			button1 = new Button();
 			PnlRapidFire.SuspendLayout();
 			tabControlMain.SuspendLayout();
 			tPageTest.SuspendLayout();
@@ -129,19 +134,19 @@
 			tabPage2.SuspendLayout();
 			groupBox2.SuspendLayout();
 			flowLayoutPanel1.SuspendLayout();
+			tabPage4.SuspendLayout();
 			panel1.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)CountdownDuration).BeginInit();
 			((System.ComponentModel.ISupportInitialize)playerBindingSource).BeginInit();
-			tabPage4.SuspendLayout();
 			SuspendLayout();
 			// 
 			// labelActiveConnections
 			// 
 			labelActiveConnections.AutoSize = true;
 			labelActiveConnections.Font = new Font("Microsoft Sans Serif", 12F, FontStyle.Regular, GraphicsUnit.Point, 0);
-			labelActiveConnections.Location = new Point(1908, 15);
+			labelActiveConnections.Location = new Point(1670, 11);
 			labelActiveConnections.Name = "labelActiveConnections";
-			labelActiveConnections.Size = new Size(64, 25);
+			labelActiveConnections.Size = new Size(51, 20);
 			labelActiveConnections.TabIndex = 21;
 			labelActiveConnections.Text = "label1";
 			// 
@@ -149,9 +154,9 @@
 			// 
 			labelRegisteredConnections.AutoSize = true;
 			labelRegisteredConnections.Font = new Font("Microsoft Sans Serif", 12F, FontStyle.Regular, GraphicsUnit.Point, 0);
-			labelRegisteredConnections.Location = new Point(1908, 78);
+			labelRegisteredConnections.Location = new Point(1670, 58);
 			labelRegisteredConnections.Name = "labelRegisteredConnections";
-			labelRegisteredConnections.Size = new Size(64, 25);
+			labelRegisteredConnections.Size = new Size(51, 20);
 			labelRegisteredConnections.TabIndex = 22;
 			labelRegisteredConnections.Text = "label1";
 			// 
@@ -159,12 +164,12 @@
 			// 
 			textBoxLog.Dock = DockStyle.Fill;
 			textBoxLog.Font = new Font("Microsoft Sans Serif", 12F, FontStyle.Regular, GraphicsUnit.Point, 0);
-			textBoxLog.Location = new Point(3, 1077);
+			textBoxLog.Location = new Point(3, 808);
 			textBoxLog.Margin = new Padding(3, 2, 3, 2);
 			textBoxLog.Multiline = true;
 			textBoxLog.Name = "textBoxLog";
 			textBoxLog.ScrollBars = ScrollBars.Vertical;
-			textBoxLog.Size = new Size(2449, 242);
+			textBoxLog.Size = new Size(2142, 181);
 			textBoxLog.TabIndex = 2;
 			// 
 			// PnlRapidFire
@@ -184,13 +189,13 @@
 			PnlRapidFire.RowStyles.Add(new RowStyle(SizeType.Percent, 9.203799F));
 			PnlRapidFire.RowStyles.Add(new RowStyle(SizeType.Percent, 65.1778946F));
 			PnlRapidFire.RowStyles.Add(new RowStyle(SizeType.Percent, 18.5465565F));
-			PnlRapidFire.RowStyles.Add(new RowStyle(SizeType.Absolute, 25F));
-			PnlRapidFire.RowStyles.Add(new RowStyle(SizeType.Absolute, 25F));
-			PnlRapidFire.RowStyles.Add(new RowStyle(SizeType.Absolute, 25F));
-			PnlRapidFire.RowStyles.Add(new RowStyle(SizeType.Absolute, 25F));
-			PnlRapidFire.RowStyles.Add(new RowStyle(SizeType.Absolute, 25F));
-			PnlRapidFire.RowStyles.Add(new RowStyle(SizeType.Absolute, 25F));
-			PnlRapidFire.Size = new Size(2455, 1321);
+			PnlRapidFire.RowStyles.Add(new RowStyle(SizeType.Absolute, 19F));
+			PnlRapidFire.RowStyles.Add(new RowStyle(SizeType.Absolute, 19F));
+			PnlRapidFire.RowStyles.Add(new RowStyle(SizeType.Absolute, 19F));
+			PnlRapidFire.RowStyles.Add(new RowStyle(SizeType.Absolute, 19F));
+			PnlRapidFire.RowStyles.Add(new RowStyle(SizeType.Absolute, 19F));
+			PnlRapidFire.RowStyles.Add(new RowStyle(SizeType.Absolute, 19F));
+			PnlRapidFire.Size = new Size(2148, 991);
 			PnlRapidFire.TabIndex = 40;
 			// 
 			// tabControlMain
@@ -198,21 +203,21 @@
 			tabControlMain.Controls.Add(tPageTest);
 			tabControlMain.Controls.Add(tPageRapidFire);
 			tabControlMain.Dock = DockStyle.Fill;
-			tabControlMain.Location = new Point(3, 217);
+			tabControlMain.Location = new Point(3, 163);
 			tabControlMain.Margin = new Padding(3, 2, 3, 2);
 			tabControlMain.Name = "tabControlMain";
 			tabControlMain.SelectedIndex = 0;
-			tabControlMain.Size = new Size(2449, 856);
+			tabControlMain.Size = new Size(2142, 641);
 			tabControlMain.TabIndex = 3;
 			// 
 			// tPageTest
 			// 
 			tPageTest.Controls.Add(pnl_Test);
-			tPageTest.Location = new Point(4, 29);
+			tPageTest.Location = new Point(4, 24);
 			tPageTest.Margin = new Padding(3, 2, 3, 2);
 			tPageTest.Name = "tPageTest";
 			tPageTest.Padding = new Padding(3, 2, 3, 2);
-			tPageTest.Size = new Size(2441, 823);
+			tPageTest.Size = new Size(2134, 613);
 			tPageTest.TabIndex = 0;
 			tPageTest.Text = "TEST";
 			tPageTest.UseVisualStyleBackColor = true;
@@ -236,23 +241,25 @@
 			pnl_Test.Location = new Point(3, 2);
 			pnl_Test.Margin = new Padding(3, 2, 3, 2);
 			pnl_Test.Name = "pnl_Test";
-			pnl_Test.Size = new Size(2435, 819);
+			pnl_Test.Size = new Size(2128, 609);
 			pnl_Test.TabIndex = 47;
 			// 
 			// button9
 			// 
-			button9.Location = new Point(798, 107);
+			button9.Location = new Point(698, 80);
+			button9.Margin = new Padding(3, 2, 3, 2);
 			button9.Name = "button9";
-			button9.Size = new Size(135, 29);
+			button9.Size = new Size(118, 22);
 			button9.TabIndex = 70;
 			button9.Text = "button9";
 			button9.UseVisualStyleBackColor = true;
 			// 
 			// button6
 			// 
-			button6.Location = new Point(291, 92);
+			button6.Location = new Point(255, 69);
+			button6.Margin = new Padding(3, 2, 3, 2);
 			button6.Name = "button6";
-			button6.Size = new Size(173, 68);
+			button6.Size = new Size(151, 51);
 			button6.TabIndex = 69;
 			button6.Text = "button6";
 			button6.UseVisualStyleBackColor = true;
@@ -260,18 +267,19 @@
 			// 
 			// AudienceCountdownDuration
 			// 
-			AudienceCountdownDuration.Location = new Point(107, 270);
+			AudienceCountdownDuration.Location = new Point(94, 202);
 			AudienceCountdownDuration.Margin = new Padding(3, 2, 3, 2);
 			AudienceCountdownDuration.Name = "AudienceCountdownDuration";
-			AudienceCountdownDuration.Size = new Size(185, 27);
+			AudienceCountdownDuration.Size = new Size(162, 23);
 			AudienceCountdownDuration.TabIndex = 68;
 			AudienceCountdownDuration.Value = new decimal(new int[] { 60, 0, 0, 0 });
 			// 
 			// btn_StopAudienceVoting
 			// 
-			btn_StopAudienceVoting.Location = new Point(867, 386);
+			btn_StopAudienceVoting.Location = new Point(759, 290);
+			btn_StopAudienceVoting.Margin = new Padding(3, 2, 3, 2);
 			btn_StopAudienceVoting.Name = "btn_StopAudienceVoting";
-			btn_StopAudienceVoting.Size = new Size(234, 94);
+			btn_StopAudienceVoting.Size = new Size(205, 70);
 			btn_StopAudienceVoting.TabIndex = 67;
 			btn_StopAudienceVoting.Text = "STOP Audience Voting";
 			btn_StopAudienceVoting.UseVisualStyleBackColor = true;
@@ -279,9 +287,10 @@
 			// 
 			// btn_StartAudienceVoting
 			// 
-			btn_StartAudienceVoting.Location = new Point(867, 270);
+			btn_StartAudienceVoting.Location = new Point(759, 202);
+			btn_StartAudienceVoting.Margin = new Padding(3, 2, 3, 2);
 			btn_StartAudienceVoting.Name = "btn_StartAudienceVoting";
-			btn_StartAudienceVoting.Size = new Size(234, 94);
+			btn_StartAudienceVoting.Size = new Size(205, 70);
 			btn_StartAudienceVoting.TabIndex = 66;
 			btn_StartAudienceVoting.Text = "START Audience Voting";
 			btn_StartAudienceVoting.UseVisualStyleBackColor = true;
@@ -290,60 +299,65 @@
 			// votingUserListBox
 			// 
 			votingUserListBox.FormattingEnabled = true;
-			votingUserListBox.Location = new Point(1260, 82);
+			votingUserListBox.ItemHeight = 15;
+			votingUserListBox.Location = new Point(1102, 62);
+			votingUserListBox.Margin = new Padding(3, 2, 3, 2);
 			votingUserListBox.Name = "votingUserListBox";
-			votingUserListBox.Size = new Size(392, 264);
+			votingUserListBox.Size = new Size(344, 199);
 			votingUserListBox.TabIndex = 65;
 			// 
 			// tbx_YTVideoId
 			// 
 			tbx_YTVideoId.Font = new Font("Segoe UI", 12F);
-			tbx_YTVideoId.Location = new Point(838, 38);
+			tbx_YTVideoId.Location = new Point(733, 28);
+			tbx_YTVideoId.Margin = new Padding(3, 2, 3, 2);
 			tbx_YTVideoId.Name = "tbx_YTVideoId";
-			tbx_YTVideoId.Size = new Size(209, 34);
+			tbx_YTVideoId.Size = new Size(183, 29);
 			tbx_YTVideoId.TabIndex = 64;
 			// 
 			// tBx_YTRedirectURI
 			// 
 			tBx_YTRedirectURI.Font = new Font("Segoe UI", 12F);
-			tBx_YTRedirectURI.Location = new Point(517, 92);
+			tBx_YTRedirectURI.Location = new Point(452, 69);
+			tBx_YTRedirectURI.Margin = new Padding(3, 2, 3, 2);
 			tBx_YTRedirectURI.Name = "tBx_YTRedirectURI";
-			tBx_YTRedirectURI.Size = new Size(209, 34);
+			tBx_YTRedirectURI.Size = new Size(183, 29);
 			tBx_YTRedirectURI.TabIndex = 63;
 			// 
 			// tBx_YTClientID
 			// 
 			tBx_YTClientID.Font = new Font("Segoe UI", 12F);
-			tBx_YTClientID.Location = new Point(517, 38);
+			tBx_YTClientID.Location = new Point(452, 28);
+			tBx_YTClientID.Margin = new Padding(3, 2, 3, 2);
 			tBx_YTClientID.Name = "tBx_YTClientID";
-			tBx_YTClientID.Size = new Size(209, 34);
+			tBx_YTClientID.Size = new Size(183, 29);
 			tBx_YTClientID.TabIndex = 62;
 			// 
 			// txtMessageToSpecificClient
 			// 
 			txtMessageToSpecificClient.Font = new Font("Microsoft Sans Serif", 12F, FontStyle.Regular, GraphicsUnit.Point, 0);
-			txtMessageToSpecificClient.Location = new Point(20, 562);
+			txtMessageToSpecificClient.Location = new Point(18, 422);
 			txtMessageToSpecificClient.Margin = new Padding(3, 2, 3, 2);
 			txtMessageToSpecificClient.Name = "txtMessageToSpecificClient";
-			txtMessageToSpecificClient.Size = new Size(1171, 30);
+			txtMessageToSpecificClient.Size = new Size(1025, 26);
 			txtMessageToSpecificClient.TabIndex = 61;
 			// 
 			// txtMessageToSend
 			// 
 			txtMessageToSend.Font = new Font("Microsoft Sans Serif", 12F, FontStyle.Regular, GraphicsUnit.Point, 0);
-			txtMessageToSend.Location = new Point(20, 485);
+			txtMessageToSend.Location = new Point(18, 364);
 			txtMessageToSend.Margin = new Padding(3, 2, 3, 2);
 			txtMessageToSend.Name = "txtMessageToSend";
-			txtMessageToSend.Size = new Size(1171, 30);
+			txtMessageToSend.Size = new Size(1025, 26);
 			txtMessageToSend.TabIndex = 60;
 			// 
 			// btnNo
 			// 
 			btnNo.Font = new Font("Microsoft Sans Serif", 14F, FontStyle.Regular, GraphicsUnit.Point, 0);
-			btnNo.Location = new Point(981, 190);
+			btnNo.Location = new Point(858, 142);
 			btnNo.Margin = new Padding(3, 2, 3, 2);
 			btnNo.Name = "btnNo";
-			btnNo.Size = new Size(224, 62);
+			btnNo.Size = new Size(196, 46);
 			btnNo.TabIndex = 56;
 			btnNo.Text = "NO";
 			btnNo.UseVisualStyleBackColor = true;
@@ -352,10 +366,10 @@
 			// btn_YTAuth
 			// 
 			btn_YTAuth.Font = new Font("Microsoft Sans Serif", 14F, FontStyle.Regular, GraphicsUnit.Point, 0);
-			btn_YTAuth.Location = new Point(517, 220);
+			btn_YTAuth.Location = new Point(452, 165);
 			btn_YTAuth.Margin = new Padding(3, 2, 3, 2);
 			btn_YTAuth.Name = "btn_YTAuth";
-			btn_YTAuth.Size = new Size(209, 108);
+			btn_YTAuth.Size = new Size(183, 81);
 			btn_YTAuth.TabIndex = 55;
 			btn_YTAuth.Text = "YouTube ავტორიზცია";
 			btn_YTAuth.UseVisualStyleBackColor = true;
@@ -364,11 +378,11 @@
 			// tPageRapidFire
 			// 
 			tPageRapidFire.Controls.Add(tableLayoutPanel1);
-			tPageRapidFire.Location = new Point(4, 29);
+			tPageRapidFire.Location = new Point(4, 24);
 			tPageRapidFire.Margin = new Padding(3, 2, 3, 2);
 			tPageRapidFire.Name = "tPageRapidFire";
 			tPageRapidFire.Padding = new Padding(3, 2, 3, 2);
-			tPageRapidFire.Size = new Size(2441, 823);
+			tPageRapidFire.Size = new Size(2134, 613);
 			tPageRapidFire.TabIndex = 1;
 			tPageRapidFire.Text = "RapidFire";
 			tPageRapidFire.UseVisualStyleBackColor = true;
@@ -385,10 +399,11 @@
 			tableLayoutPanel1.Controls.Add(tableLayoutPanel4, 2, 0);
 			tableLayoutPanel1.Dock = DockStyle.Fill;
 			tableLayoutPanel1.Location = new Point(3, 2);
+			tableLayoutPanel1.Margin = new Padding(3, 2, 3, 2);
 			tableLayoutPanel1.Name = "tableLayoutPanel1";
 			tableLayoutPanel1.RowCount = 1;
 			tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-			tableLayoutPanel1.Size = new Size(2435, 819);
+			tableLayoutPanel1.Size = new Size(2128, 609);
 			tableLayoutPanel1.TabIndex = 77;
 			// 
 			// tableLayoutPanel2
@@ -399,7 +414,8 @@
 			tableLayoutPanel2.Controls.Add(btn_ConnectLightDevice, 0, 7);
 			tableLayoutPanel2.Controls.Add(flowLayoutPanel2, 0, 5);
 			tableLayoutPanel2.Dock = DockStyle.Fill;
-			tableLayoutPanel2.Location = new Point(3, 3);
+			tableLayoutPanel2.Location = new Point(3, 2);
+			tableLayoutPanel2.Margin = new Padding(3, 2, 3, 2);
 			tableLayoutPanel2.Name = "tableLayoutPanel2";
 			tableLayoutPanel2.RowCount = 9;
 			tableLayoutPanel2.RowStyles.Add(new RowStyle());
@@ -407,11 +423,11 @@
 			tableLayoutPanel2.RowStyles.Add(new RowStyle());
 			tableLayoutPanel2.RowStyles.Add(new RowStyle());
 			tableLayoutPanel2.RowStyles.Add(new RowStyle());
-			tableLayoutPanel2.RowStyles.Add(new RowStyle(SizeType.Absolute, 280F));
-			tableLayoutPanel2.RowStyles.Add(new RowStyle(SizeType.Absolute, 194F));
-			tableLayoutPanel2.RowStyles.Add(new RowStyle(SizeType.Absolute, 200F));
-			tableLayoutPanel2.RowStyles.Add(new RowStyle(SizeType.Absolute, 8F));
-			tableLayoutPanel2.Size = new Size(481, 813);
+			tableLayoutPanel2.RowStyles.Add(new RowStyle(SizeType.Absolute, 210F));
+			tableLayoutPanel2.RowStyles.Add(new RowStyle(SizeType.Absolute, 146F));
+			tableLayoutPanel2.RowStyles.Add(new RowStyle(SizeType.Absolute, 150F));
+			tableLayoutPanel2.RowStyles.Add(new RowStyle(SizeType.Absolute, 6F));
+			tableLayoutPanel2.Size = new Size(419, 605);
 			tableLayoutPanel2.TabIndex = 0;
 			tableLayoutPanel2.Paint += tableLayoutPanel2_Paint;
 			// 
@@ -421,9 +437,11 @@
 			groupBox1.Controls.Add(cBoxUseLightControl);
 			groupBox1.Controls.Add(cBoxDisableInput);
 			groupBox1.Dock = DockStyle.Top;
-			groupBox1.Location = new Point(3, 283);
+			groupBox1.Location = new Point(3, 212);
+			groupBox1.Margin = new Padding(3, 2, 3, 2);
 			groupBox1.Name = "groupBox1";
-			groupBox1.Size = new Size(475, 174);
+			groupBox1.Padding = new Padding(3, 2, 3, 2);
+			groupBox1.Size = new Size(413, 130);
 			groupBox1.TabIndex = 80;
 			groupBox1.TabStop = false;
 			// 
@@ -431,9 +449,10 @@
 			// 
 			cBoxUseAudioControl.AutoSize = true;
 			cBoxUseAudioControl.Enabled = false;
-			cBoxUseAudioControl.Location = new Point(12, 114);
+			cBoxUseAudioControl.Location = new Point(10, 86);
+			cBoxUseAudioControl.Margin = new Padding(3, 2, 3, 2);
 			cBoxUseAudioControl.Name = "cBoxUseAudioControl";
-			cBoxUseAudioControl.Size = new Size(142, 24);
+			cBoxUseAudioControl.Size = new Size(117, 19);
 			cBoxUseAudioControl.TabIndex = 75;
 			cBoxUseAudioControl.Text = "აუდიო მართვა";
 			cBoxUseAudioControl.UseVisualStyleBackColor = true;
@@ -442,9 +461,10 @@
 			// 
 			cBoxUseLightControl.AutoSize = true;
 			cBoxUseLightControl.Enabled = false;
-			cBoxUseLightControl.Location = new Point(12, 75);
+			cBoxUseLightControl.Location = new Point(10, 56);
+			cBoxUseLightControl.Margin = new Padding(3, 2, 3, 2);
 			cBoxUseLightControl.Name = "cBoxUseLightControl";
-			cBoxUseLightControl.Size = new Size(169, 24);
+			cBoxUseLightControl.Size = new Size(138, 19);
 			cBoxUseLightControl.TabIndex = 72;
 			cBoxUseLightControl.Text = "განათების მართვა";
 			cBoxUseLightControl.UseVisualStyleBackColor = true;
@@ -452,10 +472,9 @@
 			// cBoxDisableInput
 			// 
 			cBoxDisableInput.AutoSize = true;
-			cBoxDisableInput.Location = new Point(12, 35);
-			cBoxDisableInput.Margin = new Padding(3, 4, 3, 4);
+			cBoxDisableInput.Location = new Point(10, 26);
 			cBoxDisableInput.Name = "cBoxDisableInput";
-			cBoxDisableInput.Size = new Size(131, 24);
+			cBoxDisableInput.Size = new Size(107, 19);
 			cBoxDisableInput.TabIndex = 14;
 			cBoxDisableInput.Text = "No Client Input";
 			cBoxDisableInput.UseVisualStyleBackColor = true;
@@ -463,9 +482,10 @@
 			// 
 			// btn_ConnectLightDevice
 			// 
-			btn_ConnectLightDevice.Location = new Point(3, 477);
+			btn_ConnectLightDevice.Location = new Point(3, 358);
+			btn_ConnectLightDevice.Margin = new Padding(3, 2, 3, 2);
 			btn_ConnectLightDevice.Name = "btn_ConnectLightDevice";
-			btn_ConnectLightDevice.Size = new Size(180, 60);
+			btn_ConnectLightDevice.Size = new Size(158, 45);
 			btn_ConnectLightDevice.TabIndex = 79;
 			btn_ConnectLightDevice.Text = "DMX ON";
 			btn_ConnectLightDevice.UseVisualStyleBackColor = true;
@@ -478,9 +498,10 @@
 			flowLayoutPanel2.Controls.Add(btnShowFinalResults);
 			flowLayoutPanel2.Controls.Add(btnStoreResults);
 			flowLayoutPanel2.Dock = DockStyle.Fill;
-			flowLayoutPanel2.Location = new Point(3, 3);
+			flowLayoutPanel2.Location = new Point(3, 2);
+			flowLayoutPanel2.Margin = new Padding(3, 2, 3, 2);
 			flowLayoutPanel2.Name = "flowLayoutPanel2";
-			flowLayoutPanel2.Size = new Size(475, 274);
+			flowLayoutPanel2.Size = new Size(413, 206);
 			flowLayoutPanel2.TabIndex = 81;
 			// 
 			// rf_BtnLoadQuestions
@@ -488,7 +509,7 @@
 			rf_BtnLoadQuestions.Location = new Point(3, 2);
 			rf_BtnLoadQuestions.Margin = new Padding(3, 2, 3, 2);
 			rf_BtnLoadQuestions.Name = "rf_BtnLoadQuestions";
-			rf_BtnLoadQuestions.Size = new Size(475, 75);
+			rf_BtnLoadQuestions.Size = new Size(416, 56);
 			rf_BtnLoadQuestions.TabIndex = 78;
 			rf_BtnLoadQuestions.Text = "LOAD QUESTIONS";
 			rf_BtnLoadQuestions.UseVisualStyleBackColor = true;
@@ -496,9 +517,10 @@
 			// 
 			// btnShowLeaderBoard
 			// 
-			btnShowLeaderBoard.Location = new Point(3, 82);
+			btnShowLeaderBoard.Location = new Point(3, 62);
+			btnShowLeaderBoard.Margin = new Padding(3, 2, 3, 2);
 			btnShowLeaderBoard.Name = "btnShowLeaderBoard";
-			btnShowLeaderBoard.Size = new Size(475, 69);
+			btnShowLeaderBoard.Size = new Size(416, 52);
 			btnShowLeaderBoard.TabIndex = 67;
 			btnShowLeaderBoard.Text = "Show LeaderBoard";
 			btnShowLeaderBoard.UseVisualStyleBackColor = true;
@@ -506,9 +528,10 @@
 			// 
 			// btnShowFinalResults
 			// 
-			btnShowFinalResults.Location = new Point(3, 157);
+			btnShowFinalResults.Location = new Point(3, 118);
+			btnShowFinalResults.Margin = new Padding(3, 2, 3, 2);
 			btnShowFinalResults.Name = "btnShowFinalResults";
-			btnShowFinalResults.Size = new Size(475, 50);
+			btnShowFinalResults.Size = new Size(416, 38);
 			btnShowFinalResults.TabIndex = 70;
 			btnShowFinalResults.Text = "Show Final Results";
 			btnShowFinalResults.UseVisualStyleBackColor = true;
@@ -516,9 +539,10 @@
 			// 
 			// btnStoreResults
 			// 
-			btnStoreResults.Location = new Point(3, 213);
+			btnStoreResults.Location = new Point(3, 160);
+			btnStoreResults.Margin = new Padding(3, 2, 3, 2);
 			btnStoreResults.Name = "btnStoreResults";
-			btnStoreResults.Size = new Size(475, 50);
+			btnStoreResults.Size = new Size(416, 38);
 			btnStoreResults.TabIndex = 69;
 			btnStoreResults.Text = "StoreResults";
 			btnStoreResults.UseVisualStyleBackColor = true;
@@ -528,21 +552,24 @@
 			// 
 			tableLayoutPanel3.ColumnCount = 1;
 			tableLayoutPanel3.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-			tableLayoutPanel3.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 20F));
+			tableLayoutPanel3.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 18F));
 			tableLayoutPanel3.Controls.Add(panel2, 0, 1);
 			tableLayoutPanel3.Controls.Add(tableLayoutPanel5, 0, 0);
 			tableLayoutPanel3.Dock = DockStyle.Fill;
-			tableLayoutPanel3.Location = new Point(490, 3);
+			tableLayoutPanel3.Location = new Point(428, 2);
+			tableLayoutPanel3.Margin = new Padding(3, 2, 3, 2);
 			tableLayoutPanel3.Name = "tableLayoutPanel3";
 			tableLayoutPanel3.RowCount = 3;
 			tableLayoutPanel3.RowStyles.Add(new RowStyle(SizeType.Percent, 54.8585472F));
 			tableLayoutPanel3.RowStyles.Add(new RowStyle(SizeType.Percent, 45.1414528F));
-			tableLayoutPanel3.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
-			tableLayoutPanel3.Size = new Size(1455, 813);
+			tableLayoutPanel3.RowStyles.Add(new RowStyle(SizeType.Absolute, 15F));
+			tableLayoutPanel3.Size = new Size(1270, 605);
 			tableLayoutPanel3.TabIndex = 1;
 			// 
 			// panel2
 			// 
+			panel2.Controls.Add(btnPrepareNext);
+			panel2.Controls.Add(btnUuupsAnswer);
 			panel2.Controls.Add(btnSendQuestion);
 			panel2.Controls.Add(btnShowCorrect);
 			panel2.Controls.Add(btnIncorrectAnswer);
@@ -554,16 +581,48 @@
 			panel2.Controls.Add(button2);
 			panel2.Controls.Add(button3);
 			panel2.Dock = DockStyle.Top;
-			panel2.Location = new Point(3, 438);
+			panel2.Location = new Point(3, 325);
+			panel2.Margin = new Padding(3, 2, 3, 2);
 			panel2.Name = "panel2";
-			panel2.Size = new Size(1449, 284);
+			panel2.Size = new Size(1264, 248);
 			panel2.TabIndex = 4;
+			// 
+			// btnPrepareNext
+			// 
+			btnPrepareNext.BackColor = Color.DarkSeaGreen;
+			btnPrepareNext.Font = new Font("Segoe UI", 26F);
+			btnPrepareNext.ForeColor = SystemColors.ControlText;
+			btnPrepareNext.Location = new Point(359, 174);
+			btnPrepareNext.Margin = new Padding(3, 2, 3, 2);
+			btnPrepareNext.Name = "btnPrepareNext";
+			btnPrepareNext.Size = new Size(686, 61);
+			btnPrepareNext.TabIndex = 68;
+			btnPrepareNext.Text = "Prepare Next";
+			btnPrepareNext.UseVisualStyleBackColor = false;
+			btnPrepareNext.Visible = false;
+			btnPrepareNext.Click += btnPrepareNext_Click;
+			// 
+			// btnUuupsAnswer
+			// 
+			btnUuupsAnswer.BackColor = Color.SandyBrown;
+			btnUuupsAnswer.Font = new Font("Segoe UI", 25F);
+			btnUuupsAnswer.ForeColor = SystemColors.ControlText;
+			btnUuupsAnswer.Location = new Point(359, 99);
+			btnUuupsAnswer.Margin = new Padding(3, 2, 3, 2);
+			btnUuupsAnswer.Name = "btnUuupsAnswer";
+			btnUuupsAnswer.Size = new Size(686, 59);
+			btnUuupsAnswer.TabIndex = 67;
+			btnUuupsAnswer.Text = "UPS";
+			btnUuupsAnswer.UseVisualStyleBackColor = false;
+			btnUuupsAnswer.Visible = false;
+			btnUuupsAnswer.Click += btnUuupsAnswer_Click;
 			// 
 			// btnSendQuestion
 			// 
-			btnSendQuestion.Location = new Point(46, 119);
+			btnSendQuestion.Location = new Point(40, 89);
+			btnSendQuestion.Margin = new Padding(3, 2, 3, 2);
 			btnSendQuestion.Name = "btnSendQuestion";
-			btnSendQuestion.Size = new Size(210, 53);
+			btnSendQuestion.Size = new Size(184, 146);
 			btnSendQuestion.TabIndex = 66;
 			btnSendQuestion.Text = "Send Question";
 			btnSendQuestion.UseVisualStyleBackColor = true;
@@ -572,9 +631,10 @@
 			// btnShowCorrect
 			// 
 			btnShowCorrect.BackColor = Color.Tan;
-			btnShowCorrect.Location = new Point(934, 27);
+			btnShowCorrect.Location = new Point(1094, 18);
+			btnShowCorrect.Margin = new Padding(3, 2, 3, 2);
 			btnShowCorrect.Name = "btnShowCorrect";
-			btnShowCorrect.Size = new Size(166, 72);
+			btnShowCorrect.Size = new Size(145, 54);
 			btnShowCorrect.TabIndex = 60;
 			btnShowCorrect.Text = "Show Correct";
 			btnShowCorrect.UseVisualStyleBackColor = false;
@@ -583,10 +643,12 @@
 			// btnIncorrectAnswer
 			// 
 			btnIncorrectAnswer.BackColor = Color.Red;
+			btnIncorrectAnswer.Font = new Font("Segoe UI", 26F);
 			btnIncorrectAnswer.ForeColor = SystemColors.ControlText;
-			btnIncorrectAnswer.Location = new Point(396, 18);
+			btnIncorrectAnswer.Location = new Point(727, 17);
+			btnIncorrectAnswer.Margin = new Padding(3, 2, 3, 2);
 			btnIncorrectAnswer.Name = "btnIncorrectAnswer";
-			btnIncorrectAnswer.Size = new Size(364, 81);
+			btnIncorrectAnswer.Size = new Size(318, 61);
 			btnIncorrectAnswer.TabIndex = 16;
 			btnIncorrectAnswer.Text = "NO";
 			btnIncorrectAnswer.UseVisualStyleBackColor = false;
@@ -597,20 +659,22 @@
 			// 
 			rf_CBoxRapidFireMode.DropDownStyle = ComboBoxStyle.DropDownList;
 			rf_CBoxRapidFireMode.FormattingEnabled = true;
-			rf_CBoxRapidFireMode.Location = new Point(885, 225);
+			rf_CBoxRapidFireMode.Location = new Point(1035, 99);
 			rf_CBoxRapidFireMode.Margin = new Padding(3, 2, 3, 2);
 			rf_CBoxRapidFireMode.Name = "rf_CBoxRapidFireMode";
-			rf_CBoxRapidFireMode.Size = new Size(165, 28);
+			rf_CBoxRapidFireMode.Size = new Size(145, 23);
 			rf_CBoxRapidFireMode.TabIndex = 1;
 			rf_CBoxRapidFireMode.Visible = false;
 			// 
 			// btnCorrectAnswer
 			// 
 			btnCorrectAnswer.BackColor = Color.Green;
+			btnCorrectAnswer.Font = new Font("Segoe UI", 26F);
 			btnCorrectAnswer.ForeColor = SystemColors.ControlText;
-			btnCorrectAnswer.Location = new Point(396, 134);
+			btnCorrectAnswer.Location = new Point(359, 17);
+			btnCorrectAnswer.Margin = new Padding(3, 2, 3, 2);
 			btnCorrectAnswer.Name = "btnCorrectAnswer";
-			btnCorrectAnswer.Size = new Size(364, 81);
+			btnCorrectAnswer.Size = new Size(318, 61);
 			btnCorrectAnswer.TabIndex = 15;
 			btnCorrectAnswer.Text = "YES";
 			btnCorrectAnswer.UseVisualStyleBackColor = false;
@@ -619,9 +683,10 @@
 			// 
 			// button4
 			// 
-			button4.Location = new Point(1056, 196);
+			button4.Location = new Point(1115, 130);
+			button4.Margin = new Padding(3, 2, 3, 2);
 			button4.Name = "button4";
-			button4.Size = new Size(74, 72);
+			button4.Size = new Size(65, 54);
 			button4.TabIndex = 64;
 			button4.Text = "Stop";
 			button4.UseVisualStyleBackColor = true;
@@ -629,9 +694,10 @@
 			// 
 			// btnStartRapidFire
 			// 
-			btnStartRapidFire.Location = new Point(46, 24);
+			btnStartRapidFire.Location = new Point(40, 18);
+			btnStartRapidFire.Margin = new Padding(3, 2, 3, 2);
 			btnStartRapidFire.Name = "btnStartRapidFire";
-			btnStartRapidFire.Size = new Size(210, 53);
+			btnStartRapidFire.Size = new Size(184, 40);
 			btnStartRapidFire.TabIndex = 14;
 			btnStartRapidFire.Text = "StartRapidFire ";
 			btnStartRapidFire.UseVisualStyleBackColor = true;
@@ -639,9 +705,10 @@
 			// 
 			// button5
 			// 
-			button5.Location = new Point(802, 202);
+			button5.Location = new Point(1186, 130);
+			button5.Margin = new Padding(3, 2, 3, 2);
 			button5.Name = "button5";
-			button5.Size = new Size(74, 72);
+			button5.Size = new Size(65, 54);
 			button5.TabIndex = 65;
 			button5.Text = "Resume";
 			button5.UseVisualStyleBackColor = true;
@@ -650,9 +717,10 @@
 			// 
 			// button2
 			// 
-			button2.Location = new Point(802, 36);
+			button2.Location = new Point(1186, 14);
+			button2.Margin = new Padding(3, 2, 3, 2);
 			button2.Name = "button2";
-			button2.Size = new Size(74, 72);
+			button2.Size = new Size(65, 54);
 			button2.TabIndex = 62;
 			button2.Text = "Start";
 			button2.UseVisualStyleBackColor = true;
@@ -661,9 +729,10 @@
 			// 
 			// button3
 			// 
-			button3.Location = new Point(802, 114);
+			button3.Location = new Point(1186, 72);
+			button3.Margin = new Padding(3, 2, 3, 2);
 			button3.Name = "button3";
-			button3.Size = new Size(74, 72);
+			button3.Size = new Size(65, 54);
 			button3.TabIndex = 63;
 			button3.Text = "Pause";
 			button3.UseVisualStyleBackColor = true;
@@ -678,11 +747,12 @@
 			tableLayoutPanel5.Controls.Add(dgvQuestions, 0, 0);
 			tableLayoutPanel5.Controls.Add(dgvContestants, 1, 0);
 			tableLayoutPanel5.Dock = DockStyle.Fill;
-			tableLayoutPanel5.Location = new Point(3, 3);
+			tableLayoutPanel5.Location = new Point(3, 2);
+			tableLayoutPanel5.Margin = new Padding(3, 2, 3, 2);
 			tableLayoutPanel5.Name = "tableLayoutPanel5";
 			tableLayoutPanel5.RowCount = 1;
 			tableLayoutPanel5.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-			tableLayoutPanel5.Size = new Size(1449, 429);
+			tableLayoutPanel5.Size = new Size(1264, 319);
 			tableLayoutPanel5.TabIndex = 5;
 			// 
 			// dgvQuestions
@@ -697,7 +767,7 @@
 			dgvQuestions.RowHeadersWidth = 51;
 			dgvQuestions.RowTemplate.Height = 24;
 			dgvQuestions.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-			dgvQuestions.Size = new Size(839, 425);
+			dgvQuestions.Size = new Size(731, 315);
 			dgvQuestions.TabIndex = 3;
 			// 
 			// dgvContestants
@@ -706,13 +776,13 @@
 			dgvContestants.AllowUserToDeleteRows = false;
 			dgvContestants.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
 			dgvContestants.Dock = DockStyle.Fill;
-			dgvContestants.Location = new Point(848, 2);
+			dgvContestants.Location = new Point(740, 2);
 			dgvContestants.Margin = new Padding(3, 2, 3, 2);
 			dgvContestants.Name = "dgvContestants";
 			dgvContestants.RowHeadersWidth = 51;
 			dgvContestants.RowTemplate.Height = 24;
 			dgvContestants.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-			dgvContestants.Size = new Size(598, 425);
+			dgvContestants.Size = new Size(521, 315);
 			dgvContestants.TabIndex = 75;
 			// 
 			// tableLayoutPanel4
@@ -723,7 +793,8 @@
 			tableLayoutPanel4.Controls.Add(flowLayoutPanelYutubeButtons, 0, 1);
 			tableLayoutPanel4.Controls.Add(tabControl1, 0, 4);
 			tableLayoutPanel4.Dock = DockStyle.Fill;
-			tableLayoutPanel4.Location = new Point(1951, 3);
+			tableLayoutPanel4.Location = new Point(1704, 2);
+			tableLayoutPanel4.Margin = new Padding(3, 2, 3, 2);
 			tableLayoutPanel4.Name = "tableLayoutPanel4";
 			tableLayoutPanel4.RowCount = 6;
 			tableLayoutPanel4.RowStyles.Add(new RowStyle());
@@ -731,8 +802,8 @@
 			tableLayoutPanel4.RowStyles.Add(new RowStyle(SizeType.Percent, 3.053435F));
 			tableLayoutPanel4.RowStyles.Add(new RowStyle());
 			tableLayoutPanel4.RowStyles.Add(new RowStyle(SizeType.Percent, 96.94656F));
-			tableLayoutPanel4.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
-			tableLayoutPanel4.Size = new Size(481, 813);
+			tableLayoutPanel4.RowStyles.Add(new RowStyle(SizeType.Absolute, 15F));
+			tableLayoutPanel4.Size = new Size(421, 605);
 			tableLayoutPanel4.TabIndex = 2;
 			// 
 			// flowLayoutPanelYutubeButtons
@@ -740,9 +811,10 @@
 			flowLayoutPanelYutubeButtons.AutoSize = true;
 			flowLayoutPanelYutubeButtons.BackColor = Color.LightCoral;
 			flowLayoutPanelYutubeButtons.Dock = DockStyle.Top;
-			flowLayoutPanelYutubeButtons.Location = new Point(3, 3);
+			flowLayoutPanelYutubeButtons.Location = new Point(3, 2);
+			flowLayoutPanelYutubeButtons.Margin = new Padding(3, 2, 3, 2);
 			flowLayoutPanelYutubeButtons.Name = "flowLayoutPanelYutubeButtons";
-			flowLayoutPanelYutubeButtons.Size = new Size(475, 0);
+			flowLayoutPanelYutubeButtons.Size = new Size(415, 0);
 			flowLayoutPanelYutubeButtons.TabIndex = 79;
 			// 
 			// tabControl1
@@ -752,19 +824,21 @@
 			tabControl1.Controls.Add(tabPage3);
 			tabControl1.Controls.Add(tabPage4);
 			tabControl1.Dock = DockStyle.Fill;
-			tabControl1.Location = new Point(3, 33);
+			tabControl1.Location = new Point(3, 23);
+			tabControl1.Margin = new Padding(3, 2, 3, 2);
 			tabControl1.Name = "tabControl1";
 			tabControl1.SelectedIndex = 0;
-			tabControl1.Size = new Size(475, 756);
+			tabControl1.Size = new Size(415, 564);
 			tabControl1.TabIndex = 82;
 			// 
 			// tabPage1
 			// 
 			tabPage1.Controls.Add(flowLayoutPanelLoads);
-			tabPage1.Location = new Point(4, 29);
+			tabPage1.Location = new Point(4, 24);
+			tabPage1.Margin = new Padding(3, 2, 3, 2);
 			tabPage1.Name = "tabPage1";
-			tabPage1.Padding = new Padding(3);
-			tabPage1.Size = new Size(467, 723);
+			tabPage1.Padding = new Padding(3, 2, 3, 2);
+			tabPage1.Size = new Size(407, 536);
 			tabPage1.TabIndex = 0;
 			tabPage1.Text = "Graphics";
 			tabPage1.UseVisualStyleBackColor = true;
@@ -778,9 +852,10 @@
 			flowLayoutPanelLoads.Controls.Add(BtnLoadYutubeVote);
 			flowLayoutPanelLoads.Controls.Add(btnClearGraphics);
 			flowLayoutPanelLoads.Controls.Add(btnLoadBackGround);
-			flowLayoutPanelLoads.Location = new Point(9, 23);
+			flowLayoutPanelLoads.Location = new Point(8, 17);
+			flowLayoutPanelLoads.Margin = new Padding(3, 2, 3, 2);
 			flowLayoutPanelLoads.Name = "flowLayoutPanelLoads";
-			flowLayoutPanelLoads.Size = new Size(475, 286);
+			flowLayoutPanelLoads.Size = new Size(416, 214);
 			flowLayoutPanelLoads.TabIndex = 81;
 			// 
 			// BtnLoadFullQuestion
@@ -788,7 +863,7 @@
 			BtnLoadFullQuestion.Location = new Point(3, 2);
 			BtnLoadFullQuestion.Margin = new Padding(3, 2, 3, 2);
 			BtnLoadFullQuestion.Name = "BtnLoadFullQuestion";
-			BtnLoadFullQuestion.Size = new Size(196, 65);
+			BtnLoadFullQuestion.Size = new Size(172, 49);
 			BtnLoadFullQuestion.TabIndex = 7;
 			BtnLoadFullQuestion.Text = "Load Full Graphics";
 			BtnLoadFullQuestion.UseVisualStyleBackColor = true;
@@ -796,10 +871,10 @@
 			// 
 			// BtnLoadLowerQuestion
 			// 
-			BtnLoadLowerQuestion.Location = new Point(205, 2);
+			BtnLoadLowerQuestion.Location = new Point(181, 2);
 			BtnLoadLowerQuestion.Margin = new Padding(3, 2, 3, 2);
 			BtnLoadLowerQuestion.Name = "BtnLoadLowerQuestion";
-			BtnLoadLowerQuestion.Size = new Size(196, 65);
+			BtnLoadLowerQuestion.Size = new Size(172, 49);
 			BtnLoadLowerQuestion.TabIndex = 58;
 			BtnLoadLowerQuestion.Text = "Load Lower Graphics";
 			BtnLoadLowerQuestion.UseVisualStyleBackColor = true;
@@ -807,10 +882,10 @@
 			// 
 			// BtnLoadCountDown
 			// 
-			BtnLoadCountDown.Location = new Point(3, 71);
+			BtnLoadCountDown.Location = new Point(3, 55);
 			BtnLoadCountDown.Margin = new Padding(3, 2, 3, 2);
 			BtnLoadCountDown.Name = "BtnLoadCountDown";
-			BtnLoadCountDown.Size = new Size(196, 65);
+			BtnLoadCountDown.Size = new Size(172, 49);
 			BtnLoadCountDown.TabIndex = 61;
 			BtnLoadCountDown.Text = "Load CountDown";
 			BtnLoadCountDown.UseVisualStyleBackColor = true;
@@ -818,10 +893,10 @@
 			// 
 			// BtnLoadLeaderBoard
 			// 
-			BtnLoadLeaderBoard.Location = new Point(205, 71);
+			BtnLoadLeaderBoard.Location = new Point(181, 55);
 			BtnLoadLeaderBoard.Margin = new Padding(3, 2, 3, 2);
 			BtnLoadLeaderBoard.Name = "BtnLoadLeaderBoard";
-			BtnLoadLeaderBoard.Size = new Size(196, 65);
+			BtnLoadLeaderBoard.Size = new Size(172, 49);
 			BtnLoadLeaderBoard.TabIndex = 66;
 			BtnLoadLeaderBoard.Text = "Load LeaderBoard";
 			BtnLoadLeaderBoard.UseVisualStyleBackColor = true;
@@ -829,10 +904,10 @@
 			// 
 			// BtnLoadYutubeVote
 			// 
-			BtnLoadYutubeVote.Location = new Point(3, 140);
+			BtnLoadYutubeVote.Location = new Point(3, 108);
 			BtnLoadYutubeVote.Margin = new Padding(3, 2, 3, 2);
 			BtnLoadYutubeVote.Name = "BtnLoadYutubeVote";
-			BtnLoadYutubeVote.Size = new Size(196, 68);
+			BtnLoadYutubeVote.Size = new Size(172, 51);
 			BtnLoadYutubeVote.TabIndex = 76;
 			BtnLoadYutubeVote.Text = "Load YT";
 			BtnLoadYutubeVote.UseVisualStyleBackColor = true;
@@ -840,9 +915,10 @@
 			// 
 			// btnClearGraphics
 			// 
-			btnClearGraphics.Location = new Point(205, 141);
+			btnClearGraphics.Location = new Point(181, 108);
+			btnClearGraphics.Margin = new Padding(3, 2, 3, 2);
 			btnClearGraphics.Name = "btnClearGraphics";
-			btnClearGraphics.Size = new Size(214, 62);
+			btnClearGraphics.Size = new Size(187, 46);
 			btnClearGraphics.TabIndex = 59;
 			btnClearGraphics.Text = "Clear Graphics";
 			btnClearGraphics.UseVisualStyleBackColor = true;
@@ -850,9 +926,10 @@
 			// 
 			// btnLoadBackGround
 			// 
-			btnLoadBackGround.Location = new Point(3, 213);
+			btnLoadBackGround.Location = new Point(3, 163);
+			btnLoadBackGround.Margin = new Padding(3, 2, 3, 2);
 			btnLoadBackGround.Name = "btnLoadBackGround";
-			btnLoadBackGround.Size = new Size(214, 62);
+			btnLoadBackGround.Size = new Size(187, 46);
 			btnLoadBackGround.TabIndex = 77;
 			btnLoadBackGround.Text = "Load BackGround";
 			btnLoadBackGround.UseVisualStyleBackColor = true;
@@ -862,10 +939,11 @@
 			// 
 			tabPage2.Controls.Add(groupBox2);
 			tabPage2.Controls.Add(flowLayoutPanel1);
-			tabPage2.Location = new Point(4, 29);
+			tabPage2.Location = new Point(4, 24);
+			tabPage2.Margin = new Padding(3, 2, 3, 2);
 			tabPage2.Name = "tabPage2";
-			tabPage2.Padding = new Padding(3);
-			tabPage2.Size = new Size(467, 723);
+			tabPage2.Padding = new Padding(3, 2, 3, 2);
+			tabPage2.Size = new Size(407, 536);
 			tabPage2.TabIndex = 1;
 			tabPage2.Text = "YouTUBE";
 			tabPage2.UseVisualStyleBackColor = true;
@@ -874,18 +952,21 @@
 			// 
 			groupBox2.Controls.Add(richTextBox1);
 			groupBox2.Dock = DockStyle.Bottom;
-			groupBox2.Location = new Point(3, 376);
+			groupBox2.Location = new Point(3, 276);
+			groupBox2.Margin = new Padding(3, 2, 3, 2);
 			groupBox2.Name = "groupBox2";
-			groupBox2.Size = new Size(461, 344);
+			groupBox2.Padding = new Padding(3, 2, 3, 2);
+			groupBox2.Size = new Size(401, 258);
 			groupBox2.TabIndex = 83;
 			groupBox2.TabStop = false;
 			groupBox2.Text = "ONLINE AUDIENCE";
 			// 
 			// richTextBox1
 			// 
-			richTextBox1.Location = new Point(71, 59);
+			richTextBox1.Location = new Point(62, 44);
+			richTextBox1.Margin = new Padding(3, 2, 3, 2);
 			richTextBox1.Name = "richTextBox1";
-			richTextBox1.Size = new Size(248, 100);
+			richTextBox1.Size = new Size(218, 76);
 			richTextBox1.TabIndex = 0;
 			richTextBox1.Text = "A:\nB:\nC:\nD:";
 			// 
@@ -895,9 +976,10 @@
 			flowLayoutPanel1.Controls.Add(button11);
 			flowLayoutPanel1.Controls.Add(button12);
 			flowLayoutPanel1.Dock = DockStyle.Top;
-			flowLayoutPanel1.Location = new Point(3, 3);
+			flowLayoutPanel1.Location = new Point(3, 2);
+			flowLayoutPanel1.Margin = new Padding(3, 2, 3, 2);
 			flowLayoutPanel1.Name = "flowLayoutPanel1";
-			flowLayoutPanel1.Size = new Size(461, 185);
+			flowLayoutPanel1.Size = new Size(401, 139);
 			flowLayoutPanel1.TabIndex = 82;
 			// 
 			// btn_ytVotingOnOFF
@@ -907,40 +989,90 @@
 			btn_ytVotingOnOFF.Location = new Point(3, 2);
 			btn_ytVotingOnOFF.Margin = new Padding(3, 2, 3, 2);
 			btn_ytVotingOnOFF.Name = "btn_ytVotingOnOFF";
-			btn_ytVotingOnOFF.Size = new Size(196, 65);
+			btn_ytVotingOnOFF.Size = new Size(172, 49);
 			btn_ytVotingOnOFF.TabIndex = 7;
 			btn_ytVotingOnOFF.Text = "YouTube VOTING";
 			btn_ytVotingOnOFF.UseVisualStyleBackColor = false;
 			// 
 			// button11
 			// 
-			button11.Location = new Point(205, 2);
+			button11.Location = new Point(181, 2);
 			button11.Margin = new Padding(3, 2, 3, 2);
 			button11.Name = "button11";
-			button11.Size = new Size(196, 65);
+			button11.Size = new Size(172, 49);
 			button11.TabIndex = 58;
 			button11.Text = "Get YT Vote Result";
 			button11.UseVisualStyleBackColor = true;
 			// 
 			// button12
 			// 
-			button12.Location = new Point(3, 71);
+			button12.Location = new Point(3, 55);
 			button12.Margin = new Padding(3, 2, 3, 2);
 			button12.Name = "button12";
-			button12.Size = new Size(398, 65);
+			button12.Size = new Size(348, 49);
 			button12.TabIndex = 61;
 			button12.Text = "Show Result";
 			button12.UseVisualStyleBackColor = true;
 			// 
 			// tabPage3
 			// 
-			tabPage3.Location = new Point(4, 29);
+			tabPage3.Location = new Point(4, 24);
+			tabPage3.Margin = new Padding(3, 2, 3, 2);
 			tabPage3.Name = "tabPage3";
-			tabPage3.Padding = new Padding(3);
-			tabPage3.Size = new Size(467, 723);
+			tabPage3.Padding = new Padding(3, 2, 3, 2);
+			tabPage3.Size = new Size(407, 536);
 			tabPage3.TabIndex = 2;
 			tabPage3.Text = "FaceBOOK";
 			tabPage3.UseVisualStyleBackColor = true;
+			// 
+			// tabPage4
+			// 
+			tabPage4.Controls.Add(btn_SendMidiNote);
+			tabPage4.Controls.Add(tBox_MidiVelocity);
+			tabPage4.Controls.Add(tBox_MidiNote);
+			tabPage4.Controls.Add(button1);
+			tabPage4.Location = new Point(4, 24);
+			tabPage4.Margin = new Padding(3, 2, 3, 2);
+			tabPage4.Name = "tabPage4";
+			tabPage4.Padding = new Padding(3, 2, 3, 2);
+			tabPage4.Size = new Size(407, 536);
+			tabPage4.TabIndex = 3;
+			tabPage4.Text = "DMX";
+			tabPage4.UseVisualStyleBackColor = true;
+			// 
+			// btn_SendMidiNote
+			// 
+			btn_SendMidiNote.Location = new Point(147, 142);
+			btn_SendMidiNote.Name = "btn_SendMidiNote";
+			btn_SendMidiNote.Size = new Size(73, 61);
+			btn_SendMidiNote.TabIndex = 83;
+			btn_SendMidiNote.Text = "SEND";
+			btn_SendMidiNote.UseVisualStyleBackColor = true;
+			btn_SendMidiNote.Click += btn_SendMidiNote_Click;
+			// 
+			// tBox_MidiVelocity
+			// 
+			tBox_MidiVelocity.Location = new Point(22, 183);
+			tBox_MidiVelocity.Name = "tBox_MidiVelocity";
+			tBox_MidiVelocity.Size = new Size(94, 23);
+			tBox_MidiVelocity.TabIndex = 82;
+			// 
+			// tBox_MidiNote
+			// 
+			tBox_MidiNote.Location = new Point(22, 142);
+			tBox_MidiNote.Name = "tBox_MidiNote";
+			tBox_MidiNote.Size = new Size(94, 23);
+			tBox_MidiNote.TabIndex = 81;
+			// 
+			// button1
+			// 
+			button1.Location = new Point(21, 38);
+			button1.Margin = new Padding(3, 2, 3, 2);
+			button1.Name = "button1";
+			button1.Size = new Size(200, 45);
+			button1.TabIndex = 80;
+			button1.Text = "DMX";
+			button1.UseVisualStyleBackColor = true;
 			// 
 			// panel1
 			// 
@@ -951,47 +1083,50 @@
 			panel1.Controls.Add(CountdownDuration);
 			panel1.Controls.Add(listBoxClients);
 			panel1.Dock = DockStyle.Fill;
-			panel1.Location = new Point(3, 96);
+			panel1.Location = new Point(3, 72);
 			panel1.Margin = new Padding(3, 2, 3, 2);
 			panel1.Name = "panel1";
-			panel1.Size = new Size(2449, 117);
+			panel1.Size = new Size(2142, 87);
 			panel1.TabIndex = 43;
 			// 
 			// cmbCountdownMode
 			// 
+			cmbCountdownMode.Font = new Font("Segoe UI", 25F);
 			cmbCountdownMode.FormattingEnabled = true;
-			cmbCountdownMode.Location = new Point(19, 63);
+			cmbCountdownMode.Location = new Point(23, 17);
+			cmbCountdownMode.Margin = new Padding(3, 2, 3, 2);
 			cmbCountdownMode.Name = "cmbCountdownMode";
-			cmbCountdownMode.Size = new Size(151, 28);
+			cmbCountdownMode.Size = new Size(349, 53);
 			cmbCountdownMode.TabIndex = 45;
 			// 
 			// lblPollingCountdown
 			// 
 			lblPollingCountdown.AutoSize = true;
 			lblPollingCountdown.Font = new Font("Microsoft Sans Serif", 15F, FontStyle.Regular, GraphicsUnit.Point, 0);
-			lblPollingCountdown.Location = new Point(233, 75);
+			lblPollingCountdown.Location = new Point(467, 45);
 			lblPollingCountdown.Name = "lblPollingCountdown";
-			lblPollingCountdown.Size = new Size(81, 29);
+			lblPollingCountdown.Size = new Size(64, 25);
 			lblPollingCountdown.TabIndex = 39;
 			lblPollingCountdown.Text = "label1";
 			// 
 			// lblCountdown
 			// 
 			lblCountdown.AutoSize = true;
-			lblCountdown.Font = new Font("Microsoft Sans Serif", 25F, FontStyle.Regular, GraphicsUnit.Point, 0);
+			lblCountdown.Font = new Font("Microsoft Sans Serif", 50F, FontStyle.Regular, GraphicsUnit.Point, 0);
 			lblCountdown.ForeColor = Color.Lime;
-			lblCountdown.Location = new Point(233, 18);
+			lblCountdown.Location = new Point(1266, 5);
 			lblCountdown.Name = "lblCountdown";
-			lblCountdown.Size = new Size(66, 48);
+			lblCountdown.Size = new Size(106, 76);
 			lblCountdown.TabIndex = 37;
 			lblCountdown.Text = "00";
 			// 
 			// CountdownDuration
 			// 
-			CountdownDuration.Location = new Point(19, 18);
+			CountdownDuration.Font = new Font("Segoe UI", 25F);
+			CountdownDuration.Location = new Point(951, 18);
 			CountdownDuration.Margin = new Padding(3, 2, 3, 2);
 			CountdownDuration.Name = "CountdownDuration";
-			CountdownDuration.Size = new Size(185, 27);
+			CountdownDuration.Size = new Size(87, 52);
 			CountdownDuration.TabIndex = 42;
 			CountdownDuration.Value = new decimal(new int[] { 60, 0, 0, 0 });
 			// 
@@ -999,41 +1134,22 @@
 			// 
 			listBoxClients.Dock = DockStyle.Right;
 			listBoxClients.FormattingEnabled = true;
-			listBoxClients.Location = new Point(1798, 0);
+			listBoxClients.ItemHeight = 15;
+			listBoxClients.Location = new Point(1572, 0);
 			listBoxClients.Margin = new Padding(3, 2, 3, 2);
 			listBoxClients.Name = "listBoxClients";
-			listBoxClients.Size = new Size(651, 117);
+			listBoxClients.Size = new Size(570, 87);
 			listBoxClients.TabIndex = 8;
 			// 
 			// countdownTimer
 			// 
 			countdownTimer.Tick += countdownTimer_Tick;
 			// 
-			// tabPage4
-			// 
-			tabPage4.Controls.Add(button1);
-			tabPage4.Location = new Point(4, 29);
-			tabPage4.Name = "tabPage4";
-			tabPage4.Padding = new Padding(3);
-			tabPage4.Size = new Size(467, 723);
-			tabPage4.TabIndex = 3;
-			tabPage4.Text = "DMX";
-			tabPage4.UseVisualStyleBackColor = true;
-			// 
-			// button1
-			// 
-			button1.Location = new Point(33, 32);
-			button1.Name = "button1";
-			button1.Size = new Size(229, 60);
-			button1.TabIndex = 80;
-			button1.Text = "DMX";
-			button1.UseVisualStyleBackColor = true;
-			// 
 			// MnForm
 			// 
-			AutoScaleDimensions = new SizeF(8F, 20F);
+			AutoScaleDimensions = new SizeF(7F, 15F);
 			AutoScaleMode = AutoScaleMode.Font;
-			ClientSize = new Size(2455, 1321);
+			ClientSize = new Size(2148, 991);
 			Controls.Add(PnlRapidFire);
 			Controls.Add(labelRegisteredConnections);
 			Controls.Add(labelActiveConnections);
@@ -1068,11 +1184,12 @@
 			tabPage2.ResumeLayout(false);
 			groupBox2.ResumeLayout(false);
 			flowLayoutPanel1.ResumeLayout(false);
+			tabPage4.ResumeLayout(false);
+			tabPage4.PerformLayout();
 			panel1.ResumeLayout(false);
 			panel1.PerformLayout();
 			((System.ComponentModel.ISupportInitialize)CountdownDuration).EndInit();
 			((System.ComponentModel.ISupportInitialize)playerBindingSource).EndInit();
-			tabPage4.ResumeLayout(false);
 			ResumeLayout(false);
 			PerformLayout();
 
@@ -1165,6 +1282,11 @@
 		private TabPage tabPage3;
 		private TabPage tabPage4;
 		private Button button1;
+		private Button btn_SendMidiNote;
+		private TextBox tBox_MidiVelocity;
+		private TextBox tBox_MidiNote;
+		private Button btnUuupsAnswer;
+		private Button btnPrepareNext;
 	}
 }
 

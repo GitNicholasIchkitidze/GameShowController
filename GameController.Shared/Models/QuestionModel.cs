@@ -13,6 +13,9 @@ namespace GameController.Shared.Models
 		public string? QuestionImage { get; set; }
 		public required List<string> Answers { get; set; }
 		public required string CorrectAnswer { get; set; }
+		public required int ScorePrice { get; set; }
+		public string? QuestionVideo { get; set; }
+		public string? CorrectAnswerVideo { get; set; }
 
 	}
 

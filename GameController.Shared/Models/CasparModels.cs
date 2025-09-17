@@ -17,6 +17,7 @@ namespace GameController.Shared.Models
 		public required CasparCGTemplate LeaderBoard { get; set; }
 		public required CasparCGTemplate CountDown { get; set; }
 		public required CasparCGTemplate YTVote { get; set; }
+		public required CasparCGVideoTemplate QuestionVideo { get; set; }
 	}
 
 
@@ -27,4 +28,12 @@ namespace GameController.Shared.Models
 		public int Layer { get; set; }
 		public int LayerCg { get; set; }
 	}
+	public class CasparCGVideoTemplate
+	{
+		public required string TemplateName { get; set; }
+		public int Channel { get; set; }
+		public int Layer { get; set; }
+		public int LayerCg { get; set; }
+	}
+
 }

@@ -62,11 +62,11 @@ namespace GameShowCtrl
 
 		private ConcurrentDictionary<string, string> _activeAudienceMembers = new ConcurrentDictionary<string, string>();
 
-
+		private LastAction _lastAction = LastAction.None;
 		public MnForm()
 		{
 			InitializeComponent();
-			cmbCountdownMode.DataSource = Enum.GetValues(typeof(CountdownMode));
+			cmbCountdownMode.DataSource = Enum.GetValues(typeof(GameMode));
 
 			_config = new ConfigurationBuilder()
 			.SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
@@ -378,7 +378,11 @@ namespace GameShowCtrl
 						var nextQuestion = GetNextQuestionFromGrid();
 						if (nextQuestion != null)
 						{
-							await _hubConnection.InvokeAsync("SendRapidFireQuestionFromUI", nextQuestion, cBoxDisableInput.Checked);
+							if ((GameMode)cmbCountdownMode.SelectedItem == GameMode.RapidMode)
+								await _hubConnection.InvokeAsync("SendRapidFireQuestionFromUI", nextQuestion, cBoxDisableInput.Checked);
+							//if ((GameMode)cmbCountdownMode.SelectedItem == GameMode.Round1)
+							//	btnSendQuestion.PerformClick();
+
 						}
 						else
 						{
@@ -505,13 +509,14 @@ namespace GameShowCtrl
 		{
 			listBoxClients.Items.Clear();
 
-			//playerBindingSource.DataSource = players.Where(x=> x.ClientType=="Contestant").ToList();
+			dgvContestants.AutoGenerateColumns = true;
+
 			dgvContestants.DataSource = players.Where(x => x.ClientType == "Contestant").ToList();
+			dgvContestants.Columns["ConnectionID"].Visible = false;
+			dgvContestants.Columns["ClientType"].Visible = false;
+			//dgvContestants.Columns["Ip"].Visible = false;
 			_playerNamesToIds.Clear();
 
-			//var contestantPlayer = players
-			//	.Where(p => p.ClientType == "Contestant")	 
-			//	.ToList();
 
 			foreach (var player in players)
 			{
@@ -720,7 +725,7 @@ namespace GameShowCtrl
 				int countdownDuration = (int)CountdownDuration.Value;
 
 
-				var selectedMode = (CountdownMode)cmbCountdownMode.SelectedItem;
+				var selectedMode = (GameMode)cmbCountdownMode.SelectedItem;
 
 				var allPlayers = dgvContestants.DataSource as List<Player>;
 				List<Player>? targetClients = new List<Player>();
@@ -744,6 +749,15 @@ namespace GameShowCtrl
 				await _hubConnection.InvokeAsync("UpdateScoresFromUIToMEM", targetClients);
 				await _hubConnection.InvokeAsync("SendQuestion", question, countdownDuration, selectedMode, disableInput, targetClients);
 
+
+				btnCorrectAnswer.Enabled = true;
+				btnIncorrectAnswer.Enabled = true;
+
+				if (selectedMode == GameMode.Round1 && cBoxDisableInput.Checked)
+				{
+
+					btnPrepareNext.Visible = false;
+				}
 
 			}
 			else
@@ -817,37 +831,37 @@ namespace GameShowCtrl
 		private async void btnIncorrectAnswer_Click(object sender, EventArgs e)
 		{
 
-			//var nextQuestion = GetNextQuestionFromGrid();
-			//if (nextQuestion != null)
-			//{
-			//	// Pass the next question and the disableInput flag to the server
-			//	await _hubConnection.InvokeAsync("SendRapidFireQuestionFromUI", nextQuestion, cBoxDisableInput.Checked);
-			//}
-			//else
-			//{
-			//	MessageBox.Show("End of Rapid Fire questions.", "Rapid Fire Ended", MessageBoxButtons.OK, MessageBoxIcon.Information);
-			//	await _hubConnection.InvokeAsync("EndRound");
-			//}
+
 
 			await _hubConnection.InvokeAsync("OperatorConfirmAnswer", false);
+			_lastAction = LastAction.Incorrect;
+			btnCorrectAnswer.Enabled = false;
+			btnIncorrectAnswer.Enabled = false;
+
+			if ((GameMode)cmbCountdownMode.SelectedItem == GameMode.Round1 && cBoxDisableInput.Checked)
+			{
+				btnPrepareNext.Visible = true;
+			}
+
 
 		}
 
 		private async void btnCorrectAnswer_Click(object sender, EventArgs e)
 		{
-			//var nextQuestion = GetNextQuestionFromGrid();
-			//if (nextQuestion != null)
-			//{
-			//	// Pass the next question and the disableInput flag to the server
-			//	await _hubConnection.InvokeAsync("SendRapidFireQuestionFromUI", nextQuestion, cBoxDisableInput.Checked);
-			//}
-			//else
-			//{
-			//	MessageBox.Show("End of Rapid Fire questions.", "Rapid Fire Ended", MessageBoxButtons.OK, MessageBoxIcon.Information);
-			//	await _hubConnection.InvokeAsync("EndRound");
-			//}
+
 
 			await _hubConnection.InvokeAsync("OperatorConfirmAnswer", true);
+
+
+			_lastAction = LastAction.Correct;
+
+			btnCorrectAnswer.Enabled = false;
+			btnIncorrectAnswer.Enabled = true;
+			if ((GameMode)cmbCountdownMode.SelectedItem == GameMode.Round1 && cBoxDisableInput.Checked)
+			{
+				btnPrepareNext.Visible = true;
+			}
+
 
 		}
 
@@ -855,6 +869,19 @@ namespace GameShowCtrl
 		{
 			btnCorrectAnswer.Visible = cBoxDisableInput.Checked;
 			btnIncorrectAnswer.Visible = cBoxDisableInput.Checked;
+			btnUuupsAnswer.Visible = cBoxDisableInput.Checked;
+
+			btnCorrectAnswer.Enabled = false;
+			btnIncorrectAnswer.Enabled = false;
+
+			if ((GameMode)cmbCountdownMode.SelectedItem == GameMode.Round1 && cBoxDisableInput.Checked)
+			{
+				btnPrepareNext.Visible = true;
+				btnPrepareNext.Enabled = false;
+			}
+			else
+				btnPrepareNext.Visible = false;
+
 			//btnShowCorrect.Visible = cBoxDisableInput.Checked;
 		}
 
@@ -1383,6 +1410,31 @@ namespace GameShowCtrl
 		private async void BtnLoadYutubeVote_Click(object sender, EventArgs e)
 		{
 			await _hubConnection.InvokeAsync("CGLoadTemplate", CGTemplateEnums.YTVote);
+		}
+
+		private async void btn_SendMidiNote_Click(object sender, EventArgs e)
+		{
+
+
+
+			int.TryParse(tBox_MidiNote.Text, out int Notenumber);
+			int.TryParse(tBox_MidiVelocity.Text, out int Velocity);
+
+
+			await _hubConnection.InvokeAsync("SendMIDInote", Notenumber, Velocity);
+			AppendLog($"[WinForms UI] <- Hub MIDI Sent");
+		}
+
+		private async void btnUuupsAnswer_Click(object sender, EventArgs e)
+		{
+			await _hubConnection.InvokeAsync("Uuups", _lastAction);
+		}
+
+		private async void btnPrepareNext_Click(object sender, EventArgs e)
+		{
+			await _hubConnection.InvokeAsync("CGClearChannelLayer", CGTemplateEnums.QuestionVideo);
+			await _hubConnection.InvokeAsync("CGClearChannelLayer", CGTemplateEnums.QuestionFull);
+			await _hubConnection.InvokeAsync("CGClearChannelLayer", CGTemplateEnums.QuestionLower);
 		}
 	}
 }

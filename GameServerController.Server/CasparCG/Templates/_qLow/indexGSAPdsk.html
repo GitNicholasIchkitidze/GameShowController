@@ -173,12 +173,14 @@
             correctAnswer: { duration: 0.3, scale: 1.05, repeat: 2, yoyo: true, ease: 'power1.inOut' }
         };
 
-        const ws = new WebSocket('ws://192.168.0.2:5000/ws-casparcg');
+        const ws = new WebSocket('ws://192.168.0.3:5000/ws-casparcg');
         ws.onopen = () => {
             const registrationMessage = JSON.stringify({ type: 'register', templateName: 'QuestionLower' });
             ws.send(registrationMessage);
+            console.info('Registration Request Sent. ' + registrationMessage);
         };
         ws.onmessage = (event) => {
+            console.log('Received data for LowQuestionFull: ' + event.data);
             try {
                 const jsonData = JSON.parse(event.data);
                 if (jsonData.type === 'show_answer') {
@@ -195,6 +197,7 @@
         }
 
         window.update = function (data) {
+            console.log('update: ');
             if (!data || Object.keys(data).length === 0) return;
             if (isFirstQuestion) {
                 updateQuestionContent(data);
@@ -220,11 +223,35 @@
         })();
 
         function updateQuestionContent(data) {
+            console.log('updateQuestionContent: ');
             const questionTextElement = document.getElementById('question-text');
             if (questionTextElement) questionTextElement.innerText = data.Question || '';
+
+
+
+
             const answersContainer = document.getElementById('answers-container');
+
+            if (!answersContainer) {
+                console.log('Hiding answersContainer: ');
+                document.getElementById('answers-container').style.display = "none";
+                return;
+            }
+
+
+            console.log('Checking answers: ');
+            if (!data.Answers || data.Answers.every(a => !a || a.trim() === "")) {
+                //answersContainer.style.display = "none";
+                console.log('Hiding answers: ');
+                document.getElementById('answers-container').style.display = "none";
+                return;
+            }
+
             if (answersContainer) {
                 answersContainer.innerHTML = '';
+                console.log('Showing answers: ');
+                document.getElementById('answers-container').style.display = "grid";
+
                 const markers = ['A', 'B', 'C', 'D'];
                 if (data.Answers && data.Answers.forEach) {
                     data.Answers.forEach((answer, index) => {
@@ -260,6 +287,8 @@
         }
 
         function animateSubsequentQuestion(data) {
+
+            console.log('animateSubsequentQuestion: ');
             if (currentAnimation) currentAnimation.kill();
             const questionTextElement = document.getElementById('question-text');
             const answerItems = document.querySelectorAll('.answer-item-wrapper');
@@ -271,15 +300,60 @@
 
             currentAnimation.call(() => {
                 if (questionTextElement) questionTextElement.innerText = data.Question || '';
+
+                
+
+                console.log('Checking answers: ');
+                if (!data.Answers || data.Answers.every(a => !a || a.trim() === "")) {
+                    //answersContainer.style.display = "none";
+                    console.log('Hiding answers: ');
+                    document.getElementById('answers-container').style.display = "none";
+                    document.getElementById('answers-container').innerHTML = '';
+                    return;
+                }
+
+
+                //if (!answersContainer) {
+                //    console.log('Hiding answersContainer: ');
+                //    document.getElementById('answers-container').style.display = "none";
+                //    //return;
+                //}
+
+
+                console.log('Showing answers: ');
+                const answersContainer = document.getElementById('answers-container');
+                answersContainer.style.display = "grid";
+                answersContainer.innerHTML = '';
+
+
+                const markers = ['A', 'B', 'C', 'D'];
                 if (data.Answers && data.Answers.forEach) {
-                    const markers = ['A', 'B', 'C', 'D'];
+                    
                     data.Answers.forEach((answer, index) => {
-                        if (answerItems[index]) {
-                            const answerText = answerItems[index].querySelector('.answer-text');
-                            const marker = answerItems[index].querySelector('.answer-marker');
-                            if (answerText) answerText.innerText = (answer !== null && answer !== undefined) ? answer : '';
-                            if (marker) marker.innerText = (markers[index] || '') + '.';
-                            answerItems[index].classList.remove('correct', 'wrong');
+                        //if (answerItems[index]) {
+                        //    const answerText = answerItems[index].querySelector('.answer-text');
+                        //    const marker = answerItems[index].querySelector('.answer-marker');
+                        //    if (answerText) answerText.innerText = (answer !== null && answer !== undefined) ? answer : '';
+                        //    if (marker) marker.innerText = (markers[index] || '') + '.';
+                        //    answerItems[index].classList.remove('correct', 'wrong');
+                        //}
+
+
+                        if (answer && answer.trim() !== "") {
+                            const answerWrapper = document.createElement('div');
+                            answerWrapper.className = 'answer-item-wrapper';
+
+                            const marker = document.createElement('span');
+                            marker.className = 'answer-marker';
+                            marker.innerText = (markers[index] || '') + '.';
+
+                            const answerText = document.createElement('span');
+                            answerText.className = 'answer-text';
+                            answerText.innerText = answer;
+
+                            answerWrapper.appendChild(marker);
+                            answerWrapper.appendChild(answerText);
+                            answersContainer.appendChild(answerWrapper);
                         }
                     });
                 }

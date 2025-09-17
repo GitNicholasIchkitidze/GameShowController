@@ -45,14 +45,18 @@ namespace GameController.Server.Hubs
 		private static int _answersReceivedCount;
 		private static List<string> _activePlayerIds = new List<string>();
 		private static CountdownMode _currentCountdownMode;
+		private static GameMode _currentGameMode;
 		private static int _rapidFireCurrentQuestionIndex = -1;
 		private static bool _currentDisableInput;
 
 		private static bool _isRapidFireActive = false;
+		//private static bool _isRapidFireActive = false;
 		private static string? _operatorConnectionId;
 		private static string? _ytVoterManagerConnectionId;
 		private static string? _fbVoterManagerConnectionId;
 		private bool trackerLog = true;
+
+
 
 		//private readonly CasparCGService _casparCGService;
 		private readonly CasparCGSettings _cgSettings;
@@ -119,10 +123,10 @@ namespace GameController.Server.Hubs
 			_midiLightingService.ConnectionStatusChanged += OnMidiConnectionStatusChanged;
 
 
-			if (_questions == null)
-			{
-				_questions = questionService.LoadQuestionsAsync().Result;
-			}
+			//if (_questions == null)
+			//{
+			//	_questions = questionService.LoadQuestionsAsync().Result;
+			//}
 
 
 			_cgSettings = _configuration.GetSection("CG").Get<CasparCGSettings>();
@@ -139,6 +143,11 @@ namespace GameController.Server.Hubs
 		public void SetLightControlEnabled(bool isEnabled)
 		{
 			_midiLightingService.IsLightControlEnabled = isEnabled;
+		}
+
+		public async Task SendMIDInote(int Notenumber, int Velocity)
+		{
+			_midiLightingService.SendNoteOn(Notenumber, Velocity);		
 		}
 		public void ConnectMidiDevice()
 		{
@@ -262,6 +271,46 @@ namespace GameController.Server.Hubs
 
 		#region CasparCG
 
+		public async Task CGClearChannelLayer(CGTemplateEnums templateType)
+		{
+			var channel = -1;
+			var layer = -1;
+
+
+			if (templateType == CGTemplateEnums.QuestionFull)
+			{
+				channel = _cgSettings.QuestionFull.Channel;
+				layer = _cgSettings.QuestionFull.Layer;
+			}
+			else if (templateType == CGTemplateEnums.QuestionLower)
+			{
+				channel = _cgSettings.QuestionLower.Channel;
+				layer = _cgSettings.QuestionLower.Layer;
+			}
+			else if (templateType == CGTemplateEnums.Countdown)
+			{
+				channel = _cgSettings.CountDown.Channel;
+				layer = _cgSettings.CountDown.Layer;
+			}
+			else if (templateType == CGTemplateEnums.LeaderBoard)
+			{
+				channel = _cgSettings.LeaderBoard.Channel;
+				layer = _cgSettings.LeaderBoard.Layer;
+			}
+			else if (templateType == CGTemplateEnums.YTVote)
+			{
+				channel = _cgSettings.YTVote.Channel;
+				layer = _cgSettings.YTVote.Layer;
+			}
+			else if (templateType == CGTemplateEnums.QuestionVideo)
+			{
+				channel = _cgSettings.QuestionVideo.Channel;
+				layer = _cgSettings.QuestionVideo.Layer;
+			}
+
+			await _caspar.ClearChannelLayer(channel, layer);
+
+		}
 
 		public async Task CGClearChannel(CGTemplateEnums templateType)
 		{
@@ -288,6 +337,11 @@ namespace GameController.Server.Hubs
 			{
 				channel = _cgSettings.YTVote.Channel;
 			}
+			else if (templateType == CGTemplateEnums.QuestionVideo)
+			{
+				channel = _cgSettings.QuestionVideo.Channel;
+			}
+
 			await _caspar.ClearChannel(channel);
 		}
 		public async Task<OperationResult> CGLoadTemplate(CGTemplateEnums templateType)
@@ -389,6 +443,10 @@ namespace GameController.Server.Hubs
 
 		public async Task CGWSCountdown(string templateType, int duration, CountdownStopMode action, long endTimestamp)
 		{
+
+			if (_currentGameMode == GameMode.Round1)
+				return;
+
 			_logger.LogInformation($"{Environment.NewLine}{DateTime.Now}  Trigger Countdown Start in Template '{templateType}' for {action} sec");
 
 			var message = new
@@ -426,7 +484,7 @@ namespace GameController.Server.Hubs
 
 		public async Task CGPlayClip(int channel, int layer, string templateName)
 		{
-			templateName = templateName.Replace("D:\\Masala\\", "");
+			templateName = _cgSettings.QuestionVideo.TemplateName + templateName;
 			templateName = templateName.Replace("\\", "/").Replace(".mp4","");
 			await _caspar.PlayClip(channel, layer, templateName);
 		}
@@ -812,16 +870,19 @@ namespace GameController.Server.Hubs
 			}
 		}
 
-		public async Task SendQuestion(QuestionModel question, int durationSeconds, CountdownMode mode, bool disableInput, List<Player>? clients)
+
+
+		public async Task SendQuestion(QuestionModel question, int durationSeconds, GameMode mode, bool disableInput, List<Player>? clients)
 		{
 
 			_logger.LogInformation($"{Environment.NewLine}{DateTime.Now} Sending question '{question.Question}' with a {durationSeconds}s countdown.");
 
 			_activeQuestion = question; // Set the active question here
 			_answersReceivedCount = 0; // Reset the counter for each new question
-			_currentCountdownMode = mode; // Store the selected mode
+			//_currentCountdownMode = mode; // Store the selected mode
+			_currentGameMode = mode;
 			_currentDisableInput = disableInput; // Store the input disable state
-			_isRapidFireActive = false; // Set the flag to true
+			//_isRapidFireActive = false; 
 
 			_midiLightingService.SendNoteOn(
 				_midiSettings.CountdownNote,
@@ -829,11 +890,6 @@ namespace GameController.Server.Hubs
 			);
 
 
-			//_midiLightingService.SendNoteOn(
-			//	(Melanchall.DryWetMidi.MusicTheory.NoteName)_midiSettings.CountdownNote,
-			//	Melanchall.DryWetMidi.MusicTheory.Octave.Get(_midiSettings.CountdownOctave),
-			//	_midiSettings.CountdownVelocity
-			//);
 
 			var endTimestamp = DateTimeOffset.UtcNow.AddSeconds(durationSeconds).ToUnixTimeMilliseconds();
 			if (clients == null || clients.Count == 0)
@@ -859,12 +915,16 @@ namespace GameController.Server.Hubs
 			
 			
 			await Clients.Clients(GetOperatorConnectionId()).SendAsync("ReceiveCountdown", endTimestamp);
-			await CGWSCountdown(CGTemplateEnums.Countdown.ToString(), 0, CountdownStopMode.Start, endTimestamp);
+			await CGWSCountdown(CGTemplateEnums.Countdown.ToString(), durationSeconds, CountdownStopMode.Start, endTimestamp);
 			
 
 
 			await CGWSUpdateQuestionTemplateData(CGTemplateEnums.QuestionFull.ToString(), question);
 			await CGWSUpdateQuestionTemplateData(CGTemplateEnums.QuestionLower.ToString(), question);
+			if (!String.IsNullOrEmpty(question.QuestionVideo))
+			{
+				await CGPlayClip(_cgSettings.QuestionVideo.Channel, _cgSettings.QuestionVideo.Layer, question.QuestionVideo);
+			}
 		}
 
 		public async Task UpdateScoresFromUIToMEM(List<Player> players)
@@ -931,9 +991,10 @@ namespace GameController.Server.Hubs
 					}
 
 					// This is the core logic for the new RapidFire UI control
-					if (_isRapidFireActive)
+					//if (_isRapidFireActive)
+					if (_currentGameMode == GameMode.RapidMode)
 					{
-						_logger.LogDebug("RapidFire is active. Notifying the operator to send the next question.");
+						_logger.LogDebug($"{_currentGameMode.ToString()} is active. Notifying the operator to send the next question.");
 
 						// Notify the operator UI that a player has answered.
 						await Clients.Client(GetOperatorConnectionId()).SendAsync("PlayerAnsweredInRapidFire");
@@ -949,7 +1010,8 @@ namespace GameController.Server.Hubs
 					}
 					else
 					{
-						if (_currentCountdownMode == CountdownMode.FirstAnswer)
+						//if (_currentCountdownMode == CountdownMode.FirstAnswer)
+						if (_currentGameMode == GameMode.FirstAnswer)
 						{
 							_logger.LogInformation($"{Environment.NewLine}{DateTime.Now} active player have submitted an answer. Stopping countdown.");
 							await Clients.All.SendAsync("StopCountdown", CountdownStopMode.Pause.ToString()); // Send a signal to stop the countdown
@@ -958,7 +1020,7 @@ namespace GameController.Server.Hubs
 					}
 
 					// This is the old logic for non-RapidFire modes
-					if (_currentCountdownMode == CountdownMode.AllPlayersAnswered)
+					if (_currentGameMode == GameMode.AllPlayersAnswered)
 					{
 						_answersReceivedCount++;
 						if (_answersReceivedCount >= _activePlayerIds.Count)
@@ -992,6 +1054,7 @@ namespace GameController.Server.Hubs
 
 			// Clear the active question and player list for the next round.
 			_isRapidFireActive = false; // Reset the flag
+			_currentGameMode = GameMode.None;
 			_activeQuestion = null;
 			_activePlayerIds.Clear();
 			_answersReceivedCount = 0;
@@ -1018,7 +1081,8 @@ namespace GameController.Server.Hubs
 		public async Task StartRapidFire(List<Player> clients, int durationSeconds, bool disableInput)
 		{
 			_logger.LogInformation($"{Environment.NewLine}{DateTime.Now} Starting Rapid Fire mode.");
-			_isRapidFireActive = true; // Set the flag to true
+			//_isRapidFireActive = true; // Set the flag to true
+			_currentGameMode = GameMode.RapidMode;
 			_currentDisableInput = disableInput;
 
 
@@ -1035,7 +1099,33 @@ namespace GameController.Server.Hubs
 			await CGWSCountdown(CGTemplateEnums.Countdown.ToString(), durationSeconds, CountdownStopMode.Start, endTimestamp);
 
 		}
-		
+
+		public async Task Uuups(LastAction _lastAction )
+		{
+			var activePlayerId = _activePlayerIds.FirstOrDefault();
+			if (activePlayerId != null && _gameService.ConnectedPlayers.TryGetValue(activePlayerId, out var player))
+			{
+				if (_lastAction == LastAction.Correct)
+					player.AddScore(-1);
+				else
+					player.AddScore(1);
+				
+				_logger.LogInformation($"{Environment.NewLine}{DateTime.Now} Corrected Score for '{player.Name}'. Score: {player.Score}");
+
+
+				await Clients.All.SendAsync("UpdatePlayerList", _gameService.ConnectedPlayers.Values.ToList());
+
+
+
+				// NEW: Check if the scoreboard is currently active and update it
+				if (_isLeaderBoardActive)
+				{
+					var players = _gameService.ConnectedPlayers.Values.OrderByDescending(p => p.Score).ToList();
+					await CGSWSendScoreboardToCaspar(players);
+				}
+
+			}
+		}
 
 		public async Task OperatorConfirmAnswer(bool isCorrect)
 		{
@@ -1045,7 +1135,7 @@ namespace GameController.Server.Hubs
 				return;
 			}
 
-			if (_isRapidFireActive)
+			if (_currentGameMode == GameMode.RapidMode || _currentGameMode == GameMode.Round1)
 			{
 				// Add score to the active player if the answer was correct
 				if (isCorrect)
@@ -1053,13 +1143,22 @@ namespace GameController.Server.Hubs
 					var activePlayerId = _activePlayerIds.FirstOrDefault();
 					if (activePlayerId != null && _gameService.ConnectedPlayers.TryGetValue(activePlayerId, out var player))
 					{
-						player.AddScore(1);
+						player.AddScore(_activeQuestion.ScorePrice);
 						_logger.LogInformation($"{Environment.NewLine}{DateTime.Now} RapidFire No Input: Operator confirmed a correct answer for player '{player.Name}'. Score: {player.Score}");
+						
+
 					}
 				}
 				else
 				{
 					_logger.LogInformation($"{Environment.NewLine}{DateTime.Now} RapidFire No Input: Operator confirmed an incorrect answer.");
+
+				}
+
+
+				if (_currentGameMode == GameMode.Round1 && !string.IsNullOrEmpty(_activeQuestion.QuestionVideo) && !string.IsNullOrEmpty(_activeQuestion.CorrectAnswerVideo))
+				{
+					await CGPlayClip(_cgSettings.QuestionVideo.Channel, _cgSettings.QuestionVideo.Layer, _activeQuestion.CorrectAnswerVideo);
 				}
 
 				// IMPORTANT: Update the player list for all clients to show the new score
@@ -1080,6 +1179,8 @@ namespace GameController.Server.Hubs
 				{
 					await Clients.Client(operatorConnectionId).SendAsync("OperatorConfirmedAnswer");
 				}
+
+				
 			}
 		}
 

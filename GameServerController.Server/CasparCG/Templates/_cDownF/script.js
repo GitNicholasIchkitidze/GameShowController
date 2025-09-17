@@ -1,5 +1,5 @@
 ﻿// Countdown.js
-const ws = new WebSocket('ws://192.168.0.2:5000/ws-casparcg');
+const ws = new WebSocket('ws://192.168.0.3:5000/ws-casparcg');
 let countdownInterval;
 let endTime; // მიზნობრივი დასრულების დრო
 let isPaused = false;
