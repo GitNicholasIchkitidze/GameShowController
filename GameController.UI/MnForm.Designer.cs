@@ -29,6 +29,7 @@
 		private void InitializeComponent()
 		{
 			components = new System.ComponentModel.Container();
+			Button btn_R1CorrectAnswer;
 			labelActiveConnections = new Label();
 			labelRegisteredConnections = new Label();
 			textBoxLog = new TextBox();
@@ -36,18 +37,7 @@
 			tabControlMain = new TabControl();
 			tPageTest = new TabPage();
 			pnl_Test = new Panel();
-			button9 = new Button();
-			button6 = new Button();
-			AudienceCountdownDuration = new NumericUpDown();
-			btn_StopAudienceVoting = new Button();
-			btn_StartAudienceVoting = new Button();
 			votingUserListBox = new ListBox();
-			tbx_YTVideoId = new TextBox();
-			tBx_YTRedirectURI = new TextBox();
-			tBx_YTClientID = new TextBox();
-			txtMessageToSpecificClient = new TextBox();
-			txtMessageToSend = new TextBox();
-			btnNo = new Button();
 			btn_YTAuth = new Button();
 			tPageRapidFire = new TabPage();
 			tableLayoutPanel1 = new TableLayoutPanel();
@@ -64,18 +54,18 @@
 			btnStoreResults = new Button();
 			tableLayoutPanel3 = new TableLayoutPanel();
 			panel2 = new Panel();
-			btnPrepareNext = new Button();
-			btnUuupsAnswer = new Button();
-			btnSendQuestion = new Button();
-			btnShowCorrect = new Button();
-			btnIncorrectAnswer = new Button();
-			rf_CBoxRapidFireMode = new ComboBox();
-			btnCorrectAnswer = new Button();
-			button4 = new Button();
+			tabGameModes = new TabControl();
+			tabPageRound1 = new TabPage();
+			btn_R1InCorrectAnswer = new Button();
+			btn_R1PrepareNext = new Button();
+			btn_R1UuupsAnswer = new Button();
+			btn_SendQuestion = new Button();
+			tabPageRound2 = new TabPage();
+			tabPageRound3 = new TabPage();
+			tabPageRapidFire = new TabPage();
 			btnStartRapidFire = new Button();
-			button5 = new Button();
-			button2 = new Button();
-			button3 = new Button();
+			tabPage7 = new TabPage();
+			btnShowCorrect = new Button();
 			tableLayoutPanel5 = new TableLayoutPanel();
 			dgvQuestions = new DataGridView();
 			dgvContestants = new DataGridView();
@@ -92,6 +82,8 @@
 			btnClearGraphics = new Button();
 			btnLoadBackGround = new Button();
 			tabPage2 = new TabPage();
+			tbx_YTVideoId = new TextBox();
+			AudienceCountdownDuration = new NumericUpDown();
 			groupBox2 = new GroupBox();
 			richTextBox1 = new RichTextBox();
 			flowLayoutPanel1 = new FlowLayoutPanel();
@@ -106,17 +98,16 @@
 			button1 = new Button();
 			panel1 = new Panel();
 			cmbCountdownMode = new ComboBox();
-			lblPollingCountdown = new Label();
 			lblCountdown = new Label();
 			CountdownDuration = new NumericUpDown();
 			listBoxClients = new ListBox();
 			playerBindingSource = new BindingSource(components);
 			countdownTimer = new System.Windows.Forms.Timer(components);
+			btn_R1CorrectAnswer = new Button();
 			PnlRapidFire.SuspendLayout();
 			tabControlMain.SuspendLayout();
 			tPageTest.SuspendLayout();
 			pnl_Test.SuspendLayout();
-			((System.ComponentModel.ISupportInitialize)AudienceCountdownDuration).BeginInit();
 			tPageRapidFire.SuspendLayout();
 			tableLayoutPanel1.SuspendLayout();
 			tableLayoutPanel2.SuspendLayout();
@@ -124,6 +115,10 @@
 			flowLayoutPanel2.SuspendLayout();
 			tableLayoutPanel3.SuspendLayout();
 			panel2.SuspendLayout();
+			tabGameModes.SuspendLayout();
+			tabPageRound1.SuspendLayout();
+			tabPageRapidFire.SuspendLayout();
+			tabPage7.SuspendLayout();
 			tableLayoutPanel5.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)dgvQuestions).BeginInit();
 			((System.ComponentModel.ISupportInitialize)dgvContestants).BeginInit();
@@ -132,6 +127,7 @@
 			tabPage1.SuspendLayout();
 			flowLayoutPanelLoads.SuspendLayout();
 			tabPage2.SuspendLayout();
+			((System.ComponentModel.ISupportInitialize)AudienceCountdownDuration).BeginInit();
 			groupBox2.SuspendLayout();
 			flowLayoutPanel1.SuspendLayout();
 			tabPage4.SuspendLayout();
@@ -139,6 +135,20 @@
 			((System.ComponentModel.ISupportInitialize)CountdownDuration).BeginInit();
 			((System.ComponentModel.ISupportInitialize)playerBindingSource).BeginInit();
 			SuspendLayout();
+			// 
+			// btn_R1CorrectAnswer
+			// 
+			btn_R1CorrectAnswer.BackColor = Color.Green;
+			btn_R1CorrectAnswer.Font = new Font("Segoe UI", 26F);
+			btn_R1CorrectAnswer.ForeColor = SystemColors.ControlText;
+			btn_R1CorrectAnswer.Location = new Point(253, 16);
+			btn_R1CorrectAnswer.Margin = new Padding(3, 2, 3, 2);
+			btn_R1CorrectAnswer.Name = "btn_R1CorrectAnswer";
+			btn_R1CorrectAnswer.Size = new Size(318, 61);
+			btn_R1CorrectAnswer.TabIndex = 68;
+			btn_R1CorrectAnswer.Text = "YES";
+			btn_R1CorrectAnswer.UseVisualStyleBackColor = false;
+			btn_R1CorrectAnswer.Click += btnCorrectAnswer_Click;
 			// 
 			// labelActiveConnections
 			// 
@@ -164,12 +174,12 @@
 			// 
 			textBoxLog.Dock = DockStyle.Fill;
 			textBoxLog.Font = new Font("Microsoft Sans Serif", 12F, FontStyle.Regular, GraphicsUnit.Point, 0);
-			textBoxLog.Location = new Point(3, 808);
+			textBoxLog.Location = new Point(3, 918);
 			textBoxLog.Margin = new Padding(3, 2, 3, 2);
 			textBoxLog.Multiline = true;
 			textBoxLog.Name = "textBoxLog";
 			textBoxLog.ScrollBars = ScrollBars.Vertical;
-			textBoxLog.Size = new Size(2142, 181);
+			textBoxLog.Size = new Size(2142, 206);
 			textBoxLog.TabIndex = 2;
 			// 
 			// PnlRapidFire
@@ -195,7 +205,7 @@
 			PnlRapidFire.RowStyles.Add(new RowStyle(SizeType.Absolute, 19F));
 			PnlRapidFire.RowStyles.Add(new RowStyle(SizeType.Absolute, 19F));
 			PnlRapidFire.RowStyles.Add(new RowStyle(SizeType.Absolute, 19F));
-			PnlRapidFire.Size = new Size(2148, 991);
+			PnlRapidFire.Size = new Size(2148, 1126);
 			PnlRapidFire.TabIndex = 40;
 			// 
 			// tabControlMain
@@ -203,11 +213,11 @@
 			tabControlMain.Controls.Add(tPageTest);
 			tabControlMain.Controls.Add(tPageRapidFire);
 			tabControlMain.Dock = DockStyle.Fill;
-			tabControlMain.Location = new Point(3, 163);
+			tabControlMain.Location = new Point(3, 185);
 			tabControlMain.Margin = new Padding(3, 2, 3, 2);
 			tabControlMain.Name = "tabControlMain";
 			tabControlMain.SelectedIndex = 0;
-			tabControlMain.Size = new Size(2142, 641);
+			tabControlMain.Size = new Size(2142, 729);
 			tabControlMain.TabIndex = 3;
 			// 
 			// tPageTest
@@ -217,84 +227,21 @@
 			tPageTest.Margin = new Padding(3, 2, 3, 2);
 			tPageTest.Name = "tPageTest";
 			tPageTest.Padding = new Padding(3, 2, 3, 2);
-			tPageTest.Size = new Size(2134, 613);
+			tPageTest.Size = new Size(2134, 701);
 			tPageTest.TabIndex = 0;
 			tPageTest.Text = "TEST";
 			tPageTest.UseVisualStyleBackColor = true;
 			// 
 			// pnl_Test
 			// 
-			pnl_Test.Controls.Add(button9);
-			pnl_Test.Controls.Add(button6);
-			pnl_Test.Controls.Add(AudienceCountdownDuration);
-			pnl_Test.Controls.Add(btn_StopAudienceVoting);
-			pnl_Test.Controls.Add(btn_StartAudienceVoting);
 			pnl_Test.Controls.Add(votingUserListBox);
-			pnl_Test.Controls.Add(tbx_YTVideoId);
-			pnl_Test.Controls.Add(tBx_YTRedirectURI);
-			pnl_Test.Controls.Add(tBx_YTClientID);
-			pnl_Test.Controls.Add(txtMessageToSpecificClient);
-			pnl_Test.Controls.Add(txtMessageToSend);
-			pnl_Test.Controls.Add(btnNo);
 			pnl_Test.Controls.Add(btn_YTAuth);
 			pnl_Test.Dock = DockStyle.Fill;
 			pnl_Test.Location = new Point(3, 2);
 			pnl_Test.Margin = new Padding(3, 2, 3, 2);
 			pnl_Test.Name = "pnl_Test";
-			pnl_Test.Size = new Size(2128, 609);
+			pnl_Test.Size = new Size(2128, 697);
 			pnl_Test.TabIndex = 47;
-			// 
-			// button9
-			// 
-			button9.Location = new Point(698, 80);
-			button9.Margin = new Padding(3, 2, 3, 2);
-			button9.Name = "button9";
-			button9.Size = new Size(118, 22);
-			button9.TabIndex = 70;
-			button9.Text = "button9";
-			button9.UseVisualStyleBackColor = true;
-			// 
-			// button6
-			// 
-			button6.Location = new Point(255, 69);
-			button6.Margin = new Padding(3, 2, 3, 2);
-			button6.Name = "button6";
-			button6.Size = new Size(151, 51);
-			button6.TabIndex = 69;
-			button6.Text = "button6";
-			button6.UseVisualStyleBackColor = true;
-			button6.Click += button6_Click;
-			// 
-			// AudienceCountdownDuration
-			// 
-			AudienceCountdownDuration.Location = new Point(94, 202);
-			AudienceCountdownDuration.Margin = new Padding(3, 2, 3, 2);
-			AudienceCountdownDuration.Name = "AudienceCountdownDuration";
-			AudienceCountdownDuration.Size = new Size(162, 23);
-			AudienceCountdownDuration.TabIndex = 68;
-			AudienceCountdownDuration.Value = new decimal(new int[] { 60, 0, 0, 0 });
-			// 
-			// btn_StopAudienceVoting
-			// 
-			btn_StopAudienceVoting.Location = new Point(759, 290);
-			btn_StopAudienceVoting.Margin = new Padding(3, 2, 3, 2);
-			btn_StopAudienceVoting.Name = "btn_StopAudienceVoting";
-			btn_StopAudienceVoting.Size = new Size(205, 70);
-			btn_StopAudienceVoting.TabIndex = 67;
-			btn_StopAudienceVoting.Text = "STOP Audience Voting";
-			btn_StopAudienceVoting.UseVisualStyleBackColor = true;
-			btn_StopAudienceVoting.Click += btn_StopAudienceVoting_Click;
-			// 
-			// btn_StartAudienceVoting
-			// 
-			btn_StartAudienceVoting.Location = new Point(759, 202);
-			btn_StartAudienceVoting.Margin = new Padding(3, 2, 3, 2);
-			btn_StartAudienceVoting.Name = "btn_StartAudienceVoting";
-			btn_StartAudienceVoting.Size = new Size(205, 70);
-			btn_StartAudienceVoting.TabIndex = 66;
-			btn_StartAudienceVoting.Text = "START Audience Voting";
-			btn_StartAudienceVoting.UseVisualStyleBackColor = true;
-			btn_StartAudienceVoting.Click += btn_StartAudienceVoting_Click;
 			// 
 			// votingUserListBox
 			// 
@@ -305,63 +252,6 @@
 			votingUserListBox.Name = "votingUserListBox";
 			votingUserListBox.Size = new Size(344, 199);
 			votingUserListBox.TabIndex = 65;
-			// 
-			// tbx_YTVideoId
-			// 
-			tbx_YTVideoId.Font = new Font("Segoe UI", 12F);
-			tbx_YTVideoId.Location = new Point(733, 28);
-			tbx_YTVideoId.Margin = new Padding(3, 2, 3, 2);
-			tbx_YTVideoId.Name = "tbx_YTVideoId";
-			tbx_YTVideoId.Size = new Size(183, 29);
-			tbx_YTVideoId.TabIndex = 64;
-			// 
-			// tBx_YTRedirectURI
-			// 
-			tBx_YTRedirectURI.Font = new Font("Segoe UI", 12F);
-			tBx_YTRedirectURI.Location = new Point(452, 69);
-			tBx_YTRedirectURI.Margin = new Padding(3, 2, 3, 2);
-			tBx_YTRedirectURI.Name = "tBx_YTRedirectURI";
-			tBx_YTRedirectURI.Size = new Size(183, 29);
-			tBx_YTRedirectURI.TabIndex = 63;
-			// 
-			// tBx_YTClientID
-			// 
-			tBx_YTClientID.Font = new Font("Segoe UI", 12F);
-			tBx_YTClientID.Location = new Point(452, 28);
-			tBx_YTClientID.Margin = new Padding(3, 2, 3, 2);
-			tBx_YTClientID.Name = "tBx_YTClientID";
-			tBx_YTClientID.Size = new Size(183, 29);
-			tBx_YTClientID.TabIndex = 62;
-			// 
-			// txtMessageToSpecificClient
-			// 
-			txtMessageToSpecificClient.Font = new Font("Microsoft Sans Serif", 12F, FontStyle.Regular, GraphicsUnit.Point, 0);
-			txtMessageToSpecificClient.Location = new Point(18, 422);
-			txtMessageToSpecificClient.Margin = new Padding(3, 2, 3, 2);
-			txtMessageToSpecificClient.Name = "txtMessageToSpecificClient";
-			txtMessageToSpecificClient.Size = new Size(1025, 26);
-			txtMessageToSpecificClient.TabIndex = 61;
-			// 
-			// txtMessageToSend
-			// 
-			txtMessageToSend.Font = new Font("Microsoft Sans Serif", 12F, FontStyle.Regular, GraphicsUnit.Point, 0);
-			txtMessageToSend.Location = new Point(18, 364);
-			txtMessageToSend.Margin = new Padding(3, 2, 3, 2);
-			txtMessageToSend.Name = "txtMessageToSend";
-			txtMessageToSend.Size = new Size(1025, 26);
-			txtMessageToSend.TabIndex = 60;
-			// 
-			// btnNo
-			// 
-			btnNo.Font = new Font("Microsoft Sans Serif", 14F, FontStyle.Regular, GraphicsUnit.Point, 0);
-			btnNo.Location = new Point(858, 142);
-			btnNo.Margin = new Padding(3, 2, 3, 2);
-			btnNo.Name = "btnNo";
-			btnNo.Size = new Size(196, 46);
-			btnNo.TabIndex = 56;
-			btnNo.Text = "NO";
-			btnNo.UseVisualStyleBackColor = true;
-			btnNo.Visible = false;
 			// 
 			// btn_YTAuth
 			// 
@@ -382,7 +272,7 @@
 			tPageRapidFire.Margin = new Padding(3, 2, 3, 2);
 			tPageRapidFire.Name = "tPageRapidFire";
 			tPageRapidFire.Padding = new Padding(3, 2, 3, 2);
-			tPageRapidFire.Size = new Size(2134, 613);
+			tPageRapidFire.Size = new Size(2134, 701);
 			tPageRapidFire.TabIndex = 1;
 			tPageRapidFire.Text = "RapidFire";
 			tPageRapidFire.UseVisualStyleBackColor = true;
@@ -403,7 +293,7 @@
 			tableLayoutPanel1.Name = "tableLayoutPanel1";
 			tableLayoutPanel1.RowCount = 1;
 			tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-			tableLayoutPanel1.Size = new Size(2128, 609);
+			tableLayoutPanel1.Size = new Size(2128, 697);
 			tableLayoutPanel1.TabIndex = 77;
 			// 
 			// tableLayoutPanel2
@@ -427,7 +317,7 @@
 			tableLayoutPanel2.RowStyles.Add(new RowStyle(SizeType.Absolute, 146F));
 			tableLayoutPanel2.RowStyles.Add(new RowStyle(SizeType.Absolute, 150F));
 			tableLayoutPanel2.RowStyles.Add(new RowStyle(SizeType.Absolute, 6F));
-			tableLayoutPanel2.Size = new Size(419, 605);
+			tableLayoutPanel2.Size = new Size(419, 693);
 			tableLayoutPanel2.TabIndex = 0;
 			tableLayoutPanel2.Paint += tableLayoutPanel2_Paint;
 			// 
@@ -449,10 +339,11 @@
 			// 
 			cBoxUseAudioControl.AutoSize = true;
 			cBoxUseAudioControl.Enabled = false;
+			cBoxUseAudioControl.Font = new Font("Segoe UI", 12F);
 			cBoxUseAudioControl.Location = new Point(10, 86);
 			cBoxUseAudioControl.Margin = new Padding(3, 2, 3, 2);
 			cBoxUseAudioControl.Name = "cBoxUseAudioControl";
-			cBoxUseAudioControl.Size = new Size(117, 19);
+			cBoxUseAudioControl.Size = new Size(150, 25);
 			cBoxUseAudioControl.TabIndex = 75;
 			cBoxUseAudioControl.Text = "აუდიო მართვა";
 			cBoxUseAudioControl.UseVisualStyleBackColor = true;
@@ -461,10 +352,11 @@
 			// 
 			cBoxUseLightControl.AutoSize = true;
 			cBoxUseLightControl.Enabled = false;
+			cBoxUseLightControl.Font = new Font("Segoe UI", 12F);
 			cBoxUseLightControl.Location = new Point(10, 56);
 			cBoxUseLightControl.Margin = new Padding(3, 2, 3, 2);
 			cBoxUseLightControl.Name = "cBoxUseLightControl";
-			cBoxUseLightControl.Size = new Size(138, 19);
+			cBoxUseLightControl.Size = new Size(178, 25);
 			cBoxUseLightControl.TabIndex = 72;
 			cBoxUseLightControl.Text = "განათების მართვა";
 			cBoxUseLightControl.UseVisualStyleBackColor = true;
@@ -472,9 +364,10 @@
 			// cBoxDisableInput
 			// 
 			cBoxDisableInput.AutoSize = true;
+			cBoxDisableInput.Font = new Font("Segoe UI", 12F);
 			cBoxDisableInput.Location = new Point(10, 26);
 			cBoxDisableInput.Name = "cBoxDisableInput";
-			cBoxDisableInput.Size = new Size(107, 19);
+			cBoxDisableInput.Size = new Size(134, 25);
 			cBoxDisableInput.TabIndex = 14;
 			cBoxDisableInput.Text = "No Client Input";
 			cBoxDisableInput.UseVisualStyleBackColor = true;
@@ -506,6 +399,7 @@
 			// 
 			// rf_BtnLoadQuestions
 			// 
+			rf_BtnLoadQuestions.Font = new Font("Segoe UI", 15F);
 			rf_BtnLoadQuestions.Location = new Point(3, 2);
 			rf_BtnLoadQuestions.Margin = new Padding(3, 2, 3, 2);
 			rf_BtnLoadQuestions.Name = "rf_BtnLoadQuestions";
@@ -517,6 +411,7 @@
 			// 
 			// btnShowLeaderBoard
 			// 
+			btnShowLeaderBoard.Font = new Font("Segoe UI", 15F);
 			btnShowLeaderBoard.Location = new Point(3, 62);
 			btnShowLeaderBoard.Margin = new Padding(3, 2, 3, 2);
 			btnShowLeaderBoard.Name = "btnShowLeaderBoard";
@@ -528,6 +423,7 @@
 			// 
 			// btnShowFinalResults
 			// 
+			btnShowFinalResults.Font = new Font("Segoe UI", 15F);
 			btnShowFinalResults.Location = new Point(3, 118);
 			btnShowFinalResults.Margin = new Padding(3, 2, 3, 2);
 			btnShowFinalResults.Name = "btnShowFinalResults";
@@ -539,6 +435,7 @@
 			// 
 			// btnStoreResults
 			// 
+			btnStoreResults.Font = new Font("Segoe UI", 15F);
 			btnStoreResults.Location = new Point(3, 160);
 			btnStoreResults.Margin = new Padding(3, 2, 3, 2);
 			btnStoreResults.Name = "btnStoreResults";
@@ -563,187 +460,174 @@
 			tableLayoutPanel3.RowStyles.Add(new RowStyle(SizeType.Percent, 54.8585472F));
 			tableLayoutPanel3.RowStyles.Add(new RowStyle(SizeType.Percent, 45.1414528F));
 			tableLayoutPanel3.RowStyles.Add(new RowStyle(SizeType.Absolute, 15F));
-			tableLayoutPanel3.Size = new Size(1270, 605);
+			tableLayoutPanel3.Size = new Size(1270, 693);
 			tableLayoutPanel3.TabIndex = 1;
 			// 
 			// panel2
 			// 
-			panel2.Controls.Add(btnPrepareNext);
-			panel2.Controls.Add(btnUuupsAnswer);
-			panel2.Controls.Add(btnSendQuestion);
-			panel2.Controls.Add(btnShowCorrect);
-			panel2.Controls.Add(btnIncorrectAnswer);
-			panel2.Controls.Add(rf_CBoxRapidFireMode);
-			panel2.Controls.Add(btnCorrectAnswer);
-			panel2.Controls.Add(button4);
-			panel2.Controls.Add(btnStartRapidFire);
-			panel2.Controls.Add(button5);
-			panel2.Controls.Add(button2);
-			panel2.Controls.Add(button3);
+			panel2.Controls.Add(tabGameModes);
 			panel2.Dock = DockStyle.Top;
-			panel2.Location = new Point(3, 325);
+			panel2.Location = new Point(3, 373);
 			panel2.Margin = new Padding(3, 2, 3, 2);
 			panel2.Name = "panel2";
 			panel2.Size = new Size(1264, 248);
 			panel2.TabIndex = 4;
 			// 
-			// btnPrepareNext
+			// tabGameModes
 			// 
-			btnPrepareNext.BackColor = Color.DarkSeaGreen;
-			btnPrepareNext.Font = new Font("Segoe UI", 26F);
-			btnPrepareNext.ForeColor = SystemColors.ControlText;
-			btnPrepareNext.Location = new Point(359, 174);
-			btnPrepareNext.Margin = new Padding(3, 2, 3, 2);
-			btnPrepareNext.Name = "btnPrepareNext";
-			btnPrepareNext.Size = new Size(686, 61);
-			btnPrepareNext.TabIndex = 68;
-			btnPrepareNext.Text = "Prepare Next";
-			btnPrepareNext.UseVisualStyleBackColor = false;
-			btnPrepareNext.Visible = false;
-			btnPrepareNext.Click += btnPrepareNext_Click;
+			tabGameModes.Controls.Add(tabPageRound1);
+			tabGameModes.Controls.Add(tabPageRound2);
+			tabGameModes.Controls.Add(tabPageRound3);
+			tabGameModes.Controls.Add(tabPageRapidFire);
+			tabGameModes.Controls.Add(tabPage7);
+			tabGameModes.Dock = DockStyle.Fill;
+			tabGameModes.Location = new Point(0, 0);
+			tabGameModes.Name = "tabGameModes";
+			tabGameModes.SelectedIndex = 0;
+			tabGameModes.Size = new Size(1264, 248);
+			tabGameModes.TabIndex = 69;
+			tabGameModes.Selecting += tabGameModes_Selecting;
 			// 
-			// btnUuupsAnswer
+			// tabPageRound1
 			// 
-			btnUuupsAnswer.BackColor = Color.SandyBrown;
-			btnUuupsAnswer.Font = new Font("Segoe UI", 25F);
-			btnUuupsAnswer.ForeColor = SystemColors.ControlText;
-			btnUuupsAnswer.Location = new Point(359, 99);
-			btnUuupsAnswer.Margin = new Padding(3, 2, 3, 2);
-			btnUuupsAnswer.Name = "btnUuupsAnswer";
-			btnUuupsAnswer.Size = new Size(686, 59);
-			btnUuupsAnswer.TabIndex = 67;
-			btnUuupsAnswer.Text = "UPS";
-			btnUuupsAnswer.UseVisualStyleBackColor = false;
-			btnUuupsAnswer.Visible = false;
-			btnUuupsAnswer.Click += btnUuupsAnswer_Click;
+			tabPageRound1.Controls.Add(btn_R1InCorrectAnswer);
+			tabPageRound1.Controls.Add(btn_R1PrepareNext);
+			tabPageRound1.Controls.Add(btn_R1UuupsAnswer);
+			tabPageRound1.Controls.Add(btn_R1CorrectAnswer);
+			tabPageRound1.Controls.Add(btn_SendQuestion);
+			tabPageRound1.ForeColor = SystemColors.ControlText;
+			tabPageRound1.Location = new Point(4, 24);
+			tabPageRound1.Name = "tabPageRound1";
+			tabPageRound1.Padding = new Padding(3);
+			tabPageRound1.Size = new Size(1256, 220);
+			tabPageRound1.TabIndex = 0;
+			tabPageRound1.Text = "Round1";
+			tabPageRound1.UseVisualStyleBackColor = true;
 			// 
-			// btnSendQuestion
+			// btn_R1InCorrectAnswer
 			// 
-			btnSendQuestion.Location = new Point(40, 89);
-			btnSendQuestion.Margin = new Padding(3, 2, 3, 2);
-			btnSendQuestion.Name = "btnSendQuestion";
-			btnSendQuestion.Size = new Size(184, 146);
-			btnSendQuestion.TabIndex = 66;
-			btnSendQuestion.Text = "Send Question";
-			btnSendQuestion.UseVisualStyleBackColor = true;
-			btnSendQuestion.Click += btnSendQuestion_Click;
+			btn_R1InCorrectAnswer.BackColor = Color.OrangeRed;
+			btn_R1InCorrectAnswer.Font = new Font("Segoe UI", 26F);
+			btn_R1InCorrectAnswer.ForeColor = SystemColors.ControlText;
+			btn_R1InCorrectAnswer.Location = new Point(577, 16);
+			btn_R1InCorrectAnswer.Margin = new Padding(3, 2, 3, 2);
+			btn_R1InCorrectAnswer.Name = "btn_R1InCorrectAnswer";
+			btn_R1InCorrectAnswer.Size = new Size(318, 61);
+			btn_R1InCorrectAnswer.TabIndex = 72;
+			btn_R1InCorrectAnswer.Text = "Wrong";
+			btn_R1InCorrectAnswer.UseVisualStyleBackColor = false;
+			btn_R1InCorrectAnswer.Click += btnIncorrectAnswer_Click;
 			// 
-			// btnShowCorrect
+			// btn_R1PrepareNext
 			// 
-			btnShowCorrect.BackColor = Color.Tan;
-			btnShowCorrect.Location = new Point(1094, 18);
-			btnShowCorrect.Margin = new Padding(3, 2, 3, 2);
-			btnShowCorrect.Name = "btnShowCorrect";
-			btnShowCorrect.Size = new Size(145, 54);
-			btnShowCorrect.TabIndex = 60;
-			btnShowCorrect.Text = "Show Correct";
-			btnShowCorrect.UseVisualStyleBackColor = false;
-			btnShowCorrect.Click += btnShowCorrect_Click;
+			btn_R1PrepareNext.BackColor = Color.DarkSeaGreen;
+			btn_R1PrepareNext.Font = new Font("Segoe UI", 26F);
+			btn_R1PrepareNext.ForeColor = SystemColors.ControlText;
+			btn_R1PrepareNext.Location = new Point(253, 144);
+			btn_R1PrepareNext.Margin = new Padding(3, 2, 3, 2);
+			btn_R1PrepareNext.Name = "btn_R1PrepareNext";
+			btn_R1PrepareNext.Size = new Size(642, 61);
+			btn_R1PrepareNext.TabIndex = 71;
+			btn_R1PrepareNext.Text = "Prepare Next";
+			btn_R1PrepareNext.UseVisualStyleBackColor = false;
+			btn_R1PrepareNext.Click += btnPrepareNext_Click;
 			// 
-			// btnIncorrectAnswer
+			// btn_R1UuupsAnswer
 			// 
-			btnIncorrectAnswer.BackColor = Color.Red;
-			btnIncorrectAnswer.Font = new Font("Segoe UI", 26F);
-			btnIncorrectAnswer.ForeColor = SystemColors.ControlText;
-			btnIncorrectAnswer.Location = new Point(727, 17);
-			btnIncorrectAnswer.Margin = new Padding(3, 2, 3, 2);
-			btnIncorrectAnswer.Name = "btnIncorrectAnswer";
-			btnIncorrectAnswer.Size = new Size(318, 61);
-			btnIncorrectAnswer.TabIndex = 16;
-			btnIncorrectAnswer.Text = "NO";
-			btnIncorrectAnswer.UseVisualStyleBackColor = false;
-			btnIncorrectAnswer.Visible = false;
-			btnIncorrectAnswer.Click += btnIncorrectAnswer_Click;
+			btn_R1UuupsAnswer.BackColor = Color.SandyBrown;
+			btn_R1UuupsAnswer.Font = new Font("Segoe UI", 25F);
+			btn_R1UuupsAnswer.ForeColor = SystemColors.ControlText;
+			btn_R1UuupsAnswer.Location = new Point(253, 81);
+			btn_R1UuupsAnswer.Margin = new Padding(3, 2, 3, 2);
+			btn_R1UuupsAnswer.Name = "btn_R1UuupsAnswer";
+			btn_R1UuupsAnswer.Size = new Size(642, 59);
+			btn_R1UuupsAnswer.TabIndex = 70;
+			btn_R1UuupsAnswer.Text = "UPS";
+			btn_R1UuupsAnswer.UseVisualStyleBackColor = false;
+			btn_R1UuupsAnswer.Click += btnUuupsAnswer_Click;
 			// 
-			// rf_CBoxRapidFireMode
+			// btn_SendQuestion
 			// 
-			rf_CBoxRapidFireMode.DropDownStyle = ComboBoxStyle.DropDownList;
-			rf_CBoxRapidFireMode.FormattingEnabled = true;
-			rf_CBoxRapidFireMode.Location = new Point(1035, 99);
-			rf_CBoxRapidFireMode.Margin = new Padding(3, 2, 3, 2);
-			rf_CBoxRapidFireMode.Name = "rf_CBoxRapidFireMode";
-			rf_CBoxRapidFireMode.Size = new Size(145, 23);
-			rf_CBoxRapidFireMode.TabIndex = 1;
-			rf_CBoxRapidFireMode.Visible = false;
+			btn_SendQuestion.Location = new Point(16, 16);
+			btn_SendQuestion.Margin = new Padding(3, 2, 3, 2);
+			btn_SendQuestion.Name = "btn_SendQuestion";
+			btn_SendQuestion.Size = new Size(184, 189);
+			btn_SendQuestion.TabIndex = 67;
+			btn_SendQuestion.Text = "Send Question";
+			btn_SendQuestion.UseVisualStyleBackColor = true;
+			btn_SendQuestion.Click += btnSendQuestion_Click;
 			// 
-			// btnCorrectAnswer
+			// tabPageRound2
 			// 
-			btnCorrectAnswer.BackColor = Color.Green;
-			btnCorrectAnswer.Font = new Font("Segoe UI", 26F);
-			btnCorrectAnswer.ForeColor = SystemColors.ControlText;
-			btnCorrectAnswer.Location = new Point(359, 17);
-			btnCorrectAnswer.Margin = new Padding(3, 2, 3, 2);
-			btnCorrectAnswer.Name = "btnCorrectAnswer";
-			btnCorrectAnswer.Size = new Size(318, 61);
-			btnCorrectAnswer.TabIndex = 15;
-			btnCorrectAnswer.Text = "YES";
-			btnCorrectAnswer.UseVisualStyleBackColor = false;
-			btnCorrectAnswer.Visible = false;
-			btnCorrectAnswer.Click += btnCorrectAnswer_Click;
+			tabPageRound2.Location = new Point(4, 24);
+			tabPageRound2.Name = "tabPageRound2";
+			tabPageRound2.Padding = new Padding(3);
+			tabPageRound2.Size = new Size(1256, 220);
+			tabPageRound2.TabIndex = 1;
+			tabPageRound2.Text = "Round2";
+			tabPageRound2.UseVisualStyleBackColor = true;
 			// 
-			// button4
+			// tabPageRound3
 			// 
-			button4.Location = new Point(1115, 130);
-			button4.Margin = new Padding(3, 2, 3, 2);
-			button4.Name = "button4";
-			button4.Size = new Size(65, 54);
-			button4.TabIndex = 64;
-			button4.Text = "Stop";
-			button4.UseVisualStyleBackColor = true;
-			button4.Visible = false;
+			tabPageRound3.Location = new Point(4, 24);
+			tabPageRound3.Name = "tabPageRound3";
+			tabPageRound3.Padding = new Padding(3);
+			tabPageRound3.Size = new Size(1256, 220);
+			tabPageRound3.TabIndex = 2;
+			tabPageRound3.Text = "Round3";
+			tabPageRound3.UseVisualStyleBackColor = true;
+			// 
+			// tabPageRapidFire
+			// 
+			tabPageRapidFire.Controls.Add(btnStartRapidFire);
+			tabPageRapidFire.Location = new Point(4, 24);
+			tabPageRapidFire.Name = "tabPageRapidFire";
+			tabPageRapidFire.Padding = new Padding(3);
+			tabPageRapidFire.Size = new Size(1256, 220);
+			tabPageRapidFire.TabIndex = 3;
+			tabPageRapidFire.Text = "RapidFire";
+			tabPageRapidFire.UseVisualStyleBackColor = true;
 			// 
 			// btnStartRapidFire
 			// 
-			btnStartRapidFire.Location = new Point(40, 18);
+			btnStartRapidFire.Location = new Point(94, 53);
 			btnStartRapidFire.Margin = new Padding(3, 2, 3, 2);
 			btnStartRapidFire.Name = "btnStartRapidFire";
 			btnStartRapidFire.Size = new Size(184, 40);
-			btnStartRapidFire.TabIndex = 14;
+			btnStartRapidFire.TabIndex = 15;
 			btnStartRapidFire.Text = "StartRapidFire ";
 			btnStartRapidFire.UseVisualStyleBackColor = true;
 			btnStartRapidFire.Click += btnStartRapidFire_Click;
 			// 
-			// button5
+			// tabPage7
 			// 
-			button5.Location = new Point(1186, 130);
-			button5.Margin = new Padding(3, 2, 3, 2);
-			button5.Name = "button5";
-			button5.Size = new Size(65, 54);
-			button5.TabIndex = 65;
-			button5.Text = "Resume";
-			button5.UseVisualStyleBackColor = true;
-			button5.Visible = false;
-			button5.Click += button5_Click;
+			tabPage7.Controls.Add(btnShowCorrect);
+			tabPage7.Location = new Point(4, 24);
+			tabPage7.Name = "tabPage7";
+			tabPage7.Padding = new Padding(3);
+			tabPage7.Size = new Size(1256, 220);
+			tabPage7.TabIndex = 4;
+			tabPage7.Text = "Common";
+			tabPage7.UseVisualStyleBackColor = true;
 			// 
-			// button2
+			// btnShowCorrect
 			// 
-			button2.Location = new Point(1186, 14);
-			button2.Margin = new Padding(3, 2, 3, 2);
-			button2.Name = "button2";
-			button2.Size = new Size(65, 54);
-			button2.TabIndex = 62;
-			button2.Text = "Start";
-			button2.UseVisualStyleBackColor = true;
-			button2.Visible = false;
-			button2.Click += button2_Click;
-			// 
-			// button3
-			// 
-			button3.Location = new Point(1186, 72);
-			button3.Margin = new Padding(3, 2, 3, 2);
-			button3.Name = "button3";
-			button3.Size = new Size(65, 54);
-			button3.TabIndex = 63;
-			button3.Text = "Pause";
-			button3.UseVisualStyleBackColor = true;
-			button3.Visible = false;
-			button3.Click += button3_Click;
+			btnShowCorrect.BackColor = Color.Tan;
+			btnShowCorrect.Location = new Point(243, 83);
+			btnShowCorrect.Margin = new Padding(3, 2, 3, 2);
+			btnShowCorrect.Name = "btnShowCorrect";
+			btnShowCorrect.Size = new Size(145, 54);
+			btnShowCorrect.TabIndex = 61;
+			btnShowCorrect.Text = "Show Correct";
+			btnShowCorrect.UseVisualStyleBackColor = false;
 			// 
 			// tableLayoutPanel5
 			// 
+			tableLayoutPanel5.AutoSize = true;
+			tableLayoutPanel5.AutoSizeMode = AutoSizeMode.GrowAndShrink;
 			tableLayoutPanel5.ColumnCount = 2;
-			tableLayoutPanel5.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 58.3333321F));
-			tableLayoutPanel5.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 41.6666679F));
+			tableLayoutPanel5.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 69.14557F));
+			tableLayoutPanel5.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 30.8544312F));
 			tableLayoutPanel5.Controls.Add(dgvQuestions, 0, 0);
 			tableLayoutPanel5.Controls.Add(dgvContestants, 1, 0);
 			tableLayoutPanel5.Dock = DockStyle.Fill;
@@ -752,13 +636,14 @@
 			tableLayoutPanel5.Name = "tableLayoutPanel5";
 			tableLayoutPanel5.RowCount = 1;
 			tableLayoutPanel5.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-			tableLayoutPanel5.Size = new Size(1264, 319);
+			tableLayoutPanel5.Size = new Size(1264, 367);
 			tableLayoutPanel5.TabIndex = 5;
 			// 
 			// dgvQuestions
 			// 
 			dgvQuestions.AllowUserToAddRows = false;
 			dgvQuestions.AllowUserToDeleteRows = false;
+			dgvQuestions.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.AllCellsExceptHeaders;
 			dgvQuestions.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
 			dgvQuestions.Dock = DockStyle.Fill;
 			dgvQuestions.Location = new Point(3, 2);
@@ -767,7 +652,7 @@
 			dgvQuestions.RowHeadersWidth = 51;
 			dgvQuestions.RowTemplate.Height = 24;
 			dgvQuestions.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-			dgvQuestions.Size = new Size(731, 315);
+			dgvQuestions.Size = new Size(868, 363);
 			dgvQuestions.TabIndex = 3;
 			// 
 			// dgvContestants
@@ -776,13 +661,13 @@
 			dgvContestants.AllowUserToDeleteRows = false;
 			dgvContestants.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
 			dgvContestants.Dock = DockStyle.Fill;
-			dgvContestants.Location = new Point(740, 2);
+			dgvContestants.Location = new Point(877, 2);
 			dgvContestants.Margin = new Padding(3, 2, 3, 2);
 			dgvContestants.Name = "dgvContestants";
 			dgvContestants.RowHeadersWidth = 51;
 			dgvContestants.RowTemplate.Height = 24;
 			dgvContestants.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-			dgvContestants.Size = new Size(521, 315);
+			dgvContestants.Size = new Size(384, 363);
 			dgvContestants.TabIndex = 75;
 			// 
 			// tableLayoutPanel4
@@ -803,7 +688,7 @@
 			tableLayoutPanel4.RowStyles.Add(new RowStyle());
 			tableLayoutPanel4.RowStyles.Add(new RowStyle(SizeType.Percent, 96.94656F));
 			tableLayoutPanel4.RowStyles.Add(new RowStyle(SizeType.Absolute, 15F));
-			tableLayoutPanel4.Size = new Size(421, 605);
+			tableLayoutPanel4.Size = new Size(421, 693);
 			tableLayoutPanel4.TabIndex = 2;
 			// 
 			// flowLayoutPanelYutubeButtons
@@ -824,11 +709,11 @@
 			tabControl1.Controls.Add(tabPage3);
 			tabControl1.Controls.Add(tabPage4);
 			tabControl1.Dock = DockStyle.Fill;
-			tabControl1.Location = new Point(3, 23);
+			tabControl1.Location = new Point(3, 26);
 			tabControl1.Margin = new Padding(3, 2, 3, 2);
 			tabControl1.Name = "tabControl1";
 			tabControl1.SelectedIndex = 0;
-			tabControl1.Size = new Size(415, 564);
+			tabControl1.Size = new Size(415, 649);
 			tabControl1.TabIndex = 82;
 			// 
 			// tabPage1
@@ -838,7 +723,7 @@
 			tabPage1.Margin = new Padding(3, 2, 3, 2);
 			tabPage1.Name = "tabPage1";
 			tabPage1.Padding = new Padding(3, 2, 3, 2);
-			tabPage1.Size = new Size(407, 536);
+			tabPage1.Size = new Size(407, 621);
 			tabPage1.TabIndex = 0;
 			tabPage1.Text = "Graphics";
 			tabPage1.UseVisualStyleBackColor = true;
@@ -937,22 +822,43 @@
 			// 
 			// tabPage2
 			// 
+			tabPage2.Controls.Add(tbx_YTVideoId);
+			tabPage2.Controls.Add(AudienceCountdownDuration);
 			tabPage2.Controls.Add(groupBox2);
 			tabPage2.Controls.Add(flowLayoutPanel1);
 			tabPage2.Location = new Point(4, 24);
 			tabPage2.Margin = new Padding(3, 2, 3, 2);
 			tabPage2.Name = "tabPage2";
 			tabPage2.Padding = new Padding(3, 2, 3, 2);
-			tabPage2.Size = new Size(407, 536);
+			tabPage2.Size = new Size(407, 621);
 			tabPage2.TabIndex = 1;
 			tabPage2.Text = "YouTUBE";
 			tabPage2.UseVisualStyleBackColor = true;
+			// 
+			// tbx_YTVideoId
+			// 
+			tbx_YTVideoId.Font = new Font("Segoe UI", 12F);
+			tbx_YTVideoId.Location = new Point(126, 221);
+			tbx_YTVideoId.Margin = new Padding(3, 2, 3, 2);
+			tbx_YTVideoId.Name = "tbx_YTVideoId";
+			tbx_YTVideoId.Size = new Size(183, 29);
+			tbx_YTVideoId.TabIndex = 86;
+			// 
+			// AudienceCountdownDuration
+			// 
+			AudienceCountdownDuration.Font = new Font("Segoe UI", 25F);
+			AudienceCountdownDuration.Location = new Point(222, 158);
+			AudienceCountdownDuration.Margin = new Padding(3, 2, 3, 2);
+			AudienceCountdownDuration.Name = "AudienceCountdownDuration";
+			AudienceCountdownDuration.Size = new Size(87, 52);
+			AudienceCountdownDuration.TabIndex = 85;
+			AudienceCountdownDuration.Value = new decimal(new int[] { 60, 0, 0, 0 });
 			// 
 			// groupBox2
 			// 
 			groupBox2.Controls.Add(richTextBox1);
 			groupBox2.Dock = DockStyle.Bottom;
-			groupBox2.Location = new Point(3, 276);
+			groupBox2.Location = new Point(3, 361);
 			groupBox2.Margin = new Padding(3, 2, 3, 2);
 			groupBox2.Name = "groupBox2";
 			groupBox2.Padding = new Padding(3, 2, 3, 2);
@@ -1020,7 +926,7 @@
 			tabPage3.Margin = new Padding(3, 2, 3, 2);
 			tabPage3.Name = "tabPage3";
 			tabPage3.Padding = new Padding(3, 2, 3, 2);
-			tabPage3.Size = new Size(407, 536);
+			tabPage3.Size = new Size(407, 621);
 			tabPage3.TabIndex = 2;
 			tabPage3.Text = "FaceBOOK";
 			tabPage3.UseVisualStyleBackColor = true;
@@ -1035,7 +941,7 @@
 			tabPage4.Margin = new Padding(3, 2, 3, 2);
 			tabPage4.Name = "tabPage4";
 			tabPage4.Padding = new Padding(3, 2, 3, 2);
-			tabPage4.Size = new Size(407, 536);
+			tabPage4.Size = new Size(407, 621);
 			tabPage4.TabIndex = 3;
 			tabPage4.Text = "DMX";
 			tabPage4.UseVisualStyleBackColor = true;
@@ -1078,15 +984,14 @@
 			// 
 			panel1.BackColor = SystemColors.ActiveBorder;
 			panel1.Controls.Add(cmbCountdownMode);
-			panel1.Controls.Add(lblPollingCountdown);
 			panel1.Controls.Add(lblCountdown);
 			panel1.Controls.Add(CountdownDuration);
 			panel1.Controls.Add(listBoxClients);
 			panel1.Dock = DockStyle.Fill;
-			panel1.Location = new Point(3, 72);
+			panel1.Location = new Point(3, 82);
 			panel1.Margin = new Padding(3, 2, 3, 2);
 			panel1.Name = "panel1";
-			panel1.Size = new Size(2142, 87);
+			panel1.Size = new Size(2142, 99);
 			panel1.TabIndex = 43;
 			// 
 			// cmbCountdownMode
@@ -1098,16 +1003,6 @@
 			cmbCountdownMode.Name = "cmbCountdownMode";
 			cmbCountdownMode.Size = new Size(349, 53);
 			cmbCountdownMode.TabIndex = 45;
-			// 
-			// lblPollingCountdown
-			// 
-			lblPollingCountdown.AutoSize = true;
-			lblPollingCountdown.Font = new Font("Microsoft Sans Serif", 15F, FontStyle.Regular, GraphicsUnit.Point, 0);
-			lblPollingCountdown.Location = new Point(467, 45);
-			lblPollingCountdown.Name = "lblPollingCountdown";
-			lblPollingCountdown.Size = new Size(64, 25);
-			lblPollingCountdown.TabIndex = 39;
-			lblPollingCountdown.Text = "label1";
 			// 
 			// lblCountdown
 			// 
@@ -1123,7 +1018,7 @@
 			// CountdownDuration
 			// 
 			CountdownDuration.Font = new Font("Segoe UI", 25F);
-			CountdownDuration.Location = new Point(951, 18);
+			CountdownDuration.Location = new Point(1019, 18);
 			CountdownDuration.Margin = new Padding(3, 2, 3, 2);
 			CountdownDuration.Name = "CountdownDuration";
 			CountdownDuration.Size = new Size(87, 52);
@@ -1138,7 +1033,7 @@
 			listBoxClients.Location = new Point(1572, 0);
 			listBoxClients.Margin = new Padding(3, 2, 3, 2);
 			listBoxClients.Name = "listBoxClients";
-			listBoxClients.Size = new Size(570, 87);
+			listBoxClients.Size = new Size(570, 99);
 			listBoxClients.TabIndex = 8;
 			// 
 			// countdownTimer
@@ -1149,7 +1044,7 @@
 			// 
 			AutoScaleDimensions = new SizeF(7F, 15F);
 			AutoScaleMode = AutoScaleMode.Font;
-			ClientSize = new Size(2148, 991);
+			ClientSize = new Size(2148, 1126);
 			Controls.Add(PnlRapidFire);
 			Controls.Add(labelRegisteredConnections);
 			Controls.Add(labelActiveConnections);
@@ -1163,8 +1058,6 @@
 			tabControlMain.ResumeLayout(false);
 			tPageTest.ResumeLayout(false);
 			pnl_Test.ResumeLayout(false);
-			pnl_Test.PerformLayout();
-			((System.ComponentModel.ISupportInitialize)AudienceCountdownDuration).EndInit();
 			tPageRapidFire.ResumeLayout(false);
 			tableLayoutPanel1.ResumeLayout(false);
 			tableLayoutPanel2.ResumeLayout(false);
@@ -1172,7 +1065,12 @@
 			groupBox1.PerformLayout();
 			flowLayoutPanel2.ResumeLayout(false);
 			tableLayoutPanel3.ResumeLayout(false);
+			tableLayoutPanel3.PerformLayout();
 			panel2.ResumeLayout(false);
+			tabGameModes.ResumeLayout(false);
+			tabPageRound1.ResumeLayout(false);
+			tabPageRapidFire.ResumeLayout(false);
+			tabPage7.ResumeLayout(false);
 			tableLayoutPanel5.ResumeLayout(false);
 			((System.ComponentModel.ISupportInitialize)dgvQuestions).EndInit();
 			((System.ComponentModel.ISupportInitialize)dgvContestants).EndInit();
@@ -1182,6 +1080,8 @@
 			tabPage1.ResumeLayout(false);
 			flowLayoutPanelLoads.ResumeLayout(false);
 			tabPage2.ResumeLayout(false);
+			tabPage2.PerformLayout();
+			((System.ComponentModel.ISupportInitialize)AudienceCountdownDuration).EndInit();
 			groupBox2.ResumeLayout(false);
 			flowLayoutPanel1.ResumeLayout(false);
 			tabPage4.ResumeLayout(false);
@@ -1203,7 +1103,6 @@
 		private System.Windows.Forms.TabControl tabControlMain;
 		private System.Windows.Forms.TabPage tPageTest;
 		private System.Windows.Forms.TabPage tPageRapidFire;
-		private System.Windows.Forms.Label lblPollingCountdown;
 		private System.Windows.Forms.Label lblCountdown;
 		private System.Windows.Forms.NumericUpDown CountdownDuration;
 		private System.Windows.Forms.Panel panel1;
@@ -1213,39 +1112,24 @@
 		private System.Windows.Forms.Button btnLoadCG;
 		private System.Windows.Forms.Button btnStartPolling;
 		private System.Windows.Forms.Button btnDisconnectSelectedClient;
-		private System.Windows.Forms.Button btnNo;
 		private System.Windows.Forms.Button btn_YTAuth;
 		public System.Windows.Forms.CheckBox chBoxClearScores;
 		private System.Windows.Forms.Button btnSendToSelectedClient;
 		private System.Windows.Forms.Button btnSendMessageToClients;
 		private System.Windows.Forms.ComboBox cmbPollingMode;
-		private System.Windows.Forms.TextBox txtMessageToSpecificClient;
-		private System.Windows.Forms.TextBox txtMessageToSend;
 		private Button btnStartCountdown;
 		private System.Windows.Forms.Timer countdownTimer;
 		private ComboBox cmbCountdownMode;
-		private Button btnStartRapidFire;
-		private Button btnIncorrectAnswer;
-		private Button btnCorrectAnswer;
-		private Button btnShowCorrect;
 		private Button button4;
 		private Button button3;
-		private Button button2;
+		private Button btn_R1InCorrectAnswer;
 		private Button button5;
 		private Button btnShowFinalResults;
 		private Button btnStoreResults;
 		private Button btnShowLeaderBoard;
 		public DataGridView dgvContestants;
 		private BindingSource playerBindingSource;
-		private TextBox tbx_YTVideoId;
-		private TextBox tBx_YTRedirectURI;
-		private TextBox tBx_YTClientID;
 		private ListBox votingUserListBox;
-		private Button btn_StopAudienceVoting;
-		private Button btn_StartAudienceVoting;
-		private NumericUpDown AudienceCountdownDuration;
-		private Button button6;
-		private Button button9;
 		private TableLayoutPanel tableLayoutPanel1;
 		private Button rf_BtnLoadQuestions;
 		private TableLayoutPanel tableLayoutPanel2;
@@ -1260,7 +1144,6 @@
 		private FlowLayoutPanel flowLayoutPanel2;
 		private TableLayoutPanel tableLayoutPanel5;
 		private TableLayoutPanel tableLayoutPanel4;
-		private Button btnSendQuestion;
 		private FlowLayoutPanel flowLayoutPanelYutubeButtons;
 		private TabControl tabControl1;
 		private TabPage tabPage1;
@@ -1286,7 +1169,21 @@
 		private TextBox tBox_MidiVelocity;
 		private TextBox tBox_MidiNote;
 		private Button btnUuupsAnswer;
-		private Button btnPrepareNext;
+		private NumericUpDown AudienceCountdownDuration;
+		private TextBox tbx_YTVideoId;
+		private TabControl tabGameModes;
+		private TabPage tabPageRound1;
+		private TabPage tabPageRound2;
+		private TabPage tabPageRound3;
+		private TabPage tabPageRapidFire;
+		private Button btnStartRapidFire;
+		private Button btnIncorrectAnswer;
+		private Button btn_R1CorrectAnswer;
+		private Button btn_SendQuestion;
+		private Button btn_R1PrepareNext;
+		private Button btn_R1UuupsAnswer;
+		private TabPage tabPage7;
+		private Button btnShowCorrect;
 	}
 }
 

@@ -78,6 +78,9 @@
     <None Update="CasparCG\Templates\_qFull\style.css">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="CasparCG\Templates\_qLow\indexGSAPdsk - Copy.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="CasparCG\Templates\_qLow\indexGSAPdsk.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

@@ -59,7 +59,7 @@ namespace GameController.Server.Hubs
 
 
 		//private readonly CasparCGService _casparCGService;
-		private readonly CasparCGSettings _cgSettings;
+		private readonly CasparCGSettings? _cgSettings;
 		private static bool _isLeaderBoardActive = false; // Add this static variable to track state
 		private static List<PlayerScore> _finalScores = new List<PlayerScore>();
 
@@ -76,13 +76,14 @@ namespace GameController.Server.Hubs
 		private readonly IYouTubeDataCollectorService _ytdataCollectorService;
 		private readonly IYouTubeChatService _youtubeChatService; // 
 
-		public static string YTaccessToken;
-		public static string YTrefreshToken;
+		public static string? YTaccessToken;
+		public static string? YTrefreshToken;
 		private readonly IYTOAuthTokenService _ytoauthTokenService;
 		public static bool _isYTVotingModeActive = false; // ახალი
-		//private static ConcurrentDictionary<string, bool> _activeYTAudienceIds = new ConcurrentDictionary<string, bool>();
+														  //private static ConcurrentDictionary<string, bool> _activeYTAudienceIds = new ConcurrentDictionary<string, bool>();
 
 
+		private static readonly Dictionary<CGTemplateEnums, (int channel, string templateName, int layer, int layerCg)> _cgSettingsMap = new();
 
 
 
@@ -130,6 +131,17 @@ namespace GameController.Server.Hubs
 
 
 			_cgSettings = _configuration.GetSection("CG").Get<CasparCGSettings>();
+
+
+			if (_cgSettings != null)
+			{
+				_cgSettingsMap[CGTemplateEnums.QuestionFull] = (_cgSettings.QuestionFull.Channel, _cgSettings.QuestionFull.TemplateName, _cgSettings.QuestionFull.Layer, _cgSettings.QuestionFull.LayerCg);
+				_cgSettingsMap[CGTemplateEnums.QuestionLower] = (_cgSettings.QuestionLower.Channel, _cgSettings.QuestionLower.TemplateName, _cgSettings.QuestionLower.Layer, _cgSettings.QuestionLower.LayerCg);
+				_cgSettingsMap[CGTemplateEnums.Countdown] = (_cgSettings.CountDown.Channel, _cgSettings.CountDown.TemplateName, _cgSettings.CountDown.Layer, _cgSettings.CountDown.LayerCg);
+				_cgSettingsMap[CGTemplateEnums.LeaderBoard] = (_cgSettings.LeaderBoard.Channel, _cgSettings.LeaderBoard.TemplateName, _cgSettings.LeaderBoard.Layer, _cgSettings.LeaderBoard.LayerCg);
+				_cgSettingsMap[CGTemplateEnums.YTVote] = (_cgSettings.YTVote.Channel, _cgSettings.YTVote.TemplateName, _cgSettings.YTVote.Layer, _cgSettings.YTVote.LayerCg);
+				_cgSettingsMap[CGTemplateEnums.QuestionVideo] = (_cgSettings.QuestionVideo.Channel, _cgSettings.QuestionVideo.TemplateName, _cgSettings.QuestionVideo.Layer, _cgSettings.QuestionVideo.LayerCg);
+			}
 			_casparCGWsService = casparCGWsService;
 
 
@@ -271,80 +283,73 @@ namespace GameController.Server.Hubs
 
 		#region CasparCG
 
-		public async Task CGClearChannelLayer(CGTemplateEnums templateType)
+		public async Task CGWSClearChannelLayer(CGTemplateEnums templateType)
 		{
-			var channel = -1;
-			var layer = -1;
 
 
-			if (templateType == CGTemplateEnums.QuestionFull)
+			var data = new
 			{
-				channel = _cgSettings.QuestionFull.Channel;
-				layer = _cgSettings.QuestionFull.Layer;
-			}
-			else if (templateType == CGTemplateEnums.QuestionLower)
-			{
-				channel = _cgSettings.QuestionLower.Channel;
-				layer = _cgSettings.QuestionLower.Layer;
-			}
-			else if (templateType == CGTemplateEnums.Countdown)
-			{
-				channel = _cgSettings.CountDown.Channel;
-				layer = _cgSettings.CountDown.Layer;
-			}
-			else if (templateType == CGTemplateEnums.LeaderBoard)
-			{
-				channel = _cgSettings.LeaderBoard.Channel;
-				layer = _cgSettings.LeaderBoard.Layer;
-			}
-			else if (templateType == CGTemplateEnums.YTVote)
-			{
-				channel = _cgSettings.YTVote.Channel;
-				layer = _cgSettings.YTVote.Layer;
-			}
-			else if (templateType == CGTemplateEnums.QuestionVideo)
-			{
-				channel = _cgSettings.QuestionVideo.Channel;
-				layer = _cgSettings.QuestionVideo.Layer;
-			}
+				type = "clear_content",
+				Question = "",
+				QuestionImage = "",
+				Answers = ""
+			};
+						
+			await _casparCGWsService.SendDataToTemplateAsync(templateType.ToString(), data);
 
-			await _caspar.ClearChannelLayer(channel, layer);
+			
 
 		}
 
 		public async Task CGClearChannel(CGTemplateEnums templateType)
 		{
-			var channel = -1;
+			//var channel = -1;
 
 
-			if (templateType == CGTemplateEnums.QuestionFull)
+			var settings = _cgSettingsMap.GetValueOrDefault(templateType);
+			if (settings.channel > 0)
 			{
-				channel = _cgSettings.QuestionFull.Channel;
-			}
-			else if (templateType == CGTemplateEnums.QuestionLower)
-			{
-				channel = _cgSettings.QuestionLower.Channel;
-			}
-			else if (templateType == CGTemplateEnums.Countdown)
-			{
-				channel = _cgSettings.CountDown.Channel;
-			}
-			else if (templateType == CGTemplateEnums.LeaderBoard)
-			{
-				channel = _cgSettings.LeaderBoard.Channel;
-			}
-			else if (templateType == CGTemplateEnums.YTVote)
-			{
-				channel = _cgSettings.YTVote.Channel;
-			}
-			else if (templateType == CGTemplateEnums.QuestionVideo)
-			{
-				channel = _cgSettings.QuestionVideo.Channel;
+				await _caspar.ClearChannel(settings.channel);
 			}
 
-			await _caspar.ClearChannel(channel);
+			//if (templateType == CGTemplateEnums.QuestionFull)
+			//{
+			//	channel = _cgSettings.QuestionFull.Channel;
+			//}
+			//else if (templateType == CGTemplateEnums.QuestionLower)
+			//{
+			//	channel = _cgSettings.QuestionLower.Channel;
+			//}
+			//else if (templateType == CGTemplateEnums.Countdown)
+			//{
+			//	channel = _cgSettings.CountDown.Channel;
+			//}
+			//else if (templateType == CGTemplateEnums.LeaderBoard)
+			//{
+			//	channel = _cgSettings.LeaderBoard.Channel;
+			//}
+			//else if (templateType == CGTemplateEnums.YTVote)
+			//{
+			//	channel = _cgSettings.YTVote.Channel;
+			//}
+			//else if (templateType == CGTemplateEnums.QuestionVideo)
+			//{
+			//	channel = _cgSettings.QuestionVideo.Channel;
+			//}
+
+			//await _caspar.ClearChannel(channel);
 		}
+
 		public async Task<OperationResult> CGLoadTemplate(CGTemplateEnums templateType)
+		{
+			var (channel, templateName, layer, _) = _cgSettingsMap.GetValueOrDefault(templateType);
+			if (string.IsNullOrEmpty(templateName))
+			{
+				return new OperationResult(false);
+			}
+			return await CGEnsureTemplateLoadedAsync(templateName, channel, layer);
+		}
+		public async Task<OperationResult> CGLoadTemplate_(CGTemplateEnums templateType)
 		{
 			var res = new OperationResult(true);
 			var templateName = string.Empty;
@@ -420,12 +425,10 @@ namespace GameController.Server.Hubs
 
 		{
 			_logger.LogInformation($"{Environment.NewLine}{DateTime.Now} Operator requested to update template fro Correct Answer '{templateType}' {message}");
-
-
-			// Use the new method that targets a specific template
+						
 			await _casparCGWsService.SendDataToTemplateAsync(templateType, message);
 		}
-		public async Task CGWSUpdateQuestionTemplateData(string templateType, QuestionModel question)
+		public async Task CGWSUpdateQuestionTemplateData_(string templateType, QuestionModel question)
 		{
 			_logger.LogInformation($"{Environment.NewLine}{DateTime.Now} Operator requested to update template '{templateType}' for Question {question}");
 
@@ -441,7 +444,19 @@ namespace GameController.Server.Hubs
 			await _casparCGWsService.SendDataToTemplateAsync(templateType, data);
 		}
 
-		public async Task CGWSCountdown(string templateType, int duration, CountdownStopMode action, long endTimestamp)
+		public async Task CGWSUpdateQuestionTemplateData(string templateType, QuestionModel question)
+		{
+			var data = new
+			{
+				type = "show_question",
+				Question = question.Question,
+				QuestionImage = question.QuestionImage,
+				Answers = question.Answers
+			};
+			await _casparCGWsService.SendDataToTemplateAsync(templateType, data);
+		}
+
+		public async Task CGWSCountdown_(string templateType, int duration, CountdownStopMode action, long endTimestamp)
 		{
 
 			if (_currentGameMode == GameMode.Round1)
@@ -455,7 +470,15 @@ namespace GameController.Server.Hubs
 				endTime = endTimestamp
 			};
 
-			// Use the new method that targets a specific template
+			
+			await _casparCGWsService.SendDataToTemplateAsync(templateType, message);
+		}
+
+		public async Task CGWSCountdown(string templateType, int duration, CountdownStopMode action, long endTimestamp)
+		{
+			_logger.LogInformation($"{Environment.NewLine}{DateTime.Now}  Trigger Countdown Start in Template '{templateType}' for {action} sec");
+			if (_currentGameMode == GameMode.Round1) return;
+			var message = new { type = action.ToString(), endTime = endTimestamp };
 			await _casparCGWsService.SendDataToTemplateAsync(templateType, message);
 		}
 
@@ -489,8 +512,18 @@ namespace GameController.Server.Hubs
 			await _caspar.PlayClip(channel, layer, templateName);
 		}
 
+		public async Task CGClearPlayClip(CGTemplateEnums templateType)
+		{
+			var (channel, templateName, layer, _) = _cgSettingsMap.GetValueOrDefault(templateType);
+			await _caspar.ClearChannelLayer(channel, layer);
+		}
 
+		public async Task CGSWSendScoreboardToCaspar(List<Player> players)
+		{
+			await CGSWOnPlayerScoreChanged();
 
+		}
+		#endregion
 
 
 
@@ -503,23 +536,7 @@ namespace GameController.Server.Hubs
 
 			_isCountdownActiveOnCG = true;
 		}
-
-
-
-
-		
-
-		
-
-		
-
-		public async Task CGSWSendScoreboardToCaspar(List<Player> players)
-		{
-			await CGSWOnPlayerScoreChanged();
-
-		}
-
-						  
+										  
 		public async Task StartYTVoting()
 		{
 			_logger.LogInformation($"{Environment.NewLine}{DateTime.Now} StartYTVoting: Voting Starting {"duration"} Secs.");
@@ -577,7 +594,7 @@ namespace GameController.Server.Hubs
 
 		}
 
-		// 7) ხმის მიცემის რეჟიმის ჩართვა განუსაზღვრელი დროით
+		
 		public async Task StartVotingModeIndefinite()
 		{
 			if (_isYTVotingModeActive)
@@ -613,7 +630,7 @@ namespace GameController.Server.Hubs
 			}
 		}
 
-		// 6) ხმის მიცემის რეჟიმის შეჩერება
+		
 		public async Task StopVotingMode()
 		{
 			if (!_isYTVotingModeActive)
@@ -639,7 +656,7 @@ namespace GameController.Server.Hubs
 			}
 		}
 
-		// 5) მომხმარებლის გამოგდება ხმის მიცემის პროცესიდან
+		
 		public async Task KickUserFromVoting(string authorChannelId)
 		{
 			await _ytAudienceVoteManager.KickUserAsync(authorChannelId);
@@ -691,7 +708,7 @@ namespace GameController.Server.Hubs
 
 		}
 
-		#endregion
+		
 		public async Task<List<QuestionModel>> LoadQuestionsFromFile(string fileContent)
 		{
 			try
@@ -744,13 +761,7 @@ namespace GameController.Server.Hubs
 			// Simply return the list of players from the concurrent dictionary
 			return _gameService.ConnectedPlayers.Values.ToList();
 		}
-		//public async Task StartCountdown(int durationSeconds)
-		//{
-		//	return;
 
-		//	var endTimestamp = DateTimeOffset.UtcNow.AddSeconds(durationSeconds).ToUnixTimeMilliseconds();
-		//	await Clients.All.SendAsync("ReceiveCountdown", endTimestamp);
-		//}
 		public override async Task OnConnectedAsync()
 		{
 			
@@ -872,7 +883,7 @@ namespace GameController.Server.Hubs
 
 
 
-		public async Task SendQuestion(QuestionModel question, int durationSeconds, GameMode mode, bool disableInput, List<Player>? clients)
+		public async Task SendQuestion_(QuestionModel question, int durationSeconds, GameMode mode, bool disableInput, List<Player>? clients)
 		{
 
 			_logger.LogInformation($"{Environment.NewLine}{DateTime.Now} Sending question '{question.Question}' with a {durationSeconds}s countdown.");
@@ -927,6 +938,39 @@ namespace GameController.Server.Hubs
 			}
 		}
 
+
+		public async Task SendQuestion(QuestionModel question, int durationSeconds, GameMode mode, bool disableInput, List<Player>? clients)
+		{
+			_logger.LogInformation($"Sending question '{question.Question}' with a {durationSeconds}s countdown.");
+
+			_activeQuestion = question;
+			_answersReceivedCount = 0;
+			_currentGameMode = mode;
+
+			_midiLightingService.SendNoteOn(_midiSettings.CountdownNote, _midiSettings.CountdownVelocity);
+
+			var endTimestamp = DateTimeOffset.UtcNow.AddSeconds(durationSeconds).ToUnixTimeMilliseconds();
+
+			_activePlayerIds = clients?.Select(c => c.ConnectionId).ToList() ?? _gameService.ConnectedPlayers.Where(p => p.Value.ClientType == "Contestant").Select(p => p.Key).ToList();
+
+			var clientGroup = clients != null && clients.Count > 0
+				? Clients.Clients(_activePlayerIds)
+				: Clients.All;
+
+			await clientGroup.SendAsync("ReceiveQuestion", question, disableInput);
+			await clientGroup.SendAsync("ReceiveCountdown", endTimestamp);
+			await Clients.Client(GetOperatorConnectionId()).SendAsync("ReceiveCountdown", endTimestamp);
+
+			await CGWSCountdown(CGTemplateEnums.Countdown.ToString(), durationSeconds, CountdownStopMode.Start, endTimestamp);
+			await CGWSUpdateQuestionTemplateData(CGTemplateEnums.QuestionFull.ToString(), question);
+			await CGWSUpdateQuestionTemplateData(CGTemplateEnums.QuestionLower.ToString(), question);
+
+			if (!string.IsNullOrEmpty(question.QuestionVideo))
+			{
+				await CGPlayClip(_cgSettings.QuestionVideo.Channel, _cgSettings.QuestionVideo.Layer, question.QuestionVideo);
+				
+			}
+		}
 		public async Task UpdateScoresFromUIToMEM(List<Player> players)
 		{
 

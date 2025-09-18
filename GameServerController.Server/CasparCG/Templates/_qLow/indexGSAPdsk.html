@@ -187,6 +187,8 @@
                     handleShowAnswer(jsonData);
                 } else if (jsonData.type === 'show_question') {
                     update(jsonData);
+                } else if (jsonData.type === 'clear_content') { 
+                    handleClearContent();
                 }
             } catch (e) { }
         };
@@ -197,7 +199,7 @@
         }
 
         window.update = function (data) {
-            console.log('update: ');
+            //console.log('update: ');
             if (!data || Object.keys(data).length === 0) return;
             if (isFirstQuestion) {
                 updateQuestionContent(data);
@@ -210,6 +212,23 @@
 
         window.handleShowAnswer = function (data) { _impl_handleShowAnswer(data); };
 
+        window.handleClearContent = function () {
+            if (currentAnimation) currentAnimation.kill();
+            const questionContainer = document.getElementById('question-container');
+            gsap.to(questionContainer, {
+                ...animationConfig.clear,
+                onComplete: () => {
+                    // კონტეინერის დამალვა ანიმაციის შემდეგ
+                    questionContainer.style.visibility = 'hidden';
+                    // ყველა შიგთავსის გასუფთავება
+                    document.getElementById('question-text').innerText = '';
+                    document.getElementById('answers-container').innerHTML = '';
+                    // დაყენება, რომ შემდეგი კითხვა პირველად ჩაითვალოს
+                    isFirstQuestion = true;
+                }
+            });
+        };
+
         (function replayEarlyCalls() {
             if (window._initialUpdateData) { window.update(window._initialUpdateData); window._initialUpdateData = null; }
             if (window._initialShowAnswerData) { window.handleShowAnswer(window._initialShowAnswerData); window._initialShowAnswerData = null; }
@@ -221,6 +240,8 @@
                 window.update(demoData);
             }
         })();
+
+
 
         function updateQuestionContent(data) {
             console.log('updateQuestionContent: ');
@@ -288,7 +309,7 @@
 
         function animateSubsequentQuestion(data) {
 
-            console.log('animateSubsequentQuestion: ');
+            //console.log('animateSubsequentQuestion: ');
             if (currentAnimation) currentAnimation.kill();
             const questionTextElement = document.getElementById('question-text');
             const answerItems = document.querySelectorAll('.answer-item-wrapper');
@@ -303,10 +324,10 @@
 
                 
 
-                console.log('Checking answers: ');
+                //console.log('Checking answers: ');
                 if (!data.Answers || data.Answers.every(a => !a || a.trim() === "")) {
                     //answersContainer.style.display = "none";
-                    console.log('Hiding answers: ');
+                    //console.log('Hiding answers: ');
                     document.getElementById('answers-container').style.display = "none";
                     document.getElementById('answers-container').innerHTML = '';
                     return;
@@ -320,7 +341,7 @@
                 //}
 
 
-                console.log('Showing answers: ');
+                //console.log('Showing answers: ');
                 const answersContainer = document.getElementById('answers-container');
                 answersContainer.style.display = "grid";
                 answersContainer.innerHTML = '';

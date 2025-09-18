@@ -138,14 +138,14 @@ namespace GameController.Server.Services
 		public Task ClearChannel(int channel)
 		{
 			_logger.LogInformation($"{Environment.NewLine}{DateTime.Now} Going to Clear Channel {channel}");
-			//string json = JsonSerializer.Serialize(data);
+
 			return SendCommand($"CLEAR {channel}");
 		}
 
 		public Task ClearChannelLayer(int channel, int layer)
 		{
-			_logger.LogInformation($"{Environment.NewLine}{DateTime.Now} Going to Clear Channel {channel}");
-			//string json = JsonSerializer.Serialize(data);
+			_logger.LogInformation($"{Environment.NewLine}{DateTime.Now} Going to Clear Channel {channel}-{layer}");
+			
 			return SendCommand($"CLEAR {channel}-{layer}");
 		}
 

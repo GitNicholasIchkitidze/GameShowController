@@ -58,7 +58,7 @@ namespace GameShowCtrl
 		private string ClientId = "თქვენი_Client_ID"; // ჩაანაცვლეთ თქვენი Client ID-ით
 		private string ClientSecret = "თქვენი_Client_ID"; // ჩაანაცვლეთ თქვენი Client ID-ით
 		private string RedirectUri = "http://localhost:5001/auth"; // უნდა ემთხვეოდეს Google-ის კონფიგურაციას
-		private HttpListener _listener;
+		private HttpListener? _listener;
 
 		private ConcurrentDictionary<string, string> _activeAudienceMembers = new ConcurrentDictionary<string, string>();
 
@@ -494,7 +494,7 @@ namespace GameShowCtrl
 			{
 				// If it is, update the DataGridView
 				dgvQuestions.DataSource = questions;
-				dgvQuestions.ReadOnly = true;
+				//dgvQuestions.ReadOnly = true;
 				//dgvQuestions.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
 
 				// გამორთეთ ავტომატური დალაგება თითოეული სვეტისთვის
@@ -565,20 +565,7 @@ namespace GameShowCtrl
 
 		}
 
-		private void btnSendMessageToClients_Click(object sender, EventArgs e)
-		{
-			var message = txtMessageToSend.Text;
-			if (!string.IsNullOrEmpty(message))
-			{
-				// მიიღეთ Hub-ის კონტექსტი
-				//var hubContext = GlobalHost.ConnectionManager.GetHubContext<GameHub>();
-				//// გამოიძახეთ კლიენტ-საიდ მეთოდი 'addMessage' ყველა დაკავშირებულ კლიენტზე
-				//hubContext.Clients.All.addMessage("WinForms Server", message);
-				AppendLog($"[WinForms UI] გაგზავნილია კლიენტებზე: {message}");
-				//txtMessageToSend.Clear(); // შეყვანის ველის გასუფთავება
-			}
 
-		}
 
 
 
@@ -602,13 +589,13 @@ namespace GameShowCtrl
 
 			var fetchIp = selectedPlayer?.Split(' ')[0] ?? string.Empty; // Extract the Connection ID safely
 
-			var pls = GetRegisteredPlayers();
-			var selPlayerConnectionId = (await pls).FirstOrDefault(p => p.Ip == fetchIp)?.ConnectionId;
+			var pls = await GetRegisteredPlayers();
+			var selPlayerConnectionId = pls.FirstOrDefault(p => p.Ip == fetchIp)?.ConnectionId;
 			if (!string.IsNullOrEmpty(listBoxClients.Text))
 			{
 				// Invoke the SignalR method on the server
-				await _hubConnection.InvokeAsync("SendMessageToClient", selPlayerConnectionId, txtMessageToSpecificClient.Text);
-				txtMessageToSpecificClient.Clear();
+				//await _hubConnection.InvokeAsync("SendMessageToClient", selPlayerConnectionId, txtMessageToSpecificClient.Text);
+				//txtMessageToSpecificClient.Clear();
 
 
 			}
@@ -750,14 +737,14 @@ namespace GameShowCtrl
 				await _hubConnection.InvokeAsync("SendQuestion", question, countdownDuration, selectedMode, disableInput, targetClients);
 
 
-				btnCorrectAnswer.Enabled = true;
-				btnIncorrectAnswer.Enabled = true;
+				//btn_R1CorrectAnswer.Enabled = true;
+				//btnIncorrectAnswer.Enabled = true;
 
-				if (selectedMode == GameMode.Round1 && cBoxDisableInput.Checked)
-				{
-
-					btnPrepareNext.Visible = false;
-				}
+				//if (selectedMode == GameMode.Round1 && cBoxDisableInput.Checked)
+				//{
+				//
+				//	btn_R1PrepareNext.Visible = false;
+				//}
 
 			}
 			else
@@ -835,13 +822,13 @@ namespace GameShowCtrl
 
 			await _hubConnection.InvokeAsync("OperatorConfirmAnswer", false);
 			_lastAction = LastAction.Incorrect;
-			btnCorrectAnswer.Enabled = false;
-			btnIncorrectAnswer.Enabled = false;
-
-			if ((GameMode)cmbCountdownMode.SelectedItem == GameMode.Round1 && cBoxDisableInput.Checked)
-			{
-				btnPrepareNext.Visible = true;
-			}
+			//btn_R1CorrectAnswer.Enabled = false;
+			//btnIncorrectAnswer.Enabled = false;
+			//
+			//if ((GameMode)cmbCountdownMode.SelectedItem == GameMode.Round1 && cBoxDisableInput.Checked)
+			//{
+			//	btn_R1PrepareNext.Visible = true;
+			//}
 
 
 		}
@@ -855,32 +842,65 @@ namespace GameShowCtrl
 
 			_lastAction = LastAction.Correct;
 
-			btnCorrectAnswer.Enabled = false;
-			btnIncorrectAnswer.Enabled = true;
-			if ((GameMode)cmbCountdownMode.SelectedItem == GameMode.Round1 && cBoxDisableInput.Checked)
-			{
-				btnPrepareNext.Visible = true;
-			}
+			//btn_R1CorrectAnswer.Enabled = false;
+			//btnIncorrectAnswer.Enabled = true;
+			//if ((GameMode)cmbCountdownMode.SelectedItem == GameMode.Round1 && cBoxDisableInput.Checked)
+			//{
+			//	btn_R1PrepareNext.Visible = true;
+			//}
 
 
 		}
 
 		private void cBoxDisableInput_CheckedChanged(object sender, EventArgs e)
 		{
-			btnCorrectAnswer.Visible = cBoxDisableInput.Checked;
-			btnIncorrectAnswer.Visible = cBoxDisableInput.Checked;
-			btnUuupsAnswer.Visible = cBoxDisableInput.Checked;
-
-			btnCorrectAnswer.Enabled = false;
-			btnIncorrectAnswer.Enabled = false;
+			return;
 
 			if ((GameMode)cmbCountdownMode.SelectedItem == GameMode.Round1 && cBoxDisableInput.Checked)
 			{
-				btnPrepareNext.Visible = true;
-				btnPrepareNext.Enabled = false;
+				tabPageRound1.Enabled = true;
+				btn_R1CorrectAnswer.Visible = cBoxDisableInput.Checked;
+				btn_R1InCorrectAnswer.Visible = cBoxDisableInput.Checked;
+				btn_R1UuupsAnswer.Visible = cBoxDisableInput.Checked;
+				btn_R1PrepareNext.Visible = true;
+				btn_R1CorrectAnswer.Enabled = false;
+				btn_R1InCorrectAnswer.Enabled = false;
+
+
+				tabPageRound2.Enabled = false;
+				tabPageRound3.Enabled = false;
+				tabPageRapidFire.Enabled = false;
+
+				btn_R1PrepareNext.Enabled = false;
 			}
-			else
-				btnPrepareNext.Visible = false;
+			else if ((GameMode)cmbCountdownMode.SelectedItem == GameMode.Round2 && !cBoxDisableInput.Checked)
+			{
+				tabPageRound2.Enabled = true;
+				tabPageRound1.Enabled = false;
+				tabPageRound3.Enabled = false;
+				tabPageRapidFire.Enabled = false;
+
+			}
+			else if ((GameMode)cmbCountdownMode.SelectedItem == GameMode.Round3 && !cBoxDisableInput.Checked)
+			{
+				tabPageRound3.Enabled = true;
+				tabPageRound1.Enabled = false;
+				tabPageRound2.Enabled = false;
+				tabPageRapidFire.Enabled = false;
+
+			}
+			else if ((GameMode)cmbCountdownMode.SelectedItem == GameMode.RapidMode && !cBoxDisableInput.Checked)
+			{
+				tabPageRapidFire.Enabled = true;
+				tabPageRound1.Enabled = false;
+				tabPageRound2.Enabled = false;
+				tabPageRound3.Enabled = false;
+
+
+			}
+
+
+			btn_R1PrepareNext.Visible = false;
 
 			//btnShowCorrect.Visible = cBoxDisableInput.Checked;
 		}
@@ -1268,16 +1288,7 @@ namespace GameShowCtrl
 			}
 		}
 
-		private async void button6_Click(object sender, EventArgs e)
-		{
-			var msg = new MessageToYTManager()
-			{
-				MessageText = "Hello from MnForm",
-				SenderName = "Operator",
-			};
 
-			await _hubConnection.InvokeAsync("PassMessageToYTVoteManager", msg);
-		}
 
 		private async void btn_StopAudienceVoting_Click(object sender, EventArgs e)
 		{
@@ -1291,11 +1302,7 @@ namespace GameShowCtrl
 			await _hubConnection.InvokeAsync("StopVoting", message);
 		}
 
-		private async void button10_Click(object sender, EventArgs e)
-		{
-			await _hubConnection.InvokeAsync("CGLoadTemplate", CGTemplateEnums.YTVote);
-			await Task.Delay(500);
-		}
+
 
 		private async void btn_ConnectLightDevice_Click_1(object sender, EventArgs e)
 		{
@@ -1316,21 +1323,14 @@ namespace GameShowCtrl
 
 		}
 
-		private async void CheckBox_Click(object sender, EventArgs e)
-		{
 
-
-		}
 
 		private void tableLayoutPanel2_Paint(object sender, PaintEventArgs e)
 		{
 
 		}
 
-		private void flowLayoutPanel1_Paint(object sender, PaintEventArgs e)
-		{
 
-		}
 
 		private async void btn_ytVotingOnOFF_Click(object sender, EventArgs e)
 		{
@@ -1354,10 +1354,7 @@ namespace GameShowCtrl
 			await _hubConnection.InvokeAsync("StartVoting", message);
 		}
 
-		private async void button10_Click_1(object sender, EventArgs e)
-		{
 
-		}
 
 		private async void BtnLoadFullQuestion_Click(object sender, EventArgs e)
 		{
@@ -1432,9 +1429,31 @@ namespace GameShowCtrl
 
 		private async void btnPrepareNext_Click(object sender, EventArgs e)
 		{
-			await _hubConnection.InvokeAsync("CGClearChannelLayer", CGTemplateEnums.QuestionVideo);
-			await _hubConnection.InvokeAsync("CGClearChannelLayer", CGTemplateEnums.QuestionFull);
-			await _hubConnection.InvokeAsync("CGClearChannelLayer", CGTemplateEnums.QuestionLower);
+			await _hubConnection.InvokeAsync("CGClearPlayClip", CGTemplateEnums.QuestionVideo);
+			await _hubConnection.InvokeAsync("CGWSClearChannelLayer", CGTemplateEnums.QuestionFull);
+			await _hubConnection.InvokeAsync("CGWSClearChannelLayer", CGTemplateEnums.QuestionLower);
 		}
+
+		private void tabGameModes_Selecting(object sender, TabControlCancelEventArgs e)
+		{
+			e.Cancel = false;
+			var currGameMode = (GameMode)cmbCountdownMode.SelectedItem;
+			if (e.TabPage == tabControl1.TabPages[0] && currGameMode == GameMode.Round1)
+			{
+				e.Cancel = true;
+			} else if (e.TabPage == tabControl1.TabPages[1] && currGameMode == GameMode.Round2)
+			{
+				e.Cancel = true;
+			} if (e.TabPage == tabControl1.TabPages[2] && currGameMode == GameMode.Round3)
+			{
+				e.Cancel = true;			
+			} else if (e.TabPage == tabControl1.TabPages[3] && currGameMode == GameMode.RapidMode)
+			{
+				e.Cancel = true;
+			}
+
+
+
+}
 	}
 }
