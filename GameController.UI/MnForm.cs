@@ -10,6 +10,7 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Buffers;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -21,6 +22,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Numerics;
 using System.Reflection.Emit;
 using System.Runtime;
 using System.Threading.Channels;
@@ -63,6 +65,8 @@ namespace GameShowCtrl
 		private ConcurrentDictionary<string, string> _activeAudienceMembers = new ConcurrentDictionary<string, string>();
 
 		private LastAction _lastAction = LastAction.None;
+
+		public string? _currentPlayerId;
 		public MnForm()
 		{
 			InitializeComponent();
@@ -181,7 +185,9 @@ namespace GameShowCtrl
 
 
 
-				var resultQF = await _hubConnection.InvokeAsync<OperationResult>("CGLoadTemplate", CGTemplateEnums.QuestionFull);
+                var useYt = _config["YTVotingSettings:UseYT"] ?? "NO";
+
+                var resultQF = await _hubConnection.InvokeAsync<OperationResult>("CGLoadTemplate", CGTemplateEnums.QuestionFull);
 				AppendLog($"[WinForms UI] <- Hub QuestionFull - ის ჩატვირთვა: {resultQF.Message}");
 				var resultLB = await _hubConnection.InvokeAsync<OperationResult>("CGLoadTemplate", CGTemplateEnums.LeaderBoard);
 				AppendLog($"[WinForms UI] <- Hub LeaderBoard - ის ჩატვირთვა: {resultLB.Message}");
@@ -189,9 +195,13 @@ namespace GameShowCtrl
 				AppendLog($"[WinForms UI] <- Hub QuestionLower - ის ჩატვირთვა: {resultQL.Message}");
 				var resultCD = await _hubConnection.InvokeAsync<OperationResult>("CGLoadTemplate", CGTemplateEnums.Countdown);
 				AppendLog($"[WinForms UI] <- Hub Countdown - ის ჩატვირთვა: {resultCD.Message}");
-				//var resultYT = await _hubConnection.InvokeAsync<OperationResult>("CGLoadTemplate", CGTemplateEnums.YTVote);
-				//AppendLog($"[WinForms UI] <- Hub YTVote - ის ჩატვირთვა: {resultYT.Message}");
-			}
+
+				if (useYt.ToUpper() == "YES")
+				{
+                    var resultYT = await _hubConnection.InvokeAsync<OperationResult>("CGLoadTemplate", CGTemplateEnums.YTVote);
+                    AppendLog($"[WinForms UI] <- Hub YTVote - ის ჩატვირთვა: {resultYT.Message}");
+                }
+            }
 			catch (Exception ex)
 			{
 				Console.Write($"{ex.Message}");
@@ -216,7 +226,7 @@ namespace GameShowCtrl
 
 			_hubConnection.On<List<Player>>("UpdatePlayerList", (players) =>
 			{
-				AppendLog($"[WinForms UI] <- Hub\tReceiveRegistrationStatus");
+				AppendLog($"[WinForms UI] <- Hub\tUpdatePlayerList");
 				// UI-ის განახლება ხდება მთავარ Thread-ზე.
 				// Invoke მეთოდი ამის უზრუნველსაყოფად გამოიყენება.
 				if (this.InvokeRequired)
@@ -651,7 +661,7 @@ namespace GameShowCtrl
 						// Populate the DataGridView with the new data
 						PopulateQuestionGrid(refreshedQuestions);
 
-						MessageBox.Show("Questions have been loaded successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+						//MessageBox.Show("Questions have been loaded successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
 					}
 					catch (Exception ex)
 					{
@@ -715,6 +725,7 @@ namespace GameShowCtrl
 				var selectedMode = (GameMode)cmbCountdownMode.SelectedItem;
 
 				var allPlayers = dgvContestants.DataSource as List<Player>;
+				dgvContestants.MultiSelect = false;
 				List<Player>? targetClients = new List<Player>();
 
 				if (allPlayers != null)
@@ -727,13 +738,16 @@ namespace GameShowCtrl
 					targetClients = allPlayers;
 				}
 
-				if (targetClients == null || disableInput && (targetClients.Count != 1))
+				if (selectedMode == GameMode.RapidMode && (targetClients == null || disableInput && (targetClients.Count != 1)))
 				{
 					MessageBox.Show("Please select a One Player to Play with.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
 					return;
 				}
+				else {
+					_currentPlayerId = targetClients.FirstOrDefault().ConnectionId;
+                }
 
-				await _hubConnection.InvokeAsync("UpdateScoresFromUIToMEM", targetClients);
+					await _hubConnection.InvokeAsync("UpdateScoresFromUIToMEM", targetClients);
 				await _hubConnection.InvokeAsync("SendQuestion", question, countdownDuration, selectedMode, disableInput, targetClients);
 
 
@@ -820,7 +834,7 @@ namespace GameShowCtrl
 
 
 
-			await _hubConnection.InvokeAsync("OperatorConfirmAnswer", false);
+			await _hubConnection.InvokeAsync("OperatorConfirmAnswer", false,_currentPlayerId);
 			_lastAction = LastAction.Incorrect;
 			//btn_R1CorrectAnswer.Enabled = false;
 			//btnIncorrectAnswer.Enabled = false;
@@ -836,8 +850,12 @@ namespace GameShowCtrl
 		private async void btnCorrectAnswer_Click(object sender, EventArgs e)
 		{
 
+			var selectedRow = dgvContestants.SelectedRows[0];
+			var player = (Player)selectedRow.DataBoundItem;
 
-			await _hubConnection.InvokeAsync("OperatorConfirmAnswer", true);
+
+
+			await _hubConnection.InvokeAsync("OperatorConfirmAnswer", true, _currentPlayerId);
 
 
 			_lastAction = LastAction.Correct;
@@ -1441,19 +1459,71 @@ namespace GameShowCtrl
 			if (e.TabPage == tabControl1.TabPages[0] && currGameMode == GameMode.Round1)
 			{
 				e.Cancel = true;
-			} else if (e.TabPage == tabControl1.TabPages[1] && currGameMode == GameMode.Round2)
+			}
+			else if (e.TabPage == tabControl1.TabPages[1] && currGameMode == GameMode.Round2)
 			{
 				e.Cancel = true;
-			} if (e.TabPage == tabControl1.TabPages[2] && currGameMode == GameMode.Round3)
+			}
+			if (e.TabPage == tabControl1.TabPages[2] && currGameMode == GameMode.Round3)
 			{
-				e.Cancel = true;			
-			} else if (e.TabPage == tabControl1.TabPages[3] && currGameMode == GameMode.RapidMode)
+				e.Cancel = true;
+			}
+			else if (e.TabPage == tabControl1.TabPages[3] && currGameMode == GameMode.RapidMode)
 			{
 				e.Cancel = true;
 			}
 
 
 
-}
+		}
+
+		private async void button2_Click_1(object sender, EventArgs e)
+		{
+			if (dgvContestants.DataSource is not List<Player> allPlayers)
+				return;
+
+			var player1 = allPlayers.FirstOrDefault(p => p.Name == "Player1");
+			if (player1 == null)
+				return;
+
+			// Clear all selections first
+			dgvContestants.ClearSelection();
+
+			// Find and select the matching row
+			foreach (DataGridViewRow row in dgvContestants.Rows)
+			{
+				if (row.Cells["ConnectionId"].Value?.ToString() == player1.ConnectionId)
+				{
+					row.Selected = true;
+					//dgvContestants.CurrentCell = row.Cells[3]; // optional – focus move
+					break;
+				}
+			}
+		}
+
+
+		private void button6_Click(object sender, EventArgs e)
+		{
+            if (dgvContestants.DataSource is not List<Player> allPlayers)
+                return;
+
+            var player2 = allPlayers.FirstOrDefault(p => p.Name == "Player2");
+            if (player2 == null)
+                return;
+
+            // Clear all selections first
+            dgvContestants.ClearSelection();
+
+            // Find and select the matching row
+            foreach (DataGridViewRow row in dgvContestants.Rows)
+            {
+                if (row.Cells["ConnectionId"].Value?.ToString() == player2.ConnectionId)
+                {
+                    row.Selected = true;
+                    //dgvContestants.CurrentCell = row.Cells[3]; // optional – focus move
+                    break;
+                }
+            }
+        }
 	}
 }

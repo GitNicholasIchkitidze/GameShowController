@@ -9,7 +9,7 @@ namespace GameController.Server.Services
 
 
 		void AddPoints(Player player, int point);
-		Player AddNewPlayer(string connectionId, string ip, string name, string clientType, bool isInPlay);
+		Player AddNewPlayer(string connectionId, string ip, string name, string nickName, string clientType, bool isInPlay);
 
 
 	}

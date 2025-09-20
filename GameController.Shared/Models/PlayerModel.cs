@@ -11,14 +11,16 @@ namespace GameController.Shared.Models
 		public string ConnectionId { get; }
 		public  string Ip { get; }
 		public string Name { get; }
+		public string NickName { get; }
 		public string ClientType { get; }
 		public int Score { get; set; }
 		public bool IsInPlay { get; set; } = false;
-		public Player(string connectionId, string ip, string name, string clientType, bool isInPlay)
+		public Player(string connectionId, string ip, string name, string nickName, string clientType, bool isInPlay)
 		{
 			ConnectionId = connectionId;
 			Ip = ip;
 			Name = name;
+			NickName = nickName;
 			ClientType = clientType;
 			Score = 0;
 			IsInPlay = IsInPlay;

@@ -169,6 +169,7 @@
                         opacity: 0, duration: 0.4, onComplete: () => {
                             imageContainer.classList.add('hidden');
                             questionImage.src = ''; // Clear image source
+
                         }
                     });
                     gsap.to(questionBox, { y: 0, duration: 0.8, ease: "power2.inOut" });

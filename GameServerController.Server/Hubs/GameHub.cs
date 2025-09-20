@@ -54,6 +54,7 @@ namespace GameController.Server.Hubs
 		private static string? _operatorConnectionId;
 		private static string? _ytVoterManagerConnectionId;
 		private static string? _fbVoterManagerConnectionId;
+		private static string? _hostConnectionId;
 		private bool trackerLog = true;
 
 
@@ -203,8 +204,9 @@ namespace GameController.Server.Hubs
 			if (!_isLeaderBoardActive && !isFinal) return;
 
 			var players = _gameService.ConnectedPlayers.Values
+				.Where(p => p.ClientType =="Contestant")
 				.OrderByDescending(p => p.Score)
-				.Select(p => new { id = p.ConnectionId, name = p.Name, score = p.Score })
+				.Select(p => new { id = p.ConnectionId, name = p.NickName, score = p.Score })
 				.ToList();
 
 			var message = new
@@ -741,6 +743,20 @@ namespace GameController.Server.Hubs
 			return _operatorConnectionId;
 		}
 
+		private string? GetHostConnectionId()
+		{
+
+
+
+
+			if (string.IsNullOrEmpty(_hostConnectionId))
+			{
+				// This log is a good way to debug if the operator hasn't connected yet.
+				_logger.LogWarning("Attempted to get HOST ConnectionId, but none was found.");
+			}
+			return _hostConnectionId;
+		}
+
 		private string? GetYTVoteMangerConnectionId()
 		{
 
@@ -781,13 +797,15 @@ namespace GameController.Server.Hubs
 
 			// With this corrected version:
 			var isRegisteredClient = _registeredClients.FirstOrDefault(
-				c => c.ip.Any(ip => !string.IsNullOrEmpty(ip) && clientIp?.Contains(ip) == true) && c.clientName == clientName
+				c => c.ip.Any(ip => !string.IsNullOrEmpty(ip) && clientIp?.Contains(ip) == true) && c.clientName.ToLower() == clientName.ToLower()
 			);
 			if (isRegisteredClient != null)
 			{
 
-				var newPlayer = _gameService.AddNewPlayer(Context.ConnectionId, clientIp, clientName ?? string.Empty, isRegisteredClient.clientType, isRegisteredClient.clientType == ClientTypes.Contestant.ToString() ? true : false);
-				//var newPlayer = new Player(Context.ConnectionId, clientIp, clientName ?? string.Empty, isRegisteredClient.clientType, isRegisteredClient.clientType == ClientTypes.Contestant.ToString() ? true: false);
+				var newPlayer = _gameService.AddNewPlayer(Context.ConnectionId, clientIp, clientName ?? string.Empty,
+					isRegisteredClient.nickName,
+					isRegisteredClient.clientType, isRegisteredClient.clientType == ClientTypes.Contestant.ToString() ? true : false);
+				
 
                 // Check if a player with this IP and name already exists in our dictionary of connected players
                 var existingPlayer = _gameService.ConnectedPlayers.Values
@@ -817,7 +835,10 @@ namespace GameController.Server.Hubs
 				{
 					_fbVoterManagerConnectionId = Context.ConnectionId;
 				}
-
+				if (newPlayer.ClientType == "Host")
+				{
+					_hostConnectionId = Context.ConnectionId;
+				}
 
 				_gameService.ConnectedPlayers.AddOrUpdate(Context.ConnectionId, newPlayer, (key, existingPlayer) => newPlayer);
 
@@ -857,7 +878,7 @@ namespace GameController.Server.Hubs
 				_logger.LogInformation($"{Environment.NewLine}{DateTime.Now} Client '{player.Name}' disconnected. Total registered players: {_gameService.ConnectedPlayers.Count}");
 				await Clients.All.SendAsync("UpdatePlayerList", _gameService.ConnectedPlayers.Values.ToList());
 
-				// TODO: Notify UI about disconnected player
+				
 			}
 			else
 			{
@@ -959,10 +980,10 @@ namespace GameController.Server.Hubs
 				: Clients.All;
 
 			await clientGroup.SendAsync("ReceiveQuestion", question, disableInput);
-			await clientGroup.SendAsync("ReceiveCountdown", endTimestamp);
+			if (_currentGameMode == GameMode.RapidMode) await clientGroup.SendAsync("ReceiveCountdown", endTimestamp);
 			await Clients.Client(GetOperatorConnectionId()).SendAsync("ReceiveCountdown", endTimestamp);
 
-			await CGWSCountdown(CGTemplateEnums.Countdown.ToString(), durationSeconds, CountdownStopMode.Start, endTimestamp);
+            if (_currentGameMode == GameMode.RapidMode) await CGWSCountdown(CGTemplateEnums.Countdown.ToString(), durationSeconds, CountdownStopMode.Start, endTimestamp);
 			await CGWSUpdateQuestionTemplateData(CGTemplateEnums.QuestionFull.ToString(), question);
 			await CGWSUpdateQuestionTemplateData(CGTemplateEnums.QuestionLower.ToString(), question);
 
@@ -1172,7 +1193,7 @@ namespace GameController.Server.Hubs
 			}
 		}
 
-		public async Task OperatorConfirmAnswer(bool isCorrect)
+		public async Task OperatorConfirmAnswer(bool isCorrect, string? activePlayerID = null)
 		{
 			if (_activeQuestion == null)
 			{
@@ -1185,7 +1206,8 @@ namespace GameController.Server.Hubs
 				// Add score to the active player if the answer was correct
 				if (isCorrect)
 				{
-					var activePlayerId = _activePlayerIds.FirstOrDefault();
+					 
+					var activePlayerId = activePlayerID ?? _activePlayerIds.FirstOrDefault();
 					if (activePlayerId != null && _gameService.ConnectedPlayers.TryGetValue(activePlayerId, out var player))
 					{
 						player.AddScore(_activeQuestion.ScorePrice);

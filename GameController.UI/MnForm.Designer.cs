@@ -56,10 +56,12 @@
             panel2 = new Panel();
             tabGameModes = new TabControl();
             tabPageRound1 = new TabPage();
+            button6 = new Button();
+            button2 = new Button();
             btn_R1InCorrectAnswer = new Button();
             btn_R1PrepareNext = new Button();
             btn_R1UuupsAnswer = new Button();
-            btn_R1SendQuestion = new Button();
+            btn_SendQuestion = new Button();
             tabPageRound2 = new TabPage();
             tabPageRound3 = new TabPage();
             tabPageRapidFire = new TabPage();
@@ -97,12 +99,13 @@
             tBox_MidiNote = new TextBox();
             button1 = new Button();
             panel1 = new Panel();
-            cmbCountdownMode = new ComboBox();
             lblCountdown = new Label();
             CountdownDuration = new NumericUpDown();
             listBoxClients = new ListBox();
             playerBindingSource = new BindingSource(components);
             countdownTimer = new System.Windows.Forms.Timer(components);
+            tableLayoutPanel6 = new TableLayoutPanel();
+            cmbCountdownMode = new ComboBox();
             btn_R1CorrectAnswer = new Button();
             PnlRapidFire.SuspendLayout();
             tabControlMain.SuspendLayout();
@@ -134,6 +137,7 @@
             panel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)CountdownDuration).BeginInit();
             ((System.ComponentModel.ISupportInitialize)playerBindingSource).BeginInit();
+            tableLayoutPanel6.SuspendLayout();
             SuspendLayout();
             // 
             // btn_R1CorrectAnswer
@@ -490,11 +494,13 @@
             // 
             // tabPageRound1
             // 
+            tabPageRound1.Controls.Add(button6);
+            tabPageRound1.Controls.Add(button2);
             tabPageRound1.Controls.Add(btn_R1InCorrectAnswer);
             tabPageRound1.Controls.Add(btn_R1PrepareNext);
             tabPageRound1.Controls.Add(btn_R1UuupsAnswer);
             tabPageRound1.Controls.Add(btn_R1CorrectAnswer);
-            tabPageRound1.Controls.Add(btn_R1SendQuestion);
+            tabPageRound1.Controls.Add(btn_SendQuestion);
             tabPageRound1.ForeColor = SystemColors.ControlText;
             tabPageRound1.Location = new Point(4, 24);
             tabPageRound1.Name = "tabPageRound1";
@@ -503,6 +509,26 @@
             tabPageRound1.TabIndex = 0;
             tabPageRound1.Text = "Round1";
             tabPageRound1.UseVisualStyleBackColor = true;
+            // 
+            // button6
+            // 
+            button6.Location = new Point(1011, 133);
+            button6.Name = "button6";
+            button6.Size = new Size(75, 23);
+            button6.TabIndex = 74;
+            button6.Text = "\"Player2\"";
+            button6.UseVisualStyleBackColor = true;
+            button6.Click += button6_Click;
+            // 
+            // button2
+            // 
+            button2.Location = new Point(1008, 40);
+            button2.Name = "button2";
+            button2.Size = new Size(75, 23);
+            button2.TabIndex = 73;
+            button2.Text = "\"Player1\"";
+            button2.UseVisualStyleBackColor = true;
+            button2.Click += button2_Click_1;
             // 
             // btn_R1InCorrectAnswer
             // 
@@ -546,16 +572,16 @@
             btn_R1UuupsAnswer.UseVisualStyleBackColor = false;
             btn_R1UuupsAnswer.Click += btnUuupsAnswer_Click;
             // 
-            // btn_R1SendQuestion
+            // btn_SendQuestion
             // 
-            btn_R1SendQuestion.Location = new Point(16, 16);
-            btn_R1SendQuestion.Margin = new Padding(3, 2, 3, 2);
-            btn_R1SendQuestion.Name = "btn_R1SendQuestion";
-            btn_R1SendQuestion.Size = new Size(184, 189);
-            btn_R1SendQuestion.TabIndex = 67;
-            btn_R1SendQuestion.Text = "Send Question";
-            btn_R1SendQuestion.UseVisualStyleBackColor = true;
-            btn_R1SendQuestion.Click += btnSendQuestion_Click;
+            btn_SendQuestion.Location = new Point(16, 16);
+            btn_SendQuestion.Margin = new Padding(3, 2, 3, 2);
+            btn_SendQuestion.Name = "btn_SendQuestion";
+            btn_SendQuestion.Size = new Size(184, 189);
+            btn_SendQuestion.TabIndex = 67;
+            btn_SendQuestion.Text = "Send Question";
+            btn_SendQuestion.UseVisualStyleBackColor = true;
+            btn_SendQuestion.Click += btnSendQuestion_Click;
             // 
             // tabPageRound2
             // 
@@ -830,7 +856,7 @@
             tabPage2.Margin = new Padding(3, 2, 3, 2);
             tabPage2.Name = "tabPage2";
             tabPage2.Padding = new Padding(3, 2, 3, 2);
-            tabPage2.Size = new Size(407, 579);
+            tabPage2.Size = new Size(407, 621);
             tabPage2.TabIndex = 1;
             tabPage2.Text = "YouTUBE";
             tabPage2.UseVisualStyleBackColor = true;
@@ -858,7 +884,7 @@
             // 
             groupBox2.Controls.Add(richTextBox1);
             groupBox2.Dock = DockStyle.Bottom;
-            groupBox2.Location = new Point(3, 319);
+            groupBox2.Location = new Point(3, 361);
             groupBox2.Margin = new Padding(3, 2, 3, 2);
             groupBox2.Name = "groupBox2";
             groupBox2.Padding = new Padding(3, 2, 3, 2);
@@ -926,7 +952,7 @@
             tabPage3.Margin = new Padding(3, 2, 3, 2);
             tabPage3.Name = "tabPage3";
             tabPage3.Padding = new Padding(3, 2, 3, 2);
-            tabPage3.Size = new Size(407, 579);
+            tabPage3.Size = new Size(407, 621);
             tabPage3.TabIndex = 2;
             tabPage3.Text = "FaceBOOK";
             tabPage3.UseVisualStyleBackColor = true;
@@ -941,7 +967,7 @@
             tabPage4.Margin = new Padding(3, 2, 3, 2);
             tabPage4.Name = "tabPage4";
             tabPage4.Padding = new Padding(3, 2, 3, 2);
-            tabPage4.Size = new Size(407, 579);
+            tabPage4.Size = new Size(407, 621);
             tabPage4.TabIndex = 3;
             tabPage4.Text = "DMX";
             tabPage4.UseVisualStyleBackColor = true;
@@ -983,10 +1009,7 @@
             // panel1
             // 
             panel1.BackColor = SystemColors.ActiveBorder;
-            panel1.Controls.Add(cmbCountdownMode);
-            panel1.Controls.Add(lblCountdown);
-            panel1.Controls.Add(CountdownDuration);
-            panel1.Controls.Add(listBoxClients);
+            panel1.Controls.Add(tableLayoutPanel6);
             panel1.Dock = DockStyle.Fill;
             panel1.Location = new Point(3, 77);
             panel1.Margin = new Padding(3, 2, 3, 2);
@@ -994,22 +1017,12 @@
             panel1.Size = new Size(2142, 93);
             panel1.TabIndex = 43;
             // 
-            // cmbCountdownMode
-            // 
-            cmbCountdownMode.Font = new Font("Segoe UI", 25F);
-            cmbCountdownMode.FormattingEnabled = true;
-            cmbCountdownMode.Location = new Point(23, 17);
-            cmbCountdownMode.Margin = new Padding(3, 2, 3, 2);
-            cmbCountdownMode.Name = "cmbCountdownMode";
-            cmbCountdownMode.Size = new Size(349, 53);
-            cmbCountdownMode.TabIndex = 45;
-            // 
             // lblCountdown
             // 
             lblCountdown.AutoSize = true;
             lblCountdown.Font = new Font("Microsoft Sans Serif", 50F, FontStyle.Regular, GraphicsUnit.Point, 0);
             lblCountdown.ForeColor = Color.Lime;
-            lblCountdown.Location = new Point(649, 0);
+            lblCountdown.Location = new Point(805, 0);
             lblCountdown.Name = "lblCountdown";
             lblCountdown.Size = new Size(106, 76);
             lblCountdown.TabIndex = 37;
@@ -1018,7 +1031,7 @@
             // CountdownDuration
             // 
             CountdownDuration.Font = new Font("Segoe UI", 25F);
-            CountdownDuration.Location = new Point(485, 18);
+            CountdownDuration.Location = new Point(568, 2);
             CountdownDuration.Margin = new Padding(3, 2, 3, 2);
             CountdownDuration.Name = "CountdownDuration";
             CountdownDuration.Size = new Size(87, 52);
@@ -1027,18 +1040,46 @@
             // 
             // listBoxClients
             // 
-            listBoxClients.Dock = DockStyle.Right;
             listBoxClients.FormattingEnabled = true;
             listBoxClients.ItemHeight = 15;
-            listBoxClients.Location = new Point(1572, 0);
+            listBoxClients.Location = new Point(1639, 2);
             listBoxClients.Margin = new Padding(3, 2, 3, 2);
             listBoxClients.Name = "listBoxClients";
-            listBoxClients.Size = new Size(570, 93);
+            listBoxClients.Size = new Size(500, 79);
             listBoxClients.TabIndex = 8;
             // 
             // countdownTimer
             // 
             countdownTimer.Tick += countdownTimer_Tick;
+            // 
+            // tableLayoutPanel6
+            // 
+            tableLayoutPanel6.ColumnCount = 4;
+            tableLayoutPanel6.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 70.4488754F));
+            tableLayoutPanel6.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 29.5511227F));
+            tableLayoutPanel6.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 834F));
+            tableLayoutPanel6.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 505F));
+            tableLayoutPanel6.Controls.Add(cmbCountdownMode, 0, 0);
+            tableLayoutPanel6.Controls.Add(listBoxClients, 3, 0);
+            tableLayoutPanel6.Controls.Add(lblCountdown, 2, 0);
+            tableLayoutPanel6.Controls.Add(CountdownDuration, 1, 0);
+            tableLayoutPanel6.Dock = DockStyle.Fill;
+            tableLayoutPanel6.Location = new Point(0, 0);
+            tableLayoutPanel6.Name = "tableLayoutPanel6";
+            tableLayoutPanel6.RowCount = 1;
+            tableLayoutPanel6.RowStyles.Add(new RowStyle(SizeType.Percent, 50F));
+            tableLayoutPanel6.Size = new Size(2142, 93);
+            tableLayoutPanel6.TabIndex = 46;
+            // 
+            // cmbCountdownMode
+            // 
+            cmbCountdownMode.Font = new Font("Segoe UI", 25F);
+            cmbCountdownMode.FormattingEnabled = true;
+            cmbCountdownMode.Location = new Point(3, 2);
+            cmbCountdownMode.Margin = new Padding(3, 2, 3, 2);
+            cmbCountdownMode.Name = "cmbCountdownMode";
+            cmbCountdownMode.Size = new Size(349, 53);
+            cmbCountdownMode.TabIndex = 46;
             // 
             // MnForm
             // 
@@ -1087,9 +1128,10 @@
             tabPage4.ResumeLayout(false);
             tabPage4.PerformLayout();
             panel1.ResumeLayout(false);
-            panel1.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)CountdownDuration).EndInit();
             ((System.ComponentModel.ISupportInitialize)playerBindingSource).EndInit();
+            tableLayoutPanel6.ResumeLayout(false);
+            tableLayoutPanel6.PerformLayout();
             ResumeLayout(false);
             PerformLayout();
 
@@ -1119,7 +1161,6 @@
 		private System.Windows.Forms.ComboBox cmbPollingMode;
 		private Button btnStartCountdown;
 		private System.Windows.Forms.Timer countdownTimer;
-		private ComboBox cmbCountdownMode;
 		private Button button4;
 		private Button button3;
 		private Button btn_R1InCorrectAnswer;
@@ -1179,11 +1220,15 @@
 		private Button btnStartRapidFire;
 		private Button btnIncorrectAnswer;
 		private Button btn_R1CorrectAnswer;
-		private Button btn_R1SendQuestion;
+		private Button btn_SendQuestion;
 		private Button btn_R1PrepareNext;
 		private Button btn_R1UuupsAnswer;
 		private TabPage tabPage7;
 		private Button btnShowCorrect;
-	}
+		private Button button6;
+		private Button button2;
+        private TableLayoutPanel tableLayoutPanel6;
+        private ComboBox cmbCountdownMode;
+    }
 }
 
