@@ -836,6 +836,10 @@ namespace GameShowCtrl
 
 			await _hubConnection.InvokeAsync("OperatorConfirmAnswer", false,_currentPlayerId);
 			_lastAction = LastAction.Incorrect;
+
+
+
+
 			//btn_R1CorrectAnswer.Enabled = false;
 			//btnIncorrectAnswer.Enabled = false;
 			//
