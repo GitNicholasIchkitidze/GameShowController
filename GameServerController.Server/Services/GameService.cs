@@ -32,9 +32,9 @@ namespace GameController.Server.Services
 			player.AddScore(point);
 		}
 
-		public Player AddNewPlayer(string connectionId, string ip, string name, string clientType, bool isInPlay)
+		public Player AddNewPlayer(string connectionId, string ip, string name,string nickName, string clientType, bool isInPlay)
 		{
-			return new Player(connectionId, ip, name, clientType, isInPlay);
+			return new Player(connectionId, ip, name, nickName, clientType, isInPlay);
 		}
 
 

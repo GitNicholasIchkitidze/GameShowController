@@ -9,6 +9,7 @@ namespace GameController.Shared.Models
 	public class ClientConfiguration
 	{
 		public required string clientName { get; set; }
+		public required string nickName { get; set; }
 		public required List<string?> ip { get; set; }
 		public required string clientType { get; set; }
 	}

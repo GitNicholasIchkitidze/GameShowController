@@ -56,6 +56,8 @@
 			panel2 = new Panel();
 			tabGameModes = new TabControl();
 			tabPageRound1 = new TabPage();
+			button6 = new Button();
+			button2 = new Button();
 			btn_R1InCorrectAnswer = new Button();
 			btn_R1PrepareNext = new Button();
 			btn_R1UuupsAnswer = new Button();
@@ -490,6 +492,8 @@
 			// 
 			// tabPageRound1
 			// 
+			tabPageRound1.Controls.Add(button6);
+			tabPageRound1.Controls.Add(button2);
 			tabPageRound1.Controls.Add(btn_R1InCorrectAnswer);
 			tabPageRound1.Controls.Add(btn_R1PrepareNext);
 			tabPageRound1.Controls.Add(btn_R1UuupsAnswer);
@@ -503,6 +507,26 @@
 			tabPageRound1.TabIndex = 0;
 			tabPageRound1.Text = "Round1";
 			tabPageRound1.UseVisualStyleBackColor = true;
+			// 
+			// button6
+			// 
+			button6.Location = new Point(1011, 133);
+			button6.Name = "button6";
+			button6.Size = new Size(75, 23);
+			button6.TabIndex = 74;
+			button6.Text = "button6";
+			button6.UseVisualStyleBackColor = true;
+			button6.Click += button6_Click;
+			// 
+			// button2
+			// 
+			button2.Location = new Point(1008, 40);
+			button2.Name = "button2";
+			button2.Size = new Size(75, 23);
+			button2.TabIndex = 73;
+			button2.Text = "button2";
+			button2.UseVisualStyleBackColor = true;
+			button2.Click += button2_Click_1;
 			// 
 			// btn_R1InCorrectAnswer
 			// 
@@ -1184,6 +1208,8 @@
 		private Button btn_R1UuupsAnswer;
 		private TabPage tabPage7;
 		private Button btnShowCorrect;
+		private Button button6;
+		private Button button2;
 	}
 }
 
