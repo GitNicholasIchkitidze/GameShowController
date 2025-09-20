@@ -951,7 +951,8 @@ namespace GameController.Server.Hubs
 
 			var endTimestamp = DateTimeOffset.UtcNow.AddSeconds(durationSeconds).ToUnixTimeMilliseconds();
 
-			_activePlayerIds = clients?.Select(c => c.ConnectionId).ToList() ?? _gameService.ConnectedPlayers.Where(p => p.Value.ClientType == "Contestant").Select(p => p.Key).ToList();
+			_activePlayerIds =// clients?.Select(c => c.ConnectionId).ToList() ?? 
+				_gameService.ConnectedPlayers.Where(p => (p.Value.ClientType == "Contestant" || p.Value.ClientType == "Presenter")).Select(p => p.Key).ToList();
 
 			var clientGroup = clients != null && clients.Count > 0
 				? Clients.Clients(_activePlayerIds)
