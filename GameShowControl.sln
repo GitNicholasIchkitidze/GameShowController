@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.14.36414.22
+# Visual Studio Version 18
+VisualStudioVersion = 18.0.11012.119 d18.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GameController.Server", "GameServerController.Server\GameController.Server.csproj", "{69E7431C-5884-0F5F-E2D8-35D1EB584E1A}"
 EndProject
@@ -21,8 +21,6 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GameController.WpfUI", "GameController.WpfUI\GameController.WpfUI.csproj", "{5E0CB64A-B7ED-4EAB-ABD3-116ECDB74C0A}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GameController.FBService", "GameController.FBService\GameController.FBService.csproj", "{D8A02F38-5273-4B6A-B093-C85C75B6C375}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GameController.FaceBookService", "GameController.FaceBookService\GameController.FaceBookService.csproj", "{9A507029-DCC3-45F0-913F-1908F4173174}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -58,10 +56,6 @@ Global
 		{D8A02F38-5273-4B6A-B093-C85C75B6C375}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D8A02F38-5273-4B6A-B093-C85C75B6C375}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D8A02F38-5273-4B6A-B093-C85C75B6C375}.Release|Any CPU.Build.0 = Release|Any CPU
-		{9A507029-DCC3-45F0-913F-1908F4173174}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{9A507029-DCC3-45F0-913F-1908F4173174}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{9A507029-DCC3-45F0-913F-1908F4173174}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{9A507029-DCC3-45F0-913F-1908F4173174}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
