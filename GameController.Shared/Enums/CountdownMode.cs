@@ -23,18 +23,19 @@ namespace GameController.Shared.Enums
 
 	public enum GameMode
 	{
-		// Countdown stops only when time runs out
-		TimedOnly,
-		RapidMode,
+        // Countdown stops only when time runs out
+        Round1,
+        Round2,
+        Round3,
+
+        TimedOnly,
+		RapidMode ,
 
 		// Countdown stops when time runs out OR when all active players have answered
 		AllPlayersAnswered,
 
 		// Countdown stops when time runs out OR when the first player answers
 		FirstAnswer,
-		Round1,
-		Round2,
-		Round3,
 		None
 	}
 

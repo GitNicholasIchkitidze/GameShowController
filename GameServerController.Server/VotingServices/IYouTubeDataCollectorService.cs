@@ -2,11 +2,11 @@
 
 namespace GameController.Server.VotingServices
 {
-	public interface IYouTubeDataCollectorService
-	{
+    public interface IYouTubeDataCollectorService
+    {
 
 
-		Task<OperationResult> StartCollectingAsync();
-		void StopCollecting();
-	}
+        Task<OperationResult> StartCollectingAsync();
+        void StopCollecting();
+    }
 }

@@ -1,10 +1,8 @@
-﻿using System.Threading.Tasks;
-using GameController.Shared.Models;
-namespace GameController.Server.VotingServices
+﻿namespace GameController.Server.VotingServices
 {
-	public interface IYTOAuthTokenService
-	{
-		Task<string> GetAccessTokenAsync();
-		Task SaveTokensAsync(string accessToken, string refreshToken);
-	}
+    public interface IYTOAuthTokenService
+    {
+        Task<string> GetAccessTokenAsync();
+        Task SaveTokensAsync(string accessToken, string refreshToken);
+    }
 }

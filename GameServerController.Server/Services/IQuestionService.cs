@@ -2,10 +2,10 @@
 
 namespace GameController.Server.Services
 {
-	public interface IQuestionService
-	{
-		Task<List<QuestionModel>> LoadQuestionsAsync();
+    public interface IQuestionService
+    {
+        Task<List<QuestionModel>> LoadQuestionsAsync();
 
 
-	}
+    }
 }

@@ -81,8 +81,8 @@
             BtnLoadCountDown = new Button();
             BtnLoadLeaderBoard = new Button();
             BtnLoadYutubeVote = new Button();
-            btnClearGraphics = new Button();
             btnLoadBackGround = new Button();
+            btnClearGraphics = new Button();
             tabPage2 = new TabPage();
             tbx_YTVideoId = new TextBox();
             AudienceCountdownDuration = new NumericUpDown();
@@ -93,19 +93,25 @@
             button11 = new Button();
             button12 = new Button();
             tabPage3 = new TabPage();
+            Loader_LeaderBoard = new GameController.UI.GraphicsLoader();
+            Loader_CountDown = new GameController.UI.GraphicsLoader();
+            Loader_VideoQuestion = new GameController.UI.GraphicsLoader();
+            Loader_LowerQuestion = new GameController.UI.GraphicsLoader();
+            Loader_FullQuestion = new GameController.UI.GraphicsLoader();
             tabPage4 = new TabPage();
             btn_SendMidiNote = new Button();
             tBox_MidiVelocity = new TextBox();
             tBox_MidiNote = new TextBox();
             button1 = new Button();
             panel1 = new Panel();
-            lblCountdown = new Label();
-            CountdownDuration = new NumericUpDown();
-            listBoxClients = new ListBox();
-            playerBindingSource = new BindingSource(components);
-            countdownTimer = new System.Windows.Forms.Timer(components);
             tableLayoutPanel6 = new TableLayoutPanel();
             cmbCountdownMode = new ComboBox();
+            listBoxClients = new ListBox();
+            lblCountdown = new Label();
+            CountdownDuration = new NumericUpDown();
+            playerBindingSource = new BindingSource(components);
+            countdownTimer = new System.Windows.Forms.Timer(components);
+            toolTipDgvContestant = new ToolTip(components);
             btn_R1CorrectAnswer = new Button();
             PnlRapidFire.SuspendLayout();
             tabControlMain.SuspendLayout();
@@ -133,11 +139,12 @@
             ((System.ComponentModel.ISupportInitialize)AudienceCountdownDuration).BeginInit();
             groupBox2.SuspendLayout();
             flowLayoutPanel1.SuspendLayout();
+            tabPage3.SuspendLayout();
             tabPage4.SuspendLayout();
             panel1.SuspendLayout();
+            tableLayoutPanel6.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)CountdownDuration).BeginInit();
             ((System.ComponentModel.ISupportInitialize)playerBindingSource).BeginInit();
-            tableLayoutPanel6.SuspendLayout();
             SuspendLayout();
             // 
             // btn_R1CorrectAnswer
@@ -689,12 +696,16 @@
             dgvContestants.Dock = DockStyle.Fill;
             dgvContestants.Location = new Point(877, 2);
             dgvContestants.Margin = new Padding(3, 2, 3, 2);
+            dgvContestants.MultiSelect = false;
             dgvContestants.Name = "dgvContestants";
             dgvContestants.RowHeadersWidth = 51;
             dgvContestants.RowTemplate.Height = 24;
             dgvContestants.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            dgvContestants.ShowCellToolTips = false;
             dgvContestants.Size = new Size(384, 340);
             dgvContestants.TabIndex = 75;
+            dgvContestants.CellMouseEnter += dgvContestants_CellMouseEnter;
+            dgvContestants.CellMouseLeave += dgvContestants_CellMouseLeave;
             // 
             // tableLayoutPanel4
             // 
@@ -761,12 +772,13 @@
             flowLayoutPanelLoads.Controls.Add(BtnLoadCountDown);
             flowLayoutPanelLoads.Controls.Add(BtnLoadLeaderBoard);
             flowLayoutPanelLoads.Controls.Add(BtnLoadYutubeVote);
-            flowLayoutPanelLoads.Controls.Add(btnClearGraphics);
             flowLayoutPanelLoads.Controls.Add(btnLoadBackGround);
+            flowLayoutPanelLoads.Controls.Add(btnClearGraphics);
+            flowLayoutPanelLoads.FlowDirection = FlowDirection.TopDown;
             flowLayoutPanelLoads.Location = new Point(8, 17);
             flowLayoutPanelLoads.Margin = new Padding(3, 2, 3, 2);
             flowLayoutPanelLoads.Name = "flowLayoutPanelLoads";
-            flowLayoutPanelLoads.Size = new Size(416, 214);
+            flowLayoutPanelLoads.Size = new Size(416, 487);
             flowLayoutPanelLoads.TabIndex = 81;
             // 
             // BtnLoadFullQuestion
@@ -782,7 +794,7 @@
             // 
             // BtnLoadLowerQuestion
             // 
-            BtnLoadLowerQuestion.Location = new Point(181, 2);
+            BtnLoadLowerQuestion.Location = new Point(3, 55);
             BtnLoadLowerQuestion.Margin = new Padding(3, 2, 3, 2);
             BtnLoadLowerQuestion.Name = "BtnLoadLowerQuestion";
             BtnLoadLowerQuestion.Size = new Size(172, 49);
@@ -793,7 +805,7 @@
             // 
             // BtnLoadCountDown
             // 
-            BtnLoadCountDown.Location = new Point(3, 55);
+            BtnLoadCountDown.Location = new Point(3, 108);
             BtnLoadCountDown.Margin = new Padding(3, 2, 3, 2);
             BtnLoadCountDown.Name = "BtnLoadCountDown";
             BtnLoadCountDown.Size = new Size(172, 49);
@@ -804,7 +816,7 @@
             // 
             // BtnLoadLeaderBoard
             // 
-            BtnLoadLeaderBoard.Location = new Point(181, 55);
+            BtnLoadLeaderBoard.Location = new Point(3, 161);
             BtnLoadLeaderBoard.Margin = new Padding(3, 2, 3, 2);
             BtnLoadLeaderBoard.Name = "BtnLoadLeaderBoard";
             BtnLoadLeaderBoard.Size = new Size(172, 49);
@@ -815,7 +827,7 @@
             // 
             // BtnLoadYutubeVote
             // 
-            BtnLoadYutubeVote.Location = new Point(3, 108);
+            BtnLoadYutubeVote.Location = new Point(3, 214);
             BtnLoadYutubeVote.Margin = new Padding(3, 2, 3, 2);
             BtnLoadYutubeVote.Name = "BtnLoadYutubeVote";
             BtnLoadYutubeVote.Size = new Size(172, 51);
@@ -824,20 +836,9 @@
             BtnLoadYutubeVote.UseVisualStyleBackColor = true;
             BtnLoadYutubeVote.Click += BtnLoadYutubeVote_Click;
             // 
-            // btnClearGraphics
-            // 
-            btnClearGraphics.Location = new Point(181, 108);
-            btnClearGraphics.Margin = new Padding(3, 2, 3, 2);
-            btnClearGraphics.Name = "btnClearGraphics";
-            btnClearGraphics.Size = new Size(187, 46);
-            btnClearGraphics.TabIndex = 59;
-            btnClearGraphics.Text = "Clear Graphics";
-            btnClearGraphics.UseVisualStyleBackColor = true;
-            btnClearGraphics.Click += btnClearGraphics_Click;
-            // 
             // btnLoadBackGround
             // 
-            btnLoadBackGround.Location = new Point(3, 163);
+            btnLoadBackGround.Location = new Point(3, 269);
             btnLoadBackGround.Margin = new Padding(3, 2, 3, 2);
             btnLoadBackGround.Name = "btnLoadBackGround";
             btnLoadBackGround.Size = new Size(187, 46);
@@ -845,6 +846,17 @@
             btnLoadBackGround.Text = "Load BackGround";
             btnLoadBackGround.UseVisualStyleBackColor = true;
             btnLoadBackGround.Click += btnLoadBackGround_Click;
+            // 
+            // btnClearGraphics
+            // 
+            btnClearGraphics.Location = new Point(3, 319);
+            btnClearGraphics.Margin = new Padding(3, 2, 3, 2);
+            btnClearGraphics.Name = "btnClearGraphics";
+            btnClearGraphics.Size = new Size(187, 46);
+            btnClearGraphics.TabIndex = 59;
+            btnClearGraphics.Text = "Clear Graphics";
+            btnClearGraphics.UseVisualStyleBackColor = true;
+            btnClearGraphics.Click += btnClearGraphics_Click;
             // 
             // tabPage2
             // 
@@ -856,7 +868,7 @@
             tabPage2.Margin = new Padding(3, 2, 3, 2);
             tabPage2.Name = "tabPage2";
             tabPage2.Padding = new Padding(3, 2, 3, 2);
-            tabPage2.Size = new Size(407, 621);
+            tabPage2.Size = new Size(407, 579);
             tabPage2.TabIndex = 1;
             tabPage2.Text = "YouTUBE";
             tabPage2.UseVisualStyleBackColor = true;
@@ -884,7 +896,7 @@
             // 
             groupBox2.Controls.Add(richTextBox1);
             groupBox2.Dock = DockStyle.Bottom;
-            groupBox2.Location = new Point(3, 361);
+            groupBox2.Location = new Point(3, 319);
             groupBox2.Margin = new Padding(3, 2, 3, 2);
             groupBox2.Name = "groupBox2";
             groupBox2.Padding = new Padding(3, 2, 3, 2);
@@ -948,14 +960,61 @@
             // 
             // tabPage3
             // 
+            tabPage3.Controls.Add(Loader_LeaderBoard);
+            tabPage3.Controls.Add(Loader_CountDown);
+            tabPage3.Controls.Add(Loader_VideoQuestion);
+            tabPage3.Controls.Add(Loader_LowerQuestion);
+            tabPage3.Controls.Add(Loader_FullQuestion);
             tabPage3.Location = new Point(4, 24);
             tabPage3.Margin = new Padding(3, 2, 3, 2);
             tabPage3.Name = "tabPage3";
             tabPage3.Padding = new Padding(3, 2, 3, 2);
-            tabPage3.Size = new Size(407, 621);
+            tabPage3.Size = new Size(407, 579);
             tabPage3.TabIndex = 2;
             tabPage3.Text = "FaceBOOK";
             tabPage3.UseVisualStyleBackColor = true;
+            // 
+            // Loader_LeaderBoard
+            // 
+            Loader_LeaderBoard.BackColor = SystemColors.ActiveCaption;
+            Loader_LeaderBoard.Location = new Point(19, 418);
+            Loader_LeaderBoard.Name = "Loader_LeaderBoard";
+            Loader_LeaderBoard.Size = new Size(360, 76);
+            Loader_LeaderBoard.TabIndex = 4;
+            // 
+            // Loader_CountDown
+            // 
+            Loader_CountDown.BackColor = SystemColors.ActiveCaption;
+            Loader_CountDown.Location = new Point(19, 326);
+            Loader_CountDown.Name = "Loader_CountDown";
+            Loader_CountDown.Size = new Size(360, 76);
+            Loader_CountDown.TabIndex = 3;
+            // 
+            // Loader_VideoQuestion
+            // 
+            Loader_VideoQuestion.BackColor = SystemColors.ActiveCaption;
+            Loader_VideoQuestion.Location = new Point(19, 221);
+            Loader_VideoQuestion.Name = "Loader_VideoQuestion";
+            Loader_VideoQuestion.Size = new Size(360, 76);
+            Loader_VideoQuestion.TabIndex = 2;
+            // 
+            // Loader_LowerQuestion
+            // 
+            Loader_LowerQuestion.BackColor = SystemColors.ActiveCaption;
+            Loader_LowerQuestion.Location = new Point(19, 113);
+            Loader_LowerQuestion.Name = "Loader_LowerQuestion";
+            Loader_LowerQuestion.Size = new Size(360, 76);
+            Loader_LowerQuestion.TabIndex = 1;
+            // 
+            // Loader_FullQuestion
+            // 
+            Loader_FullQuestion.BackColor = SystemColors.ActiveCaption;
+            Loader_FullQuestion.Location = new Point(19, 15);
+            Loader_FullQuestion.Name = "Loader_FullQuestion";
+            Loader_FullQuestion.Size = new Size(360, 76);
+            Loader_FullQuestion.TabIndex = 0;
+            Loader_FullQuestion.Load += Loader_FullQuestion_Load;
+            Loader_FullQuestion.Click += Loader_FullQuestion_Click;
             // 
             // tabPage4
             // 
@@ -967,7 +1026,7 @@
             tabPage4.Margin = new Padding(3, 2, 3, 2);
             tabPage4.Name = "tabPage4";
             tabPage4.Padding = new Padding(3, 2, 3, 2);
-            tabPage4.Size = new Size(407, 621);
+            tabPage4.Size = new Size(407, 579);
             tabPage4.TabIndex = 3;
             tabPage4.Text = "DMX";
             tabPage4.UseVisualStyleBackColor = true;
@@ -1017,47 +1076,12 @@
             panel1.Size = new Size(2142, 93);
             panel1.TabIndex = 43;
             // 
-            // lblCountdown
-            // 
-            lblCountdown.AutoSize = true;
-            lblCountdown.Font = new Font("Microsoft Sans Serif", 50F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            lblCountdown.ForeColor = Color.Lime;
-            lblCountdown.Location = new Point(805, 0);
-            lblCountdown.Name = "lblCountdown";
-            lblCountdown.Size = new Size(106, 76);
-            lblCountdown.TabIndex = 37;
-            lblCountdown.Text = "00";
-            // 
-            // CountdownDuration
-            // 
-            CountdownDuration.Font = new Font("Segoe UI", 25F);
-            CountdownDuration.Location = new Point(568, 2);
-            CountdownDuration.Margin = new Padding(3, 2, 3, 2);
-            CountdownDuration.Name = "CountdownDuration";
-            CountdownDuration.Size = new Size(87, 52);
-            CountdownDuration.TabIndex = 42;
-            CountdownDuration.Value = new decimal(new int[] { 60, 0, 0, 0 });
-            // 
-            // listBoxClients
-            // 
-            listBoxClients.FormattingEnabled = true;
-            listBoxClients.ItemHeight = 15;
-            listBoxClients.Location = new Point(1639, 2);
-            listBoxClients.Margin = new Padding(3, 2, 3, 2);
-            listBoxClients.Name = "listBoxClients";
-            listBoxClients.Size = new Size(500, 79);
-            listBoxClients.TabIndex = 8;
-            // 
-            // countdownTimer
-            // 
-            countdownTimer.Tick += countdownTimer_Tick;
-            // 
             // tableLayoutPanel6
             // 
             tableLayoutPanel6.ColumnCount = 4;
-            tableLayoutPanel6.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 70.4488754F));
-            tableLayoutPanel6.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 29.5511227F));
-            tableLayoutPanel6.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 834F));
+            tableLayoutPanel6.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 75.84158F));
+            tableLayoutPanel6.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 24.1584167F));
+            tableLayoutPanel6.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 1131F));
             tableLayoutPanel6.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 505F));
             tableLayoutPanel6.Controls.Add(cmbCountdownMode, 0, 0);
             tableLayoutPanel6.Controls.Add(listBoxClients, 3, 0);
@@ -1073,13 +1097,55 @@
             // 
             // cmbCountdownMode
             // 
+            cmbCountdownMode.Dock = DockStyle.Fill;
             cmbCountdownMode.Font = new Font("Segoe UI", 25F);
             cmbCountdownMode.FormattingEnabled = true;
             cmbCountdownMode.Location = new Point(3, 2);
             cmbCountdownMode.Margin = new Padding(3, 2, 3, 2);
             cmbCountdownMode.Name = "cmbCountdownMode";
-            cmbCountdownMode.Size = new Size(349, 53);
+            cmbCountdownMode.Size = new Size(377, 53);
             cmbCountdownMode.TabIndex = 46;
+            // 
+            // listBoxClients
+            // 
+            listBoxClients.Dock = DockStyle.Fill;
+            listBoxClients.FormattingEnabled = true;
+            listBoxClients.ItemHeight = 15;
+            listBoxClients.Location = new Point(1639, 2);
+            listBoxClients.Margin = new Padding(3, 2, 3, 2);
+            listBoxClients.Name = "listBoxClients";
+            listBoxClients.Size = new Size(500, 89);
+            listBoxClients.TabIndex = 8;
+            // 
+            // lblCountdown
+            // 
+            lblCountdown.AutoSize = true;
+            lblCountdown.BorderStyle = BorderStyle.FixedSingle;
+            lblCountdown.Dock = DockStyle.Fill;
+            lblCountdown.Font = new Font("Microsoft Sans Serif", 50F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            lblCountdown.ForeColor = Color.Lime;
+            lblCountdown.LiveSetting = System.Windows.Forms.Automation.AutomationLiveSetting.Polite;
+            lblCountdown.Location = new Point(508, 0);
+            lblCountdown.Name = "lblCountdown";
+            lblCountdown.Size = new Size(1125, 93);
+            lblCountdown.TabIndex = 37;
+            lblCountdown.Text = "00";
+            lblCountdown.TextAlign = ContentAlignment.MiddleCenter;
+            // 
+            // CountdownDuration
+            // 
+            CountdownDuration.Dock = DockStyle.Fill;
+            CountdownDuration.Font = new Font("Segoe UI", 25F);
+            CountdownDuration.Location = new Point(386, 2);
+            CountdownDuration.Margin = new Padding(3, 2, 3, 2);
+            CountdownDuration.Name = "CountdownDuration";
+            CountdownDuration.Size = new Size(116, 52);
+            CountdownDuration.TabIndex = 42;
+            CountdownDuration.Value = new decimal(new int[] { 60, 0, 0, 0 });
+            // 
+            // countdownTimer
+            // 
+            countdownTimer.Tick += countdownTimer_Tick;
             // 
             // MnForm
             // 
@@ -1125,13 +1191,14 @@
             ((System.ComponentModel.ISupportInitialize)AudienceCountdownDuration).EndInit();
             groupBox2.ResumeLayout(false);
             flowLayoutPanel1.ResumeLayout(false);
+            tabPage3.ResumeLayout(false);
             tabPage4.ResumeLayout(false);
             tabPage4.PerformLayout();
             panel1.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)CountdownDuration).EndInit();
-            ((System.ComponentModel.ISupportInitialize)playerBindingSource).EndInit();
             tableLayoutPanel6.ResumeLayout(false);
             tableLayoutPanel6.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)CountdownDuration).EndInit();
+            ((System.ComponentModel.ISupportInitialize)playerBindingSource).EndInit();
             ResumeLayout(false);
             PerformLayout();
 
@@ -1229,6 +1296,12 @@
 		private Button button2;
         private TableLayoutPanel tableLayoutPanel6;
         private ComboBox cmbCountdownMode;
+        private ToolTip toolTipDgvContestant;
+        private GameController.UI.GraphicsLoader Loader_FullQuestion;
+        private GameController.UI.GraphicsLoader Loader_LowerQuestion;
+        private GameController.UI.GraphicsLoader Loader_LeaderBoard;
+        private GameController.UI.GraphicsLoader Loader_CountDown;
+        private GameController.UI.GraphicsLoader Loader_VideoQuestion;
     }
 }
 
