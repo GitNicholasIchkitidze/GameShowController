@@ -5,6 +5,7 @@ using GameController.Shared.Enums;
 using GameController.Shared.Models;
 using GameController.Shared.Models.Connection;
 using GameController.Shared.Models.YouTube;
+using GameController.UI;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -18,6 +19,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Configuration;
 using System.Data;
+using System.Data.Common;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -26,7 +28,9 @@ using System.Net.Sockets;
 using System.Numerics;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Reflection.Metadata;
 using System.Runtime;
+using System.Text.Json;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -53,6 +57,13 @@ namespace GameShowCtrl
 
 
         private readonly HubConnection _hubConnection;
+        private ArduinoTcpServer arduinoServer;
+        //private bool _acceptingTcpAnswers = false; // ეს არის თქვენი ფლაგი
+        private TcpListenModel _tcpListeningState = new TcpListenModel(); // შექმენით GameState ობიექტი
+
+        private string ardPlayer1IP;
+        private string ardPlayer2IP;
+
         private DateTime _countdownEndTime;
         private ConcurrentDictionary<string, string> _playerNamesToIds = new ConcurrentDictionary<string, string>();
 
@@ -84,6 +95,9 @@ namespace GameShowCtrl
             .AddJsonFile("appsettings.UI.json")
             .Build();
 
+
+            ardPlayer1IP = _config.GetValue<string>("ServerSettingsForAVR:ardPlayer1IP");
+            ardPlayer2IP = _config.GetValue<string>("ServerSettingsForAVR:ardPlayer2IP");
 
             var serverAppFolder = _config["ServerSettings:BaseAppFolder"] ?? "https://localhost:7172";
             _configCG = new ConfigurationBuilder()
@@ -181,6 +195,16 @@ namespace GameShowCtrl
 
         }
 
+
+        private void MnForm_Load(object sender, EventArgs e)
+        {
+
+            StarArduionServer();
+            bSrc_TcpListeningState.DataSource = _tcpListeningState;
+
+
+        }
+
         private async Task SetupHubConnection()
         {
             try
@@ -231,6 +255,79 @@ namespace GameShowCtrl
 
         }
 
+
+        private void StarArduionServer()
+        {
+
+            string ip = _config["ServerSettingsForAvr:ip"] ?? "localhost";
+            int port = _config.GetValue<int>("ServerSettingsForAvr:port");
+
+            // შექმენით სერვერის ინსტანცია და დაიწყეთ
+            arduinoServer = new ArduinoTcpServer(
+                // ლოგირების მეთოდი
+                message => this.Invoke(new MethodInvoker(() => textBoxLog.AppendText(message))),
+                        // მონაცემთა დამუშავების მეთოდი
+               (processMessage, clientIp) => this.Invoke(new MethodInvoker(() => ProcessArduinoData(processMessage, clientIp))),
+            ip,
+            port
+            );
+            arduinoServer.Start();
+        }
+
+        private void ProcessArduinoData(string jsonData, string clientIp)
+        {
+
+            if (!_tcpListeningState.AcceptingAnswers)
+            {
+                // არდუინოსგან მიღებული მონაცემები იგნორირებულია
+                textBoxLog.AppendText("Ignoring Arduino data, not in an accepting state.\r\n");
+                return;
+            }
+
+
+            try
+            {
+                JsonDocument doc = JsonDocument.Parse(jsonData);
+
+                doc.RootElement.TryGetProperty("answer", out var msgtype) ;//.GetProperty("object")
+                //string answer = doc.RootElement.GetProperty("object").GetString();
+                string playerName = "ArduinoPlayer1";
+
+                 
+                if (clientIp== ardPlayer1IP && msgtype.GetString() == "Answer 1")
+                {
+                    SetCurrentPlayer("Player1");
+                }
+
+                if (clientIp == ardPlayer2IP && msgtype.GetString() == "Answer 2")
+                {
+                    SetCurrentPlayer("Player2");
+                }
+
+
+
+                // გაუგზავნეთ პასუხი GameHub-ში
+                // დარწმუნდით, რომ hubConnection ობიექტი ხელმისაწვდომია აქ.
+                //if (hubConnection != null && hubConnection.State == HubConnectionState.Connected)
+                //{
+                //    hubConnection.InvokeAsync("ReceiveAnswer", playerName, answer);
+                //    this.Invoke(new MethodInvoker(() =>
+                //    {
+                //        textBoxLog.AppendText($"Processed and sent answer to Hub: {answer}\r\n");
+                //    }));
+                //}
+
+                _tcpListeningState.AcceptingAnswers = false;
+                bSrc_TcpListeningState.ResetBindings(false);
+            }
+            catch (System.Text.Json.JsonException ex)
+            {
+                this.Invoke(new MethodInvoker(() =>
+                {
+                    textBoxLog.AppendText($"JSON parse error from Arduino: {ex.Message}\r\n");
+                }));
+            }
+        }
 
         private async Task LoadInitialTemplates()
         {
@@ -632,12 +729,7 @@ namespace GameShowCtrl
 
 
 
-        private async void MnForm_Load(object sender, EventArgs e)
-        {
 
-
-
-        }
 
 
 
@@ -813,6 +905,12 @@ namespace GameShowCtrl
                 }
 
                 await _hubConnection.InvokeAsync("UpdateScoresFromUIToMEM", targetClients);
+                if (selectedMode == GameMode.Round1)
+                {
+                    _tcpListeningState.AcceptingAnswers = true;
+                    bSrc_TcpListeningState.ResetBindings(false);
+                }
+
                 await _hubConnection.InvokeAsync("SendQuestion", question, countdownDuration, selectedMode, disableInput, targetClients);
 
 
@@ -1546,12 +1644,12 @@ namespace GameShowCtrl
 
         }
 
-        private async void button2_Click_1(object sender, EventArgs e)
+        private void SetCurrentPlayer(string contestant)
         {
             if (dgvContestants.DataSource is not List<Player> allPlayers)
                 return;
 
-            var player1 = allPlayers.FirstOrDefault(p => p.Name == "Player1");
+            var player1 = allPlayers.FirstOrDefault(p => p.Name == contestant);
             if (player1 == null)
                 return;
 
@@ -1568,31 +1666,18 @@ namespace GameShowCtrl
                     break;
                 }
             }
+
+        }
+
+        private async void button2_Click_1(object sender, EventArgs e)
+        {
+            SetCurrentPlayer("Player1");
         }
 
 
         private void button6_Click(object sender, EventArgs e)
         {
-            if (dgvContestants.DataSource is not List<Player> allPlayers)
-                return;
-
-            var player2 = allPlayers.FirstOrDefault(p => p.Name == "Player2");
-            if (player2 == null)
-                return;
-
-            // Clear all selections first
-            dgvContestants.ClearSelection();
-
-            // Find and select the matching row
-            foreach (DataGridViewRow row in dgvContestants.Rows)
-            {
-                if (row.Cells["ConnectionId"].Value?.ToString() == player2.ConnectionId)
-                {
-                    row.Selected = true;
-                    //dgvContestants.CurrentCell = row.Cells[3]; // optional – focus move
-                    break;
-                }
-            }
+            SetCurrentPlayer("Player2");
         }
 
         private void dgvContestants_CellMouseEnter(object sender, DataGridViewCellEventArgs e)

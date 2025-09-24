@@ -18,5 +18,6 @@
 #include <arduino.h>
 #include <pins_arduino.h> 
 #include "..\GameController.ArduClient.ino"
+#include "..\GameController.ino"
 #endif
 #endif

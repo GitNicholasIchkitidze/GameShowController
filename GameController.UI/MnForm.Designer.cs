@@ -56,6 +56,8 @@
             panel2 = new Panel();
             tabGameModes = new TabControl();
             tabPageRound1 = new TabPage();
+            txtBoxTcpListeningMode = new TextBox();
+            bSrc_TcpListeningState = new BindingSource(components);
             button6 = new Button();
             button2 = new Button();
             btn_R1InCorrectAnswer = new Button();
@@ -126,6 +128,7 @@
             panel2.SuspendLayout();
             tabGameModes.SuspendLayout();
             tabPageRound1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)bSrc_TcpListeningState).BeginInit();
             tabPageRapidFire.SuspendLayout();
             tabPage7.SuspendLayout();
             tableLayoutPanel5.SuspendLayout();
@@ -501,6 +504,7 @@
             // 
             // tabPageRound1
             // 
+            tabPageRound1.Controls.Add(txtBoxTcpListeningMode);
             tabPageRound1.Controls.Add(button6);
             tabPageRound1.Controls.Add(button2);
             tabPageRound1.Controls.Add(btn_R1InCorrectAnswer);
@@ -517,11 +521,23 @@
             tabPageRound1.Text = "Round1";
             tabPageRound1.UseVisualStyleBackColor = true;
             // 
+            // txtBoxTcpListeningMode
+            // 
+            txtBoxTcpListeningMode.DataBindings.Add(new Binding("Text", bSrc_TcpListeningState, "AcceptingAnswers", true, DataSourceUpdateMode.OnPropertyChanged));
+            txtBoxTcpListeningMode.Location = new Point(1119, 81);
+            txtBoxTcpListeningMode.Name = "txtBoxTcpListeningMode";
+            txtBoxTcpListeningMode.Size = new Size(100, 23);
+            txtBoxTcpListeningMode.TabIndex = 75;
+            // 
+            // bSrc_TcpListeningState
+            // 
+            bSrc_TcpListeningState.DataSource = typeof(GameController.Shared.Models.TcpListenModel);
+            // 
             // button6
             // 
-            button6.Location = new Point(1011, 133);
+            button6.Location = new Point(1008, 133);
             button6.Name = "button6";
-            button6.Size = new Size(75, 23);
+            button6.Size = new Size(78, 23);
             button6.TabIndex = 74;
             button6.Text = "\"Player2\"";
             button6.UseVisualStyleBackColor = true;
@@ -1176,6 +1192,8 @@
             panel2.ResumeLayout(false);
             tabGameModes.ResumeLayout(false);
             tabPageRound1.ResumeLayout(false);
+            tabPageRound1.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)bSrc_TcpListeningState).EndInit();
             tabPageRapidFire.ResumeLayout(false);
             tabPage7.ResumeLayout(false);
             tableLayoutPanel5.ResumeLayout(false);
@@ -1302,6 +1320,8 @@
         private GameController.UI.GraphicsLoader Loader_LeaderBoard;
         private GameController.UI.GraphicsLoader Loader_CountDown;
         private GameController.UI.GraphicsLoader Loader_VideoQuestion;
+        private BindingSource bSrc_TcpListeningState;
+        private TextBox txtBoxTcpListeningMode;
     }
 }
 

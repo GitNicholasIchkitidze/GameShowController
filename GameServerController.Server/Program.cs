@@ -94,7 +94,15 @@ Console.WriteLine($"MIDI Device Name from Config: {midiDeviceName}");
 builder.Services.AddSignalR(options =>
 {
     options.AddFilter<LogHubFilter>();
+    //options.
 });
+
+
+builder.Services.AddSignalR()
+    .AddJsonProtocol(options => {
+        options.PayloadSerializerOptions.PropertyNamingPolicy = null;
+    });
+
 
 // Register the filter itself
 builder.Services.AddTransient<LogHubFilter>();

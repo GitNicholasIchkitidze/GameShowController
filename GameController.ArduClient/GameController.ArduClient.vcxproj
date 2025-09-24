@@ -86,6 +86,10 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="GameController.ino">
+      <FileType>CppCode</FileType>
+      <DeploymentContent>true</DeploymentContent>
+    </ClCompile>
     <None Include="src\arduino folders read me.txt">
     </None>
   </ItemGroup>
