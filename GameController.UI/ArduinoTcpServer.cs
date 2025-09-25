@@ -25,6 +25,7 @@ namespace GameController.UI
 
 
             IPAddress localAddr = IPAddress.Parse(ip);
+
             _tcpListener = new TcpListener(localAddr, port);
         }
 

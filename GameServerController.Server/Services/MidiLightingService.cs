@@ -4,6 +4,7 @@ using Melanchall.DryWetMidi.Core;
 using Melanchall.DryWetMidi.Multimedia;
 using Melanchall.DryWetMidi.MusicTheory;
 using Microsoft.Extensions.Options;
+using Sanford.Multimedia;
 
 namespace GameController.Server.Services
 {
@@ -22,14 +23,13 @@ namespace GameController.Server.Services
             _logger = logger;
             _midiSettings = midiSettings.Value;
 
+
+
             // Initialize() მეთოდის გამოძახება _midiSettings-ის ინიციალიზაციის შემდეგ
             Initialize();
 
             // ხელმისაწვდომი MIDI მოწყობილობების ლოგირება
-            foreach (var device in OutputDevice.GetAll())
-            {
-                _logger.LogInformation($" - {device.Name}");
-            }
+
         }
 
         private void Initialize()
@@ -37,16 +37,28 @@ namespace GameController.Server.Services
             try
             {
                 var deviceName = _midiSettings.DeviceName;
-                _midiOutputDevice = OutputDevice.GetByName(deviceName);
+
+                foreach (var device in OutputDevice.GetAll())
+                {
+                    _logger.LogInformation($" - {device.Name}");
+                }
+
+                _logger.LogInformation($" Midi Dev from Settings - {deviceName}");
+
+
+                _midiOutputDevice = OutputDevice.GetAll().FirstOrDefault(d => d.Name.Contains("USB MIDI"));
+
+                //_midiOutputDevice = OutputDevice.GetByName(deviceName);
                 _midiOutputDevice.EventSent += OnEventSent;
 
+                Connect();
                 _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} Successfully connected to MIDI device: {deviceName}");
                 ConnectionStatusChanged?.Invoke(this, true);
 
             }
             catch (Exception ex)
             {
-                _logger.LogInformation($"Error connecting to MIDI device: {ex.Message}");
+                _logger.LogError($"Error connecting to MIDI device: {ex.Message}");
                 _midiOutputDevice = null;
                 ConnectionStatusChanged?.Invoke(this, false);
 
@@ -64,7 +76,8 @@ namespace GameController.Server.Services
             try
             {
                 var deviceName = _midiSettings.DeviceName;
-                _midiOutputDevice = OutputDevice.GetByName(deviceName);
+                //_midiOutputDevice = OutputDevice.GetByName(deviceName);
+                _midiOutputDevice = OutputDevice.GetAll().FirstOrDefault(d => d.Name.Contains("USB MIDI"));
                 _midiOutputDevice.EventSent += OnEventSent;
 
                 _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} Successfully connected to MIDI device: {deviceName}");

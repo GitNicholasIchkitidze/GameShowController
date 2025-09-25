@@ -163,32 +163,32 @@ namespace GameShowCtrl
             }
 
 
-            var (channel, templateName, layer, _) = _cgSettingsMap.GetValueOrDefault(CGTemplateEnums.QuestionFull);
-            Loader_FullQuestion.Btn_Load.Text = "Load Full Question Template";
-            Loader_FullQuestion.Channel.Value = channel;
-            Loader_FullQuestion.Layer.Value = layer;
-            //Loader_FullQuestion.Btn_Load.Click += BtnLoadFullQuestion_Click(sender: null, e: null);
-
-
-            (channel, templateName, layer, _) = _cgSettingsMap.GetValueOrDefault(CGTemplateEnums.QuestionLower);
-            Loader_LowerQuestion.Btn_Load.Text = "Load Lower Question Template";
-            Loader_LowerQuestion.Channel.Value = channel;
-            Loader_LowerQuestion.Layer.Value = layer;
-
-            (channel, templateName, layer, _) = _cgSettingsMap.GetValueOrDefault(CGTemplateEnums.Countdown);
-            Loader_CountDown.Btn_Load.Text = "Load CountDown Template";
-            Loader_CountDown.Channel.Value = channel;
-            Loader_CountDown.Layer.Value = layer;
-
-            (channel, templateName, layer, _) = _cgSettingsMap.GetValueOrDefault(CGTemplateEnums.QuestionVideo);
-            Loader_VideoQuestion.Btn_Load.Text = "Load Video Question Template";
-            Loader_VideoQuestion.Channel.Value = channel;
-            Loader_VideoQuestion.Layer.Value = layer;
-
-            (channel, templateName, layer, _) = _cgSettingsMap.GetValueOrDefault(CGTemplateEnums.LeaderBoard);
-            Loader_LeaderBoard.Btn_Load.Text = "Load LeaderBoard Template";
-            Loader_LeaderBoard.Channel.Value = channel;
-            Loader_LeaderBoard.Layer.Value = layer;
+        ////    var (channel, templateName, layer, _) = _cgSettingsMap.GetValueOrDefault(CGTemplateEnums.QuestionFull);
+        ////    Loader_FullQuestion.Btn_Load.Text = "Load Full Question Template";
+        ////    Loader_FullQuestion.Channel.Value = channel;
+        ////    Loader_FullQuestion.Layer.Value = layer;
+        ////    //Loader_FullQuestion.Btn_Load.Click += BtnLoadFullQuestion_Click(sender: null, e: null);
+        ////
+        ////
+        ////    (channel, templateName, layer, _) = _cgSettingsMap.GetValueOrDefault(CGTemplateEnums.QuestionLower);
+        ////    Loader_LowerQuestion.Btn_Load.Text = "Load Lower Question Template";
+        ////    Loader_LowerQuestion.Channel.Value = channel;
+        ////    Loader_LowerQuestion.Layer.Value = layer;
+        ////
+        ////    (channel, templateName, layer, _) = _cgSettingsMap.GetValueOrDefault(CGTemplateEnums.Countdown);
+        ////    Loader_CountDown.Btn_Load.Text = "Load CountDown Template";
+        ////    Loader_CountDown.Channel.Value = channel;
+        ////    Loader_CountDown.Layer.Value = layer;
+        ////
+        ////    (channel, templateName, layer, _) = _cgSettingsMap.GetValueOrDefault(CGTemplateEnums.QuestionVideo);
+        ////    Loader_VideoQuestion.Btn_Load.Text = "Load Video Question Template";
+        ////    Loader_VideoQuestion.Channel.Value = channel;
+        ////    Loader_VideoQuestion.Layer.Value = layer;
+        ////
+        ////    (channel, templateName, layer, _) = _cgSettingsMap.GetValueOrDefault(CGTemplateEnums.LeaderBoard);
+        ////    Loader_LeaderBoard.Btn_Load.Text = "Load LeaderBoard Template";
+        ////    Loader_LeaderBoard.Channel.Value = channel;
+        ////    Loader_LeaderBoard.Layer.Value = layer;
 
 
 
@@ -1496,11 +1496,13 @@ namespace GameShowCtrl
                 return;
             if (button.Text == "DMX ON")
             {
+                AppendLog($"[WinForms UI] MIDI ON");
                 await _hubConnection.InvokeAsync("ConnectMidiDevice");
                 button.Text = "DMX OFF";
             }
             else
             {
+                AppendLog($"[WinForms UI] MIDI OFF");
                 button.Text = "DMX ON";
                 await _hubConnection.InvokeAsync("DisconnectMidiDevice");
             }
@@ -1649,17 +1651,19 @@ namespace GameShowCtrl
             if (dgvContestants.DataSource is not List<Player> allPlayers)
                 return;
 
-            var player1 = allPlayers.FirstOrDefault(p => p.Name == contestant);
-            if (player1 == null)
+            var player = allPlayers.FirstOrDefault(p => p.Name == contestant);
+            if (player == null)
                 return;
 
             // Clear all selections first
             dgvContestants.ClearSelection();
 
+            _currentPlayerId = player.ConnectionId;
+
             // Find and select the matching row
             foreach (DataGridViewRow row in dgvContestants.Rows)
             {
-                if (row.Cells["ConnectionId"].Value?.ToString() == player1.ConnectionId)
+                if (row.Cells["ConnectionId"].Value?.ToString() == player.ConnectionId)
                 {
                     row.Selected = true;
                     //dgvContestants.CurrentCell = row.Cells[3]; // optional – focus move
@@ -1707,7 +1711,7 @@ namespace GameShowCtrl
         private void Loader_FullQuestion_Click(object sender, EventArgs e)
         {
 
-            var aa = Loader_FullQuestion.Channel.ToString();
+            
         }
     }
 }

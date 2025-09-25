@@ -148,17 +148,19 @@ namespace GameController.Server.Hubs
 
         public async Task SendMIDInote(int Notenumber, int Velocity)
         {
-            _midiLightingService.SendNoteOn(Notenumber, Velocity);
+            //_midiLightingService.SendNoteOn(Notenumber, Velocity);
         }
         public void ConnectMidiDevice()
         {
-            _midiLightingService.Connect();
+            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} GameHub: Switching MIDI ON");
+            //_midiLightingService.Connect();
         }
 
         // ახალი მეთოდი UI-დან კავშირის გასაწყვეტად
         public void DisconnectMidiDevice()
         {
-            _midiLightingService.Disconnect();
+            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} GameHub: Switching MIDI OFF");
+            //_midiLightingService.Disconnect();
         }
         private async void OnMidiConnectionStatusChanged(object? sender, bool isConnected)
         {
@@ -899,10 +901,10 @@ namespace GameController.Server.Hubs
             _currentDisableInput = disableInput; // Store the input disable state
                                                  //_isRapidFireActive = false; 
 
-            _midiLightingService.SendNoteOn(
-                _midiSettings.CountdownNote,
-                _midiSettings.CountdownVelocity
-            );
+            //_midiLightingService.SendNoteOn(
+            //    _midiSettings.CountdownNote,
+            //    _midiSettings.CountdownVelocity
+            //);
 
 
 

@@ -32,6 +32,11 @@ builder.Services.AddHttpClient<IYouTubeChatService, YouTubeChatService>();
 
 
 builder.Services.AddSingleton<IMidiLightingService, MidiLightingService>();
+
+//builder.Services.AddSingleton<MidiLightingService>();
+//builder.Services.AddSingleton<IMidiLightingService, MidiLightingService>(x => x.GetRequiredService<MidiLightingService>());
+//builder.Services.AddHostedService(x => x.GetRequiredService<MidiLightingService>());
+
 builder.Services.AddSingleton<IGameService, GameService>();
 builder.Services.AddSingleton<IQuestionService, QuestionService>();
 

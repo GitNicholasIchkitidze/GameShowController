@@ -95,11 +95,6 @@
             button11 = new Button();
             button12 = new Button();
             tabPage3 = new TabPage();
-            Loader_LeaderBoard = new GameController.UI.GraphicsLoader();
-            Loader_CountDown = new GameController.UI.GraphicsLoader();
-            Loader_VideoQuestion = new GameController.UI.GraphicsLoader();
-            Loader_LowerQuestion = new GameController.UI.GraphicsLoader();
-            Loader_FullQuestion = new GameController.UI.GraphicsLoader();
             tabPage4 = new TabPage();
             btn_SendMidiNote = new Button();
             tBox_MidiVelocity = new TextBox();
@@ -142,7 +137,6 @@
             ((System.ComponentModel.ISupportInitialize)AudienceCountdownDuration).BeginInit();
             groupBox2.SuspendLayout();
             flowLayoutPanel1.SuspendLayout();
-            tabPage3.SuspendLayout();
             tabPage4.SuspendLayout();
             panel1.SuspendLayout();
             tableLayoutPanel6.SuspendLayout();
@@ -524,18 +518,14 @@
             // txtBoxTcpListeningMode
             // 
             txtBoxTcpListeningMode.DataBindings.Add(new Binding("Text", bSrc_TcpListeningState, "AcceptingAnswers", true, DataSourceUpdateMode.OnPropertyChanged));
-            txtBoxTcpListeningMode.Location = new Point(1119, 81);
+            txtBoxTcpListeningMode.Location = new Point(912, 109);
             txtBoxTcpListeningMode.Name = "txtBoxTcpListeningMode";
             txtBoxTcpListeningMode.Size = new Size(100, 23);
             txtBoxTcpListeningMode.TabIndex = 75;
             // 
-            // bSrc_TcpListeningState
-            // 
-            bSrc_TcpListeningState.DataSource = typeof(GameController.Shared.Models.TcpListenModel);
-            // 
             // button6
             // 
-            button6.Location = new Point(1008, 133);
+            button6.Location = new Point(912, 182);
             button6.Name = "button6";
             button6.Size = new Size(78, 23);
             button6.TabIndex = 74;
@@ -545,7 +535,7 @@
             // 
             // button2
             // 
-            button2.Location = new Point(1008, 40);
+            button2.Location = new Point(912, 16);
             button2.Name = "button2";
             button2.Size = new Size(75, 23);
             button2.TabIndex = 73;
@@ -976,11 +966,6 @@
             // 
             // tabPage3
             // 
-            tabPage3.Controls.Add(Loader_LeaderBoard);
-            tabPage3.Controls.Add(Loader_CountDown);
-            tabPage3.Controls.Add(Loader_VideoQuestion);
-            tabPage3.Controls.Add(Loader_LowerQuestion);
-            tabPage3.Controls.Add(Loader_FullQuestion);
             tabPage3.Location = new Point(4, 24);
             tabPage3.Margin = new Padding(3, 2, 3, 2);
             tabPage3.Name = "tabPage3";
@@ -989,48 +974,6 @@
             tabPage3.TabIndex = 2;
             tabPage3.Text = "FaceBOOK";
             tabPage3.UseVisualStyleBackColor = true;
-            // 
-            // Loader_LeaderBoard
-            // 
-            Loader_LeaderBoard.BackColor = SystemColors.ActiveCaption;
-            Loader_LeaderBoard.Location = new Point(19, 418);
-            Loader_LeaderBoard.Name = "Loader_LeaderBoard";
-            Loader_LeaderBoard.Size = new Size(360, 76);
-            Loader_LeaderBoard.TabIndex = 4;
-            // 
-            // Loader_CountDown
-            // 
-            Loader_CountDown.BackColor = SystemColors.ActiveCaption;
-            Loader_CountDown.Location = new Point(19, 326);
-            Loader_CountDown.Name = "Loader_CountDown";
-            Loader_CountDown.Size = new Size(360, 76);
-            Loader_CountDown.TabIndex = 3;
-            // 
-            // Loader_VideoQuestion
-            // 
-            Loader_VideoQuestion.BackColor = SystemColors.ActiveCaption;
-            Loader_VideoQuestion.Location = new Point(19, 221);
-            Loader_VideoQuestion.Name = "Loader_VideoQuestion";
-            Loader_VideoQuestion.Size = new Size(360, 76);
-            Loader_VideoQuestion.TabIndex = 2;
-            // 
-            // Loader_LowerQuestion
-            // 
-            Loader_LowerQuestion.BackColor = SystemColors.ActiveCaption;
-            Loader_LowerQuestion.Location = new Point(19, 113);
-            Loader_LowerQuestion.Name = "Loader_LowerQuestion";
-            Loader_LowerQuestion.Size = new Size(360, 76);
-            Loader_LowerQuestion.TabIndex = 1;
-            // 
-            // Loader_FullQuestion
-            // 
-            Loader_FullQuestion.BackColor = SystemColors.ActiveCaption;
-            Loader_FullQuestion.Location = new Point(19, 15);
-            Loader_FullQuestion.Name = "Loader_FullQuestion";
-            Loader_FullQuestion.Size = new Size(360, 76);
-            Loader_FullQuestion.TabIndex = 0;
-            Loader_FullQuestion.Load += Loader_FullQuestion_Load;
-            Loader_FullQuestion.Click += Loader_FullQuestion_Click;
             // 
             // tabPage4
             // 
@@ -1209,7 +1152,6 @@
             ((System.ComponentModel.ISupportInitialize)AudienceCountdownDuration).EndInit();
             groupBox2.ResumeLayout(false);
             flowLayoutPanel1.ResumeLayout(false);
-            tabPage3.ResumeLayout(false);
             tabPage4.ResumeLayout(false);
             tabPage4.PerformLayout();
             panel1.ResumeLayout(false);
@@ -1315,11 +1257,7 @@
         private TableLayoutPanel tableLayoutPanel6;
         private ComboBox cmbCountdownMode;
         private ToolTip toolTipDgvContestant;
-        private GameController.UI.GraphicsLoader Loader_FullQuestion;
-        private GameController.UI.GraphicsLoader Loader_LowerQuestion;
-        private GameController.UI.GraphicsLoader Loader_LeaderBoard;
-        private GameController.UI.GraphicsLoader Loader_CountDown;
-        private GameController.UI.GraphicsLoader Loader_VideoQuestion;
+
         private BindingSource bSrc_TcpListeningState;
         private TextBox txtBoxTcpListeningMode;
     }
