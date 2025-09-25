@@ -32,38 +32,52 @@ namespace GameController.Server.Services
 
         }
 
+        // MidiLightingService.cs-ში
         private void Initialize()
         {
             try
             {
                 var deviceName = _midiSettings.DeviceName;
 
+                // დაბეჭდეთ ყველა ხელმისაწვდომი მოწყობილობა დეტალურად
+                _logger.LogInformation("Available MIDI devices:");
                 foreach (var device in OutputDevice.GetAll())
                 {
-                    _logger.LogInformation($" - {device.Name}");
+                    _logger.LogInformation($" - '{device.Name}' (Exact match: {device.Name == deviceName})");
                 }
 
-                _logger.LogInformation($" Midi Dev from Settings - {deviceName}");
+                // ზუსტი დამთხვევის მოძიება
+                _midiOutputDevice = OutputDevice.GetAll()
+                    .FirstOrDefault(d => d.Name.Equals(deviceName, StringComparison.OrdinalIgnoreCase));
 
+                if (_midiOutputDevice == null)
+                {
+                    // თუ ზუსტი არ მოიძებნა, სცადეთ ნაწილობრივი დამთხვევა
+                    _midiOutputDevice = OutputDevice.GetAll()
+                        .FirstOrDefault(d => d.Name.Contains(deviceName, StringComparison.OrdinalIgnoreCase));
+                }
 
-                _midiOutputDevice = OutputDevice.GetAll().FirstOrDefault(d => d.Name.Contains("USB MIDI"));
-
-                //_midiOutputDevice = OutputDevice.GetByName(deviceName);
-                _midiOutputDevice.EventSent += OnEventSent;
-
-                Connect();
-                _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} Successfully connected to MIDI device: {deviceName}");
-                ConnectionStatusChanged?.Invoke(this, true);
-
+                if (_midiOutputDevice != null)
+                {
+                    _midiOutputDevice.EventSent += OnEventSent;
+                    _logger.LogInformation($"Successfully connected to MIDI device: {_midiOutputDevice.ToString()}");
+                    ConnectionStatusChanged?.Invoke(this, true);
+                }
+                else
+                {
+                    _logger.LogError($"MIDI device '{deviceName}' not found!");
+                    ConnectionStatusChanged?.Invoke(this, false);
+                }
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error connecting to MIDI device: {ex.Message}");
                 _midiOutputDevice = null;
                 ConnectionStatusChanged?.Invoke(this, false);
-
             }
         }
+
+    
 
         public void Connect()
         {
@@ -85,7 +99,7 @@ namespace GameController.Server.Services
             }
             catch (Exception ex)
             {
-                _logger.LogInformation($"Error connecting to MIDI device: {ex.Message}");
+                _logger.LogError($"{Environment.NewLine}{DateTime.Now} Error connecting to MIDI device: {ex.Message}");
                 _midiOutputDevice = null;
                 ConnectionStatusChanged?.Invoke(this, false);
             }
@@ -101,7 +115,7 @@ namespace GameController.Server.Services
 
             if (_midiOutputDevice == null)
             {
-                _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} Not Existing MIDI device.");
+                _logger.LogError($"{Environment.NewLine}{DateTime.Now} Not Existing MIDI device.");
                 ConnectionStatusChanged?.Invoke(this, false); // ყოველთვის დარწმუნდით, რომ UI განახლებულია
                 return;
             }
@@ -117,14 +131,23 @@ namespace GameController.Server.Services
         public void SendNoteOn(int noteNumber, int velocity)
         {
 
+            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} SendNoteOn called - Note: {noteNumber}, Velocity: {velocity}, Enabled: {IsLightControlEnabled}, Connected: {IsConnected}");
+
             if (!IsLightControlEnabled)
             {
+                _logger.LogWarning($"{Environment.NewLine}{DateTime.Now} MIDI control is disabled - skipping note send");
                 return;
             }
 
             if (!IsConnected)
             {
-                _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} MIDI device is not connected.");
+                _logger.LogWarning($"{Environment.NewLine}{DateTime.Now} MIDI device is not connected - skipping note send");
+                return;
+            }
+
+            if (_midiOutputDevice == null)
+            {
+                _logger.LogError($"{Environment.NewLine}{DateTime.Now} MIDI output device is null - skipping note send");
                 return;
             }
 
@@ -136,11 +159,11 @@ namespace GameController.Server.Services
 
                 _midiOutputDevice!.SendEvent(noteOn);
                 //_midiOutputDevice!.SendEvent(new NoteOnEvent(note.NoteNumber, new SevenBitNumber((byte)velocity)));
-                _logger.LogInformation($"MIDI device Was Sent {noteNumber}, {velocity}.");
+                _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} MIDI NoteOn sent successfully - Note: {noteNumber}, Velocity: {velocity}");
             }
             catch (Exception ex)
             {
-                _logger.LogInformation($"MIDI device Was Not Sent {ex.Message}.");
+                _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} MIDI device Was Not Sent {ex.Message}.");
 
             }
         }
@@ -198,7 +221,7 @@ namespace GameController.Server.Services
 
         private void OnEventSent(object sender, MidiEventSentEventArgs e)
         {
-            _logger.LogInformation($"Sent MIDI event: {e.Event}");
+            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} Sent MIDI event: {e.Event}");
         }
 
         public void Dispose()
@@ -207,7 +230,7 @@ namespace GameController.Server.Services
             {
                 _midiOutputDevice.Dispose();
                 _midiOutputDevice = null;
-                _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} MIDI device disconnected.");
+                _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} MIDI device disconnected/disposed.");
             }
         }
     }

@@ -99,7 +99,7 @@
             btn_SendMidiNote = new Button();
             tBox_MidiVelocity = new TextBox();
             tBox_MidiNote = new TextBox();
-            button1 = new Button();
+            btn_checkMIDIStatus = new Button();
             panel1 = new Panel();
             tableLayoutPanel6 = new TableLayoutPanel();
             cmbCountdownMode = new ComboBox();
@@ -980,7 +980,7 @@
             tabPage4.Controls.Add(btn_SendMidiNote);
             tabPage4.Controls.Add(tBox_MidiVelocity);
             tabPage4.Controls.Add(tBox_MidiNote);
-            tabPage4.Controls.Add(button1);
+            tabPage4.Controls.Add(btn_checkMIDIStatus);
             tabPage4.Location = new Point(4, 24);
             tabPage4.Margin = new Padding(3, 2, 3, 2);
             tabPage4.Name = "tabPage4";
@@ -1014,15 +1014,16 @@
             tBox_MidiNote.Size = new Size(94, 23);
             tBox_MidiNote.TabIndex = 81;
             // 
-            // button1
+            // btn_checkMIDIStatus
             // 
-            button1.Location = new Point(21, 38);
-            button1.Margin = new Padding(3, 2, 3, 2);
-            button1.Name = "button1";
-            button1.Size = new Size(200, 45);
-            button1.TabIndex = 80;
-            button1.Text = "DMX";
-            button1.UseVisualStyleBackColor = true;
+            btn_checkMIDIStatus.Location = new Point(21, 38);
+            btn_checkMIDIStatus.Margin = new Padding(3, 2, 3, 2);
+            btn_checkMIDIStatus.Name = "btn_checkMIDIStatus";
+            btn_checkMIDIStatus.Size = new Size(286, 45);
+            btn_checkMIDIStatus.TabIndex = 80;
+            btn_checkMIDIStatus.Text = "DMX";
+            btn_checkMIDIStatus.UseVisualStyleBackColor = true;
+            btn_checkMIDIStatus.Click += btn_checkMIDIStatus_Click;
             // 
             // panel1
             // 
@@ -1232,7 +1233,7 @@
 		private Button button12;
 		private TabPage tabPage3;
 		private TabPage tabPage4;
-		private Button button1;
+		private Button btn_checkMIDIStatus;
 		private Button btn_SendMidiNote;
 		private TextBox tBox_MidiVelocity;
 		private TextBox tBox_MidiNote;

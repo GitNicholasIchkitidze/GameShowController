@@ -69,7 +69,7 @@ namespace GameShowCtrl
 
         private readonly string _serverBaseUrl; // ახალი ცვლადი
         private readonly IConfiguration _config; // ახალი ცვლადი კონფიგურაციისთვის
-        private readonly IConfiguration _configCG; 
+        private readonly IConfiguration _configCG;
 
         private readonly ILogger<MnForm> _logger;
 
@@ -163,32 +163,32 @@ namespace GameShowCtrl
             }
 
 
-        ////    var (channel, templateName, layer, _) = _cgSettingsMap.GetValueOrDefault(CGTemplateEnums.QuestionFull);
-        ////    Loader_FullQuestion.Btn_Load.Text = "Load Full Question Template";
-        ////    Loader_FullQuestion.Channel.Value = channel;
-        ////    Loader_FullQuestion.Layer.Value = layer;
-        ////    //Loader_FullQuestion.Btn_Load.Click += BtnLoadFullQuestion_Click(sender: null, e: null);
-        ////
-        ////
-        ////    (channel, templateName, layer, _) = _cgSettingsMap.GetValueOrDefault(CGTemplateEnums.QuestionLower);
-        ////    Loader_LowerQuestion.Btn_Load.Text = "Load Lower Question Template";
-        ////    Loader_LowerQuestion.Channel.Value = channel;
-        ////    Loader_LowerQuestion.Layer.Value = layer;
-        ////
-        ////    (channel, templateName, layer, _) = _cgSettingsMap.GetValueOrDefault(CGTemplateEnums.Countdown);
-        ////    Loader_CountDown.Btn_Load.Text = "Load CountDown Template";
-        ////    Loader_CountDown.Channel.Value = channel;
-        ////    Loader_CountDown.Layer.Value = layer;
-        ////
-        ////    (channel, templateName, layer, _) = _cgSettingsMap.GetValueOrDefault(CGTemplateEnums.QuestionVideo);
-        ////    Loader_VideoQuestion.Btn_Load.Text = "Load Video Question Template";
-        ////    Loader_VideoQuestion.Channel.Value = channel;
-        ////    Loader_VideoQuestion.Layer.Value = layer;
-        ////
-        ////    (channel, templateName, layer, _) = _cgSettingsMap.GetValueOrDefault(CGTemplateEnums.LeaderBoard);
-        ////    Loader_LeaderBoard.Btn_Load.Text = "Load LeaderBoard Template";
-        ////    Loader_LeaderBoard.Channel.Value = channel;
-        ////    Loader_LeaderBoard.Layer.Value = layer;
+            ////    var (channel, templateName, layer, _) = _cgSettingsMap.GetValueOrDefault(CGTemplateEnums.QuestionFull);
+            ////    Loader_FullQuestion.Btn_Load.Text = "Load Full Question Template";
+            ////    Loader_FullQuestion.Channel.Value = channel;
+            ////    Loader_FullQuestion.Layer.Value = layer;
+            ////    //Loader_FullQuestion.Btn_Load.Click += BtnLoadFullQuestion_Click(sender: null, e: null);
+            ////
+            ////
+            ////    (channel, templateName, layer, _) = _cgSettingsMap.GetValueOrDefault(CGTemplateEnums.QuestionLower);
+            ////    Loader_LowerQuestion.Btn_Load.Text = "Load Lower Question Template";
+            ////    Loader_LowerQuestion.Channel.Value = channel;
+            ////    Loader_LowerQuestion.Layer.Value = layer;
+            ////
+            ////    (channel, templateName, layer, _) = _cgSettingsMap.GetValueOrDefault(CGTemplateEnums.Countdown);
+            ////    Loader_CountDown.Btn_Load.Text = "Load CountDown Template";
+            ////    Loader_CountDown.Channel.Value = channel;
+            ////    Loader_CountDown.Layer.Value = layer;
+            ////
+            ////    (channel, templateName, layer, _) = _cgSettingsMap.GetValueOrDefault(CGTemplateEnums.QuestionVideo);
+            ////    Loader_VideoQuestion.Btn_Load.Text = "Load Video Question Template";
+            ////    Loader_VideoQuestion.Channel.Value = channel;
+            ////    Loader_VideoQuestion.Layer.Value = layer;
+            ////
+            ////    (channel, templateName, layer, _) = _cgSettingsMap.GetValueOrDefault(CGTemplateEnums.LeaderBoard);
+            ////    Loader_LeaderBoard.Btn_Load.Text = "Load LeaderBoard Template";
+            ////    Loader_LeaderBoard.Channel.Value = channel;
+            ////    Loader_LeaderBoard.Layer.Value = layer;
 
 
 
@@ -266,7 +266,7 @@ namespace GameShowCtrl
             arduinoServer = new ArduinoTcpServer(
                 // ლოგირების მეთოდი
                 message => this.Invoke(new MethodInvoker(() => textBoxLog.AppendText(message))),
-                        // მონაცემთა დამუშავების მეთოდი
+               // მონაცემთა დამუშავების მეთოდი
                (processMessage, clientIp) => this.Invoke(new MethodInvoker(() => ProcessArduinoData(processMessage, clientIp))),
             ip,
             port
@@ -289,12 +289,12 @@ namespace GameShowCtrl
             {
                 JsonDocument doc = JsonDocument.Parse(jsonData);
 
-                doc.RootElement.TryGetProperty("answer", out var msgtype) ;//.GetProperty("object")
+                doc.RootElement.TryGetProperty("answer", out var msgtype);//.GetProperty("object")
                 //string answer = doc.RootElement.GetProperty("object").GetString();
                 string playerName = "ArduinoPlayer1";
 
-                 
-                if (clientIp== ardPlayer1IP && msgtype.GetString() == "Answer 1")
+
+                if (clientIp == ardPlayer1IP && msgtype.GetString() == "Answer 1")
                 {
                     SetCurrentPlayer("Player1");
                 }
@@ -1711,7 +1711,13 @@ namespace GameShowCtrl
         private void Loader_FullQuestion_Click(object sender, EventArgs e)
         {
 
-            
+
+        }
+
+        private async void btn_checkMIDIStatus_Click(object sender, EventArgs e)
+        {
+            var status = await _hubConnection.InvokeAsync<string>("GetMidiStatus");
+            AppendLog($"[MIDI Status] {status}");
         }
     }
 }

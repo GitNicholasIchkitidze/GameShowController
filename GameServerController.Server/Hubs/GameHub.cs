@@ -141,6 +141,17 @@ namespace GameController.Server.Hubs
 
         #region LightControl
 
+        public async Task<string> GetMidiStatus()
+        {
+            var status = new StringBuilder();
+            status.AppendLine($"MIDI Service Status:");
+            status.AppendLine($"- IsConnected: {_midiLightingService.IsConnected}");
+            status.AppendLine($"- IsLightControlEnabled: {_midiLightingService.IsLightControlEnabled}");
+            status.AppendLine($"- Device Name from config: {_midiSettings.DeviceName}");
+
+            return status.ToString();
+        }
+
         public void SetLightControlEnabled(bool isEnabled)
         {
             _midiLightingService.IsLightControlEnabled = isEnabled;
@@ -148,21 +159,21 @@ namespace GameController.Server.Hubs
 
         public async Task SendMIDInote(int Notenumber, int Velocity)
         {
-            //_midiLightingService.SendNoteOn(Notenumber, Velocity);
+            _midiLightingService.SendNoteOn(Notenumber, Velocity);
         }
         public void ConnectMidiDevice()
         {
             _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} GameHub: Switching MIDI ON");
-            //_midiLightingService.Connect();
+            _midiLightingService.Connect();
         }
 
         // ახალი მეთოდი UI-დან კავშირის გასაწყვეტად
         public void DisconnectMidiDevice()
         {
             _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} GameHub: Switching MIDI OFF");
-            //_midiLightingService.Disconnect();
+            _midiLightingService.Disconnect();
         }
-        private async void OnMidiConnectionStatusChanged(object? sender, bool isConnected)
+        private async void OnMidiConnectionStatusChanged_(object? sender, bool isConnected)
         {
             // გაუგზავნეთ შეტყობინება ყველა კლიენტს, განსაკუთრებით ოპერატორის UI-ს
 
@@ -181,6 +192,28 @@ namespace GameController.Server.Hubs
                     _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} exception in {MethodBase.GetCurrentMethod().Name} {ex.Message}");
 
                 }
+            }
+        }
+
+        // GameHub.cs-ში OnMidiConnectionStatusChanged მეთოდში
+        private async void OnMidiConnectionStatusChanged(object? sender, bool isConnected)
+        {
+            try
+            {
+                var operatorConnectionId = GetOperatorConnectionId();
+                if (!string.IsNullOrEmpty(operatorConnectionId))
+                {
+                    await Clients.Client(operatorConnectionId).SendAsync("ReceiveMidiStatus", isConnected);
+                }
+            }
+            catch (ObjectDisposedException)
+            {
+                // იგნორირება - Hub უკვე disposed არის
+                _logger.LogInformation("Hub was disposed during MIDI status update");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error in MIDI status update: {ex.Message}");
             }
         }
         #endregion
