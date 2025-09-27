@@ -22,10 +22,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="ArtNetSharp" Version="0.0.38" />
     <PackageReference Include="CasparCg.AmcpClient" Version="2.0.4" />
     <PackageReference Include="Melanchall.DryWetMidi" Version="8.0.2" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR" Version="1.2.0" />
-    <PackageReference Include="Sanford.Multimedia.Midi" Version="6.1.2" />
   </ItemGroup>
 
   <ItemGroup>

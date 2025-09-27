@@ -11,6 +11,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using org.dmxc.wkdt.Light.ArtNet;
 using System;
 using System.Buffers;
 using System.Collections.Concurrent;
@@ -35,6 +36,7 @@ using System.Threading.Channels;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using static System.Formats.Asn1.AsnWriter;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 using Application = System.Windows.Forms.Application;
 using MethodInvoker = System.Windows.Forms.MethodInvoker;
@@ -1718,6 +1720,13 @@ namespace GameShowCtrl
         {
             var status = await _hubConnection.InvokeAsync<string>("GetMidiStatus");
             AppendLog($"[MIDI Status] {status}");
+        }
+
+        private async void btn_sendDMX_Click(object sender, EventArgs e)
+        {
+            await _hubConnection.InvokeAsync("SendRowDmxAsync", LightDMXEvent.Correct);
+            
+
         }
     }
 }

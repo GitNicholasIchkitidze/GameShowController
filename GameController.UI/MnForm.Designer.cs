@@ -96,6 +96,7 @@
             button12 = new Button();
             tabPage3 = new TabPage();
             tabPage4 = new TabPage();
+            btn_sendDMX = new Button();
             btn_SendMidiNote = new Button();
             tBox_MidiVelocity = new TextBox();
             tBox_MidiNote = new TextBox();
@@ -109,6 +110,7 @@
             playerBindingSource = new BindingSource(components);
             countdownTimer = new System.Windows.Forms.Timer(components);
             toolTipDgvContestant = new ToolTip(components);
+            comboBox1 = new ComboBox();
             btn_R1CorrectAnswer = new Button();
             PnlRapidFire.SuspendLayout();
             tabControlMain.SuspendLayout();
@@ -977,6 +979,8 @@
             // 
             // tabPage4
             // 
+            tabPage4.Controls.Add(comboBox1);
+            tabPage4.Controls.Add(btn_sendDMX);
             tabPage4.Controls.Add(btn_SendMidiNote);
             tabPage4.Controls.Add(tBox_MidiVelocity);
             tabPage4.Controls.Add(tBox_MidiNote);
@@ -987,8 +991,19 @@
             tabPage4.Padding = new Padding(3, 2, 3, 2);
             tabPage4.Size = new Size(407, 579);
             tabPage4.TabIndex = 3;
-            tabPage4.Text = "DMX";
+            tabPage4.Text = "DMX & MIDI";
             tabPage4.UseVisualStyleBackColor = true;
+            // 
+            // btn_sendDMX
+            // 
+            btn_sendDMX.Location = new Point(21, 330);
+            btn_sendDMX.Margin = new Padding(3, 2, 3, 2);
+            btn_sendDMX.Name = "btn_sendDMX";
+            btn_sendDMX.Size = new Size(367, 45);
+            btn_sendDMX.TabIndex = 84;
+            btn_sendDMX.Text = "DMX";
+            btn_sendDMX.UseVisualStyleBackColor = true;
+            btn_sendDMX.Click += btn_sendDMX_Click;
             // 
             // btn_SendMidiNote
             // 
@@ -1019,9 +1034,9 @@
             btn_checkMIDIStatus.Location = new Point(21, 38);
             btn_checkMIDIStatus.Margin = new Padding(3, 2, 3, 2);
             btn_checkMIDIStatus.Name = "btn_checkMIDIStatus";
-            btn_checkMIDIStatus.Size = new Size(286, 45);
+            btn_checkMIDIStatus.Size = new Size(216, 45);
             btn_checkMIDIStatus.TabIndex = 80;
-            btn_checkMIDIStatus.Text = "DMX";
+            btn_checkMIDIStatus.Text = "MIDI";
             btn_checkMIDIStatus.UseVisualStyleBackColor = true;
             btn_checkMIDIStatus.Click += btn_checkMIDIStatus_Click;
             // 
@@ -1106,6 +1121,14 @@
             // countdownTimer
             // 
             countdownTimer.Tick += countdownTimer_Tick;
+            // 
+            // comboBox1
+            // 
+            comboBox1.FormattingEnabled = true;
+            comboBox1.Location = new Point(34, 420);
+            comboBox1.Name = "comboBox1";
+            comboBox1.Size = new Size(121, 23);
+            comboBox1.TabIndex = 85;
             // 
             // MnForm
             // 
@@ -1261,6 +1284,8 @@
 
         private BindingSource bSrc_TcpListeningState;
         private TextBox txtBoxTcpListeningMode;
+        private Button btn_sendDMX;
+        private ComboBox comboBox1;
     }
 }
 

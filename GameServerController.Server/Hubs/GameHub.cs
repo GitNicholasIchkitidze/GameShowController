@@ -1,4 +1,5 @@
 ﻿using GameController.Server.Services;
+using GameController.Server.Services.SoundLight;
 using GameController.Server.VotingManagers;
 using GameController.Server.VotingServices;
 using GameController.Shared.Enums;
@@ -7,10 +8,13 @@ using GameController.Shared.Models.Connection;
 using GameController.Shared.Models.YouTube;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Options;
+
 using System.Collections.Concurrent;
 using System.Net.WebSockets;
-using System.Reflection;
+
 using System.Text;
+
+using String = System.String;
 
 namespace GameController.Server.Hubs
 {
@@ -21,6 +25,8 @@ namespace GameController.Server.Hubs
         private readonly IMidiLightingService _midiLightingService;
         private readonly IGameService _gameService;
         private readonly MidiSettingsModels _midiSettings;
+        private readonly IArtNetDmxService _lightController;
+
 
 
         private readonly List<ClientConfiguration> _registeredClients;
@@ -78,6 +84,7 @@ namespace GameController.Server.Hubs
 
 
         public GameHub(IMidiLightingService midiLightingService,
+            IArtNetDmxService lightController,
             IOptions<MidiSettingsModels> midiSettings,
             ILogger<GameHub> logger,
             IConfiguration configuration,
@@ -98,6 +105,8 @@ namespace GameController.Server.Hubs
             _questionService = questionService;
             _caspar = caspar;
             _midiLightingService = midiLightingService;
+            _lightController = lightController;
+
             _midiSettings = midiSettings.Value;
             _gameService = gameService;
 
@@ -173,29 +182,7 @@ namespace GameController.Server.Hubs
             _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} GameHub: Switching MIDI OFF");
             _midiLightingService.Disconnect();
         }
-        private async void OnMidiConnectionStatusChanged_(object? sender, bool isConnected)
-        {
-            // გაუგზავნეთ შეტყობინება ყველა კლიენტს, განსაკუთრებით ოპერატორის UI-ს
-
-            var operatorConnectionId = GetOperatorConnectionId();
-            if (operatorConnectionId != null)
-            {
-                //await Clients.Client(operatorConnectionId).SendAsync("ReceiveMidiStatus", isConnected);
-
-
-                try
-                {
-                    await Clients.All.SendAsync("ReceiveMidiStatus", isConnected);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} exception in {MethodBase.GetCurrentMethod().Name} {ex.Message}");
-
-                }
-            }
-        }
-
-        // GameHub.cs-ში OnMidiConnectionStatusChanged მეთოდში
+     
         private async void OnMidiConnectionStatusChanged(object? sender, bool isConnected)
         {
             try
@@ -216,6 +203,18 @@ namespace GameController.Server.Hubs
                 _logger.LogError($"Error in MIDI status update: {ex.Message}");
             }
         }
+
+
+        public async Task SendRowDmxAsync(LightDMXEvent dmxEvent)
+        {
+
+            await _lightController.SendDmxAsync(0, dmxEvent);
+
+        }
+
+       
+
+
         #endregion
 
         #region CasparCG LeaderBoard

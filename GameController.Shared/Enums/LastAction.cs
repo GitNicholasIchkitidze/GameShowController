@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace GameController.Shared.Models
+namespace GameController.Shared.Enums
 {
 	public enum LastAction
 	{
