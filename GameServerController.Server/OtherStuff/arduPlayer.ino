@@ -3,7 +3,7 @@
 #include <ArduinoJson.h>
 
 // --- ქსელის პარამეტრები ---
-const char* serverHost = "192.168.210.61";
+const char* serverHost = "192.168.0.4";
 const int serverPort = 5005;
 byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
 IPAddress staticIP(192, 168, 210, 55);

@@ -12,8 +12,8 @@ namespace GameController.Shared.Models
 		public int CorrectAnswerNote { get; set; }
 		public int CorrectAnswerOctave { get; set; }
 		public int CorrectAnswerVelocity { get; set; }
-		public int CountdownNote { get; set; }
-		public int CountdownOctave { get; set; }
-		public int CountdownVelocity { get; set; }
+		public int CountDownNote { get; set; }
+		public int CountDownOctave { get; set; }
+		public int CountDownVelocity { get; set; }
 	}
 }

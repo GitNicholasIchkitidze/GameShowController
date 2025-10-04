@@ -1,0 +1,119 @@
+﻿:root {
+    /* Colors */
+    --primary-bg-color: #4cff00;
+    --secondary-bg-color: #E21C21;
+    --text-color: #FFFFFF;
+    --second-line-color: #b9b9b9;
+    --headline-bg-color: #0026ff; /* ახალი ცვლადი: სათაურის ფონი */
+    --second-line-bg-color: #ffd800; /* ახალი ცვლადი: ქვესათაურის ფონი */
+    --second-line-div-bg-color: #ffd800; /* ახალი ცვლადი: ქვესათაურის ფონი */
+    --second-line-divider-color: #000000; /* ახალი ცვლადი: გამყოფი ხაზის ფერი */
+
+    /* Font Styles */
+    --main-font-family: 'Arial', sans-serif;
+    --breaking-news-font-size: 14px;
+    --headline-font-size: 32px;
+    --second-line-font-size: 16px;
+    --second-line-font-weight: 400;
+    /* Animation Durations (in seconds) */
+    --show-duration: 0.5;
+    --hide-duration: 0.5;
+    --text-swap-duration: 0.4;
+    --flip-logo-interval: 5; /* ლოგოს და ტექსტის მონაცვლეობის დრო (წამებში) */
+    --flip-logo: 1; /* 1 - ჩართავს მონაცვლეობას, 0 - გამორთავს */
+    /* Logo URL */
+    --logo-url: url('path/to/your/logo.png'); /* ლოგოს მისამართი */
+
+    --headline-top-offset: -10px; /* სათაურის პოზიციის რეგულირება (Pixel-ებში). */
+}
+
+body {
+    background: transparent;
+    font-family: var(--main-font-family);
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    color: var(--text-color);
+}
+
+#container {
+    position: absolute;
+    bottom: 50px;
+    left: 0;
+    display: flex;
+    align-items: stretch;
+    transform: translateX(-100%);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+#left-bar {
+    width: 5px;
+    height: 100%;
+    background-color: var(--text-color);
+}
+
+#breaking-news-box {
+    background-color: var(--primary-bg-color);
+    font-size: var(--breaking-news-font-size);
+    font-weight: bold;
+    padding: 10px 15px;
+    display: flex;
+    align-items: center;
+    text-transform: uppercase;
+    position: relative;
+    overflow: hidden;
+    transform: translateX(-100%);
+    opacity: 0;
+}
+
+#breaking-news-text,
+#breaking-news-logo {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 0;
+}
+
+#breaking-news-logo {
+    width: auto;
+    height: 100%;
+    content: var(--logo-url);
+}
+
+#main-box {
+    background-color: var(--secondary-bg-color);
+    padding: 10px 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    transform: translateX(-100%);
+    opacity: 0;
+}
+
+#headline-text {
+    font-size: var(--headline-font-size);
+    font-weight: bold;
+    text-transform: uppercase;
+    position: relative; /* პოზიციის შეცვლისთვის */
+    top: var(--headline-top-offset); /* ახალი ცვლადის გამოყენება */
+    background-color: var(--headline-bg-color); /* ფონის ფერის ცვლადი */
+}
+
+#second-line-text {
+    font-size: var(--second-line-font-size);
+    font-weight: var(--second-line-font-weight);
+    color: var(--second-line-color);
+    position: absolute;
+    bottom: -100%;
+    background-color: var(--second-line-bg-color); /* ფონის ფერის ცვლადი */
+}
+
+#second-line-divider {
+    width: 100%;
+    height: 2px;
+    background-color: var(--second-line-divider-color);
+    margin: 5px 0;
+}

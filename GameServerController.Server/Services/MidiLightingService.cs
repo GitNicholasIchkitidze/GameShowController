@@ -52,7 +52,7 @@ namespace GameController.Server.Services
                 _midiOutputDevice.EventSent += OnEventSent;
 
                 Connect();
-                _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} Successfully connected to MIDI device: {deviceName}");
+                _logger.LogInformation($"{Environment.NewLine}{DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff")} Successfully connected to MIDI device: {deviceName}");
                 ConnectionStatusChanged?.Invoke(this, true);
 
             }
@@ -69,7 +69,7 @@ namespace GameController.Server.Services
         {
             if (IsConnected)
             {
-                _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} Already connected to a MIDI device.");
+                _logger.LogInformation($"{Environment.NewLine}{DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff")} Already connected to a MIDI device.");
                 return;
             }
 
@@ -80,7 +80,7 @@ namespace GameController.Server.Services
                 _midiOutputDevice = OutputDevice.GetAll().FirstOrDefault(d => d.Name.Contains("USB MIDI"));
                 _midiOutputDevice.EventSent += OnEventSent;
 
-                _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} Successfully connected to MIDI device: {deviceName}");
+                _logger.LogInformation($"{Environment.NewLine}{DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff")} Successfully connected to MIDI device: {deviceName}");
                 ConnectionStatusChanged?.Invoke(this, true);
             }
             catch (Exception ex)
@@ -95,13 +95,13 @@ namespace GameController.Server.Services
         {
             if (!IsConnected)
             {
-                _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} Not connected to a MIDI device.");
+                _logger.LogInformation($"{Environment.NewLine}{DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff")} Not connected to a MIDI device.");
                 return;
             }
 
             if (_midiOutputDevice == null)
             {
-                _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} Not Existing MIDI device.");
+                _logger.LogInformation($"{Environment.NewLine}{DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff")} Not Existing MIDI device.");
                 ConnectionStatusChanged?.Invoke(this, false); // ყოველთვის დარწმუნდით, რომ UI განახლებულია
                 return;
             }
@@ -109,7 +109,7 @@ namespace GameController.Server.Services
             ConnectionStatusChanged?.Invoke(this, false);
             _midiOutputDevice!.Dispose();
             _midiOutputDevice = null;
-            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} Successfully disconnected from MIDI device.");
+            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff")} Successfully disconnected from MIDI device.");
 
         }
 
@@ -124,7 +124,7 @@ namespace GameController.Server.Services
 
             if (!IsConnected)
             {
-                _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} MIDI device is not connected.");
+                _logger.LogInformation($"{Environment.NewLine}{DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff")} MIDI device is not connected.");
                 return;
             }
 
@@ -207,7 +207,7 @@ namespace GameController.Server.Services
             {
                 _midiOutputDevice.Dispose();
                 _midiOutputDevice = null;
-                _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} MIDI device disconnected.");
+                _logger.LogInformation($"{Environment.NewLine}{DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff")} MIDI device disconnected.");
             }
         }
     }

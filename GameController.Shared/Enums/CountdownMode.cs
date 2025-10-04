@@ -6,15 +6,15 @@ using System.Threading.Tasks;
 
 namespace GameController.Shared.Enums
 {
-	public enum CountdownMode
+	public enum CountDownMode
 	{
-		// Countdown stops only when time runs out
+		// CountDown stops only when time runs out
 		TimedOnly,
 
-		// Countdown stops when time runs out OR when all active players have answered
+		// CountDown stops when time runs out OR when all active players have answered
 		AllPlayersAnswered,
 
-		// Countdown stops when time runs out OR when the first player answers
+		// CountDown stops when time runs out OR when the first player answers
 		FirstAnswer,
 		Round1,
 		Round2,	
@@ -23,7 +23,7 @@ namespace GameController.Shared.Enums
 
 	public enum GameMode
 	{
-        // Countdown stops only when time runs out
+        // CountDown stops only when time runs out
         Round1,
         Round2,
         Round3,
@@ -31,24 +31,24 @@ namespace GameController.Shared.Enums
         TimedOnly,
 		RapidMode ,
 
-		// Countdown stops when time runs out OR when all active players have answered
+		// CountDown stops when time runs out OR when all active players have answered
 		AllPlayersAnswered,
 
-		// Countdown stops when time runs out OR when the first player answers
+		// CountDown stops when time runs out OR when the first player answers
 		FirstAnswer,
 		None
 	}
 
-	public enum CountdownStopMode
+	public enum CountDownStopMode
 	{
-		// Countdown stops only when time runs out
+		// CountDown stops only when time runs out
 		Start,
 		Pause,
 
-		// Countdown stops when time runs out OR when all active players have answered
+		// CountDown stops when time runs out OR when all active players have answered
 		Reset,
 
-		// Countdown stops when time runs out OR when the first player answers
+		// CountDown stops when time runs out OR when the first player answers
 		TimeUp,
 		Resume
 	}

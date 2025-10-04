@@ -39,7 +39,7 @@ namespace GameController.Server.VotingServices
         public async Task<OperationResult> StartCollectingAsync()
         {
             // ეს მეთოდი დაიწყებს კოლექციის პროცესს, როდესაც მომხმარებელი გაივლის ავტორიზაციას.
-            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} StartCollectingAsync:  YouTube Data Collector Service starting.");
+            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff")} StartCollectingAsync:  YouTube Data Collector Service starting.");
             _cancellationTokenSource = new CancellationTokenSource();
 
             var result = new OperationResult(true);
@@ -97,7 +97,7 @@ namespace GameController.Server.VotingServices
         public void StopCollecting()
         {
             _cancellationTokenSource?.Cancel();
-            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} YouTube Data Collector Service-ის კოლექცია შეჩერდა.");
+            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff")} YouTube Data Collector Service-ის კოლექცია შეჩერდა.");
 
         }
 
@@ -123,7 +123,7 @@ namespace GameController.Server.VotingServices
 
                     if (!jsonDoc.RootElement.TryGetProperty("items", out var chatMessages) || chatMessages.ValueKind != JsonValueKind.Array)
                     {
-                        _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} არ არის ახალი შეტყობინებები.");
+                        _logger.LogInformation($"{Environment.NewLine}{DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff")} არ არის ახალი შეტყობინებები.");
                         if (jsonDoc.RootElement.TryGetProperty("nextPageToken", out var nextPageTokenElement))
                         {
                             pageToken = nextPageTokenElement.GetString();

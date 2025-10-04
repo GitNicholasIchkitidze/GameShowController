@@ -38,8 +38,8 @@
                             <Button Content="Start Audience Voting" Command="{Binding StartAudienceVotingCommand}" Margin="5"/>
                             <Button Content="Stop Audience Voting" Command="{Binding StopAudienceVotingCommand}" Margin="5"/>
                             <StackPanel Orientation="Horizontal" Margin="5">
-                                <TextBlock Text="Countdown Duration (sec): " VerticalAlignment="Center"/>
-                                <TextBox Width="50" Text="{Binding AudienceCountdownDuration}" Margin="5,0,0,0"/>
+                                <TextBlock Text="CountDown Duration (sec): " VerticalAlignment="Center"/>
+                                <TextBox Width="50" Text="{Binding AudienceCountDownDuration}" Margin="5,0,0,0"/>
                             </StackPanel>
                             <ListBox ItemsSource="{Binding VotingUsers}" Height="200" Margin="5"/>
                         </StackPanel>

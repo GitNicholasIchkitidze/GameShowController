@@ -16,9 +16,9 @@ namespace GameController.Server.Services
 
 
 
-        private AudienceQuestionData _currentQuestionData;
+        private AudienceQuestionData? _currentQuestionData;
         private readonly IYouTubeChatService _youtubeChatService;
-        private string _liveChatId;
+        private string? _liveChatId;
 
         public YTAudienceVoteManager(IHubContext<GameHub> hubContext, IYouTubeChatService youtubeChatService)
         {
@@ -41,6 +41,8 @@ namespace GameController.Server.Services
                 AnswerCounts = new ConcurrentDictionary<string, int>(),
                 AnswerPercentages = new Dictionary<string, double>()
             };
+
+            await Task.CompletedTask;
         }
 
 
@@ -96,44 +98,11 @@ namespace GameController.Server.Services
                 await RecalculateAndSendResultsAsync();
             }
         }
-        public async Task ProcessVoteAsync_(AudienceMember member, string accessToken, string liveChatId, string message)
-        {
-            if (_currentQuestionData == null)
-            {
-                // თუ კითხვა არ არის აქტიური, უგულებელყოფთ პასუხს
-                // return;
-            }
+        
 
-            // ვინახავთ liveChatId-ს, რათა მოგვიანებით გამოვიყენოთ სხვა მეთოდებში
-            _liveChatId = liveChatId;
+		public AudienceQuestionData GetCurrentQuestionData() => _currentQuestionData ?? new AudienceQuestionData();
 
-            var uniqueKey = $"{member.Platform}_{member.AuthorChannelId}";
-            if (_votedAudienceMembers.TryAdd(uniqueKey, member.Answer))
-            {
-                ////_currentQuestionData.AnswerCounts.AddOrUpdate(
-                ////	member.Answer,
-                ////	1,
-                ////	(key, oldValue) => oldValue + 1
-                ////);
-                ////_currentQuestionData.TotalVotes++;
-
-                // აქ ვუგზავნით უკუკავშირს, უკვე დინამიური liveChatId-ის გამოყენებით
-                await _youtubeChatService.PostChatMessageAsync(
-                    _liveChatId,
-                    $"{member.AuthorName} {message} ({member.Answer}). მადლობა მონაწილეობისთვის!",
-                    accessToken
-                );
-
-                await RecalculateAndSendResultsAsync();
-            }
-        }
-
-        public AudienceQuestionData? GetCurrentQuestionData()
-        {
-            return _currentQuestionData;
-        }
-
-        private async Task RecalculateAndSendResultsAsync()
+		private async Task RecalculateAndSendResultsAsync()
         {
             if (_currentQuestionData == null) return;
 
@@ -153,6 +122,7 @@ namespace GameController.Server.Services
         public async Task KickUserAsync(string authorChannelId)
         {
             _ = _kickedAudienceMembers.TryAdd(authorChannelId, true);
+            await Task.CompletedTask;
         }
 
         public bool IsUserKicked(string authorChannelId)

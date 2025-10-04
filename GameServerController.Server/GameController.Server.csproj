@@ -43,7 +43,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="CasparCG\Templates\_cDownF\index.html">
+    <None Update="CasparCG\Templates\_cDownF\CountDown.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="CasparCG\Templates\_cDownF\script.js">
@@ -64,13 +64,13 @@
     <None Update="CasparCG\Templates\_lBoard\index - Copy.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="CasparCG\Templates\_lBoard\index.html">
+    <None Update="CasparCG\Templates\_lBoard\LeaderBoard.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="CasparCG\Templates\_qFull\index - Copy.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="CasparCG\Templates\_qFull\index.html">
+    <None Update="CasparCG\Templates\_qFull\QuestionFull.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="CasparCG\Templates\_qFull\script.js">
@@ -79,16 +79,10 @@
     <None Update="CasparCG\Templates\_qFull\style.css">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="CasparCG\Templates\_qLow\indexGSAPdsk - Copy.html">
+    <None Update="CasparCG\Templates\_qLow\QuestionLower.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="CasparCG\Templates\_qLow\indexGSAPdsk.html">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="CasparCG\Templates\_qLow\style.css">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="CasparCG\Templates\_ytVoting\ytVoting.html">
+    <None Update="CasparCG\Templates\_ytVoting\YTVote.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

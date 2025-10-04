@@ -1,10 +1,12 @@
-﻿using GameController.Server.Services;
+﻿using CasparCg.AmcpClient.Commands.Query.Common;
+using GameController.Server.Services;
 using GameController.Server.VotingManagers;
 using GameController.Server.VotingServices;
 using GameController.Shared.Enums;
 using GameController.Shared.Models;
 using GameController.Shared.Models.Connection;
 using GameController.Shared.Models.YouTube;
+using GameController.UI.Model;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Options;
 using System.Collections.Concurrent;
@@ -32,7 +34,7 @@ namespace GameController.Server.Hubs
 
         private static int _answersReceivedCount;
         private static List<string> _activePlayerIds = new List<string>();
-        private static CountdownMode _currentCountdownMode;
+        //private static CountDownMode _currentCountDownMode;
         private static GameMode _currentGameMode;
         private static int _rapidFireCurrentQuestionIndex = -1;
         private static bool _currentDisableInput;
@@ -52,16 +54,18 @@ namespace GameController.Server.Hubs
         private static bool _isLeaderBoardActive = false; // Add this static variable to track state
         private static List<PlayerScore> _finalScores = new List<PlayerScore>();
 
-        private static bool _isCountdownActiveOnCG = false; // To track if the CG countdown is running
+        private static bool _isCountDownActiveOnCG = false; // To track if the CG countdown is running
 
 
         private readonly ConcurrentDictionary<string, bool> _isTemplateLoaded = new ConcurrentDictionary<string, bool>();
         private readonly ICasparService _caspar;
         private readonly CasparCGWsService _casparCGWsService;
+        private readonly ICasparManager _casparManager;
 
 
 
-        private readonly IYTAudienceVoteManager _ytAudienceVoteManager;
+
+		private readonly IYTAudienceVoteManager _ytAudienceVoteManager;
         private readonly IYouTubeDataCollectorService _ytdataCollectorService;
         private readonly IYouTubeChatService _youtubeChatService; // 
 
@@ -69,15 +73,15 @@ namespace GameController.Server.Hubs
         public static string? YTrefreshToken;
         private readonly IYTOAuthTokenService _ytoauthTokenService;
         public static bool _isYTVotingModeActive = false; // ახალი
-                                                          //private static ConcurrentDictionary<string, bool> _activeYTAudienceIds = new ConcurrentDictionary<string, bool>();
+														  //private static ConcurrentDictionary<string, bool> _activeYTAudienceIds = new ConcurrentDictionary<string, bool>();
 
 
-        private static readonly Dictionary<CGTemplateEnums, (int channel, string templateName, int layer, int layerCg)> _cgSettingsMap = new();
+		//private static Dictionary<CGTemplateEnums, (string serverIP, int channel, string templateName, int layer, int layerCg)> _cgSettingsMap = new();
+		//private static Dictionary<CGTemplateEnums, templateSettingModel> _cgSettingsMap = new();
 
 
 
-
-        public GameHub(IMidiLightingService midiLightingService,
+		public GameHub(IMidiLightingService midiLightingService,
             IOptions<MidiSettingsModels> midiSettings,
             ILogger<GameHub> logger,
             IConfiguration configuration,
@@ -85,7 +89,9 @@ namespace GameController.Server.Hubs
             ICasparService caspar,
             IGameService gameService,
             CasparCGWsService casparCGWsService,
-            IYTAudienceVoteManager audienceVoteManager,
+			ICasparManager casparManager,
+
+			IYTAudienceVoteManager audienceVoteManager,
             IYouTubeDataCollectorService ytdataCollectorService,
             IYTOAuthTokenService ytoauthTokenService,
             IYouTubeChatService youtubeChatService
@@ -97,7 +103,9 @@ namespace GameController.Server.Hubs
             _registeredClients = _configuration.GetSection("RegisteredClients").Get<List<ClientConfiguration>>() ?? new List<ClientConfiguration>();
             _questionService = questionService;
             _caspar = caspar;
-            _midiLightingService = midiLightingService;
+            _casparManager = casparManager;
+            _casparCGWsService = casparCGWsService;
+			_midiLightingService = midiLightingService;
             _midiSettings = midiSettings.Value;
             _gameService = gameService;
 
@@ -106,7 +114,7 @@ namespace GameController.Server.Hubs
             _ytoauthTokenService = ytoauthTokenService;
             _youtubeChatService = youtubeChatService;
 
-            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} >>> GameHub instance created <<<");
+            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff")} >>> GameHub instance created <<<");
 
 
             // გამოიწერეთ event-ი და გამოიძახეთ მეთოდი სტატუსის ცვლილებისას
@@ -124,17 +132,17 @@ namespace GameController.Server.Hubs
 
             if (_cgSettings != null)
             {
-                _cgSettingsMap[CGTemplateEnums.QuestionFull] = (_cgSettings.QuestionFull.Channel, _cgSettings.QuestionFull.TemplateName, _cgSettings.QuestionFull.Layer, _cgSettings.QuestionFull.LayerCg);
-                _cgSettingsMap[CGTemplateEnums.QuestionLower] = (_cgSettings.QuestionLower.Channel, _cgSettings.QuestionLower.TemplateName, _cgSettings.QuestionLower.Layer, _cgSettings.QuestionLower.LayerCg);
-                _cgSettingsMap[CGTemplateEnums.Countdown] = (_cgSettings.CountDown.Channel, _cgSettings.CountDown.TemplateName, _cgSettings.CountDown.Layer, _cgSettings.CountDown.LayerCg);
-                _cgSettingsMap[CGTemplateEnums.LeaderBoard] = (_cgSettings.LeaderBoard.Channel, _cgSettings.LeaderBoard.TemplateName, _cgSettings.LeaderBoard.Layer, _cgSettings.LeaderBoard.LayerCg);
-                _cgSettingsMap[CGTemplateEnums.YTVote] = (_cgSettings.YTVote.Channel, _cgSettings.YTVote.TemplateName, _cgSettings.YTVote.Layer, _cgSettings.YTVote.LayerCg);
-                _cgSettingsMap[CGTemplateEnums.QuestionVideo] = (_cgSettings.QuestionVideo.Channel, _cgSettings.QuestionVideo.TemplateName, _cgSettings.QuestionVideo.Layer, _cgSettings.QuestionVideo.LayerCg);
+                ////_cgSettingsMap[CGTemplateEnums.QuestionFull] = (_cgSettings.QuestionFull.Channel, _cgSettings.QuestionFull.TemplateName, _cgSettings.QuestionFull.Layer, _cgSettings.QuestionFull.LayerCg);
+                ////_cgSettingsMap[CGTemplateEnums.QuestionLower] = (_cgSettings.QuestionLower.Channel, _cgSettings.QuestionLower.TemplateName, _cgSettings.QuestionLower.Layer, _cgSettings.QuestionLower.LayerCg);
+                ////_cgSettingsMap[CGTemplateEnums.CountDown] = (_cgSettings.CountDown.Channel, _cgSettings.CountDown.TemplateName, _cgSettings.CountDown.Layer, _cgSettings.CountDown.LayerCg);
+                ////_cgSettingsMap[CGTemplateEnums.LeaderBoard] = (_cgSettings.LeaderBoard.Channel, _cgSettings.LeaderBoard.TemplateName, _cgSettings.LeaderBoard.Layer, _cgSettings.LeaderBoard.LayerCg);
+                ////_cgSettingsMap[CGTemplateEnums.YTVote] = (_cgSettings.YTVote.Channel, _cgSettings.YTVote.TemplateName, _cgSettings.YTVote.Layer, _cgSettings.YTVote.LayerCg);
+                ////_cgSettingsMap[CGTemplateEnums.QuestionVideo] = (_cgSettings.QuestionVideo.Channel, _cgSettings.QuestionVideo.TemplateName, _cgSettings.QuestionVideo.Layer, _cgSettings.QuestionVideo.LayerCg);
             }
-            _casparCGWsService = casparCGWsService;
+            
 
 
-            //_connectionMnHost = _connectionMnHost ?? CreateAmcpConnection(_cgSettings.ServerIp, _cgSettings.ServerPort);
+            
 
 
         }
@@ -148,18 +156,19 @@ namespace GameController.Server.Hubs
 
         public async Task SendMIDInote(int Notenumber, int Velocity)
         {
-            //_midiLightingService.SendNoteOn(Notenumber, Velocity);
-        }
+			//_midiLightingService.SendNoteOn(Notenumber, Velocity);
+			await Task.CompletedTask;
+		}
         public void ConnectMidiDevice()
         {
-            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} GameHub: Switching MIDI ON");
+            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff")} GameHub: Switching MIDI ON");
             //_midiLightingService.Connect();
         }
 
         // ახალი მეთოდი UI-დან კავშირის გასაწყვეტად
         public void DisconnectMidiDevice()
         {
-            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} GameHub: Switching MIDI OFF");
+            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff")} GameHub: Switching MIDI OFF");
             //_midiLightingService.Disconnect();
         }
         private async void OnMidiConnectionStatusChanged(object? sender, bool isConnected)
@@ -178,333 +187,197 @@ namespace GameController.Server.Hubs
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} exception in {MethodBase.GetCurrentMethod().Name} {ex.Message}");
+                    _logger.LogInformation($"{Environment.NewLine}{DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff")} exception in {MethodBase.GetCurrentMethod().Name} {ex.Message}");
 
                 }
             }
         }
-        #endregion
+		#endregion
 
-        #region CasparCG LeaderBoard
-        // Update LeaderBoard in real-time
-        public async Task CGSWUpdateLeaderBoard(bool isFinal = false)
+		#region CasparCG LeaderBoard
+		// Update LeaderBoard in real-time
+		public async Task CGSWUpdateLeaderBoard(bool isFinal = false)
         {
-            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now}  UpdateLeaderBoard isFinal '{isFinal}'");
+			
+				await _casparManager.CGSWUpdateLeaderBoardAsync(_isLeaderBoardActive, isFinal);
 
-            if (!_isLeaderBoardActive && !isFinal) return;
+		}
 
-            var players = _gameService.ConnectedPlayers.Values
-                .Where(p => p.ClientType == "Contestant")
-                .OrderByDescending(p => p.Score)
-                .Select(p => new { id = p.ConnectionId, name = p.NickName, score = p.Score })
-                .ToList();
+		
 
-            var message = new
-            {
-                type = isFinal ? "show_final_results" : "update_LeaderBoard",
-                players = players
-            };
-
-            _ = await _casparCGWsService.SendDataToTemplateAsync("LeaderBoard", message);
-        }
-
-        public async Task CGSWStoreFinalResults()
+		public async Task CGSWStoreFinalResults()
         {
-            await Task.Run(() =>
-            {
-                _finalScores = _gameService.ConnectedPlayers.Values
-                    .Select(p => new PlayerScore
-                    {
-                        PlayerId = p.ConnectionId,
-                        PlayerName = p.Name,
-                        Score = p.Score,
-                        Timestamp = DateTime.Now
-                    })
-                    .ToList();
-            });
+			await _casparManager.CGSWStoreFinalResultsAsync();
+		}
 
-            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} Final results stored for session.");
-        }
-
-
-        // Show final results
-        public async Task CGSWShowFinalResults()
+		
+		public async Task CGSWShowFinalResults()
         {
-            var players = _gameService.ConnectedPlayers.Values.Where(p => p.Score > 0 && p.ClientType == ClientTypes.Contestant.ToString())
-                .Select(p => new { id = p.ConnectionId, name = p.Name, score = p.Score })
-                .OrderByDescending(s => s.score)
-                .ToList();
+			await _casparManager.CGSWShowFinalResultsAsync();
+		}
 
-            var message = new
-            {
-                type = "show_final_results",
-                players = players
-            };
-
-            _ = await _casparCGWsService.SendDataToTemplateAsync("LeaderBoard", message);
-        }
-
-        public async Task CGSWToggleLeaderBoard(bool isVisible)
+		
+		public async Task CGSWToggleLeaderBoard(bool isVisible)
         {
-            _isLeaderBoardActive = isVisible;
-
-            if (!isVisible)
-            {
-                var message = new { type = "clear" };
-                _ = await _casparCGWsService.SendDataToTemplateAsync("LeaderBoard", message);
-            }
-            else
-            {
-                await CGSWUpdateLeaderBoard();
-            }
-        }
+			_isLeaderBoardActive = isVisible;
+            await _casparManager.CGSWToggleLeaderBoardAsync(_isLeaderBoardActive, isVisible);
+		}
+        	
 
         private async Task CGSWOnPlayerScoreChanged()
         {
-            if (_isLeaderBoardActive)
-            {
-                await CGSWUpdateLeaderBoard();
-            }
-        }
-
-
-
-
-        #endregion
-
-
-        #region CasparCG
-
-        public async Task CGWSClearChannelLayer(CGTemplateEnums templateType)
-        {
-
-
-            var data = new
-            {
-                type = "clear_content",
-                Question = "",
-                QuestionImage = "",
-                Answers = ""
-            };
-
-            _ = await _casparCGWsService.SendDataToTemplateAsync(templateType.ToString(), data);
-
-
+           await _casparManager.CGSWUpdateLeaderBoardAsync(_isLeaderBoardActive);
 
         }
 
-        public async Task CGClearChannel(CGTemplateEnums templateType)
+		
+
+
+
+		#endregion
+
+
+		#region CasparCG
+
+		public async Task CGWSClearChannelLayer(CGTemplateEnums templateType)
         {
-            //var channel = -1;
+			await _casparManager.CGWSClearChannelLayerAsync(templateType);
+
+		}
+		
+
+		public async Task CGClearChannel(CGTemplateEnums templateType)
+        { 
+            await _casparManager.ClearChannelAsync(templateType);
+		}
 
 
-            var settings = _cgSettingsMap.GetValueOrDefault(templateType);
-            if (settings.channel > 0)
-            {
-                await _caspar.ClearChannel(settings.channel);
-            }
+		public async Task<OperationResult> UpdatecgSettingsMap(CGTemplateEnums templateType,Dictionary<CGTemplateEnums, templateSettingModel> cgSettingsMap)
+        {
+			//_cgSettingsMap = cgSettingsMap;
+			var result = await _casparManager.UpdatecgSettingsMap(templateType, cgSettingsMap);
 
-            //if (templateType == CGTemplateEnums.QuestionFull)
-            //{
-            //	channel = _cgSettings.QuestionFull.Channel;
-            //}
-            //else if (templateType == CGTemplateEnums.QuestionLower)
-            //{
-            //	channel = _cgSettings.QuestionLower.Channel;
-            //}
-            //else if (templateType == CGTemplateEnums.Countdown)
-            //{
-            //	channel = _cgSettings.CountDown.Channel;
-            //}
-            //else if (templateType == CGTemplateEnums.LeaderBoard)
-            //{
-            //	channel = _cgSettings.LeaderBoard.Channel;
-            //}
-            //else if (templateType == CGTemplateEnums.YTVote)
-            //{
-            //	channel = _cgSettings.YTVote.Channel;
-            //}
-            //else if (templateType == CGTemplateEnums.QuestionVideo)
-            //{
-            //	channel = _cgSettings.QuestionVideo.Channel;
-            //}
+			return new OperationResult(result.Result);
+			//var result = await _casparManager.LoadTemplateAsync(templateType);
+			//return result;
+		}
 
-            //await _caspar.ClearChannel(channel);
+        public async Task<OperationResult> CGSWToggleTitle(TitleDataModel title, bool show)
+        {
+            var result = await _casparManager.ToggleTitle(title, show);
+            if (!result.Result)
+                _logger.LogError($"{Environment.NewLine}{DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff")} Failed to load template: {result.Message}");
+            return result;
+
         }
 
         public async Task<OperationResult> CGLoadTemplate(CGTemplateEnums templateType)
-        {
-            var (channel, templateName, layer, _) = _cgSettingsMap.GetValueOrDefault(templateType);
-            return string.IsNullOrEmpty(templateName)
-                ? new OperationResult(false)
-                : await CGEnsureTemplateLoadedAsync(templateName, channel, layer);
+		{
+			var result = await _casparManager.LoadTemplateAsync(templateType);
+			if (!result.Result)
+				_logger.LogError($"{Environment.NewLine}{DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff")} Failed to load template: {result.Message}");
+			return result;
+		}
+		////public async Task<OperationResult> CGLoadTemplateWithParams(CGTemplateEnums templateType,
+		////	Dictionary<CGTemplateEnums, (string serverIP, int channel, string templateName, int layer, int layerCg)> _cgSettingsMap
+        ////
+		////	)
+		////{
+		////	var result = await _casparManager.LoadTemplateAsync(templateType, _cgSettingsMap);
+		////	if (!result.Result)
+		////		_logger.LogError($"{Environment.NewLine}{DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff")} Failed to load template: {result.Message}");
+        ////    return result;
+		////}
+
+		
+		public async Task CGWSShowCorrectAnswer(string templateType, int correctAnswerIndex)
+		{
+			var result = await _casparManager.ShowCorrectAnswerAsync(templateType, correctAnswerIndex);
+			if (!result.Result)
+				_logger.LogError($"{Environment.NewLine}{DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff")} Failed to load template: {result.Message}");
+
+			// ლოგინგი სერვისშია
+		}
+
+		public async Task CGWSUpdateInQuestionShowCorrectTemplateData(string templateType, object message)
+        {           
+
+           await _casparManager.CGWSUpdateInQuestionShowCorrectTemplateDataAsync(templateType, message);
         }
-        public async Task<OperationResult> CGLoadTemplate_(CGTemplateEnums templateType)
+				
+		public async Task CGWSUpdateQuestionTemplateData(string templateType, QuestionModel question)
+		{
+			var result = await _casparManager.UpdateQuestionTemplateAsync(templateType, question);
+			if (!result.Result)
+				_logger.LogError($"{Environment.NewLine}{DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff")} Failed to update question template: {result.Message}");
+		}
+        		
+		public async Task CGWSCountDown(string templateType, int duration, CountDownStopMode action, long endTimestamp)
+		{
+			await _casparManager.StartCountDownAsync(templateType, duration, action, endTimestamp);
+		}
+
+		public async Task CGWSYTVote(string templateType, VoteResultsMessage message)
         {
-            _ = new OperationResult(true);
-            var templateName = string.Empty;
-            var layer = -1;
-            var channel = -1;
-            if (templateType == CGTemplateEnums.QuestionFull)
-            {
-                templateName = _cgSettings.QuestionFull.TemplateName;
-                channel = _cgSettings.QuestionFull.Channel;
-                layer = _cgSettings.QuestionFull.Layer;
-                _ = _cgSettings.QuestionFull.LayerCg;
-            }
-            else if (templateType == CGTemplateEnums.QuestionLower)
-            {
-                templateName = _cgSettings.QuestionLower.TemplateName;
-                channel = _cgSettings.QuestionLower.Channel;
-                layer = _cgSettings.QuestionLower.Layer;
-                _ = _cgSettings.QuestionLower.LayerCg;
-            }
-            else if (templateType == CGTemplateEnums.Countdown)
-            {
-                templateName = _cgSettings.CountDown.TemplateName;
-                channel = _cgSettings.CountDown.Channel;
-                layer = _cgSettings.CountDown.Layer;
-                _ = _cgSettings.CountDown.LayerCg;
-            }
-            else if (templateType == CGTemplateEnums.LeaderBoard)
-            {
-                templateName = _cgSettings.LeaderBoard.TemplateName;
-                channel = _cgSettings.LeaderBoard.Channel;
-                layer = _cgSettings.LeaderBoard.Layer;
-                _ = _cgSettings.LeaderBoard.LayerCg;
-            }
-            else if (templateType == CGTemplateEnums.YTVote)
-            {
-                templateName = _cgSettings.YTVote.TemplateName;
-                channel = _cgSettings.YTVote.Channel;
-                layer = _cgSettings.YTVote.Layer;
-                _ = _cgSettings.YTVote.LayerCg;
-            }
+			await _casparManager.CGWSYTVoteAsync(templateType, message);
+		}
+		        
+		public async Task<OperationResult> CGEnsureTemplateLoadedAsync(string templateName, int channel, int layer)
+		{
+			var res = new OperationResult(true);
+			var key = $"{channel}-{layer}";
+			const int maxRetries = 3;
+
+			if (!_isTemplateLoaded.ContainsKey(key))
+			{
+				// დამატებული რეტრაი ლოგიკა
+				int retryCount = 0;
+				
+
+				while (retryCount < maxRetries)
+				{
+					res = await _caspar.LoadTemplate(templateName, channel, layer, 1, false, null);
+
+					if (res.Result)
+					{
+						_isTemplateLoaded[key] = true;
+						_logger.LogInformation($"{Environment.NewLine}{DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff")} EnsureTemplateLoaded: {res.Message}");
+						break;
+					}
+					else
+					{
+						retryCount++;
+						_logger.LogWarning($"{Environment.NewLine}{DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff")} EnsureTemplateLoaded FAILED (attempt {retryCount}): {res.Message}");
+
+						if (retryCount < maxRetries)
+						{
+							await Task.Delay(1000); // დაელოდეთ 1 წამს სანამ თავიდან ცდით
+						}
+					}
+				}
+			}
+
+			if (!res.Result)
+			{
+				_logger.LogError($"{Environment.NewLine}{DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff")} EnsureTemplateLoaded: FINAL FAILURE after {maxRetries} attempts: {res.Message}");
+			}
+
+			return res;
+		}
 
 
+		
+		public async Task CGPlayClip(int channel, int layer, string templateName)
+		{
+			await _casparManager.PlayClipAsync(channel, layer, templateName);
+		}
+        		
+		public async Task CGClearPlayClip(CGTemplateEnums templateType)
+		{			
+			await _casparManager.ClearPlayClipAsync(templateType);
+		}
 
-
-            //_ = CGEnsureTemplateLoadedAsync(templateName, channel, layer);
-            return await CGEnsureTemplateLoadedAsync(templateName, channel, layer);
-
-
-
-
-        }
-        public async Task CGWSShowCorrectAnswer(string templateType, int correctAnswerIndex)
-        {
-            Console.WriteLine($"{DateTime.Now} Operator requested to show correct answer for template '{templateType}'. Correct answer index: {correctAnswerIndex}");
-
-
-
-            // Prepare the message to send to the template via WebSocket
-            var message = new
-            {
-                type = "show_answer",
-                correctAnswerIndex = correctAnswerIndex
-            };
-
-            // Send the message to the specified template
-            await CGWSUpdateInQuestionShowCorrectTemplateData(templateType, message);
-        }
-        public async Task CGWSUpdateInQuestionShowCorrectTemplateData(string templateType, object message)
-
-        {
-            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} Operator requested to update template fro Correct Answer '{templateType}' {message}");
-
-            _ = await _casparCGWsService.SendDataToTemplateAsync(templateType, message);
-        }
-        public async Task CGWSUpdateQuestionTemplateData_(string templateType, QuestionModel question)
-        {
-            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} Operator requested to update template '{templateType}' for Question {question}");
-
-            var data = new
-            {
-                type = "show_question",
-                Question = question.Question,
-                QuestionImage = question.QuestionImage,
-                Answers = question.Answers
-            };
-
-            // Use the new method that targets a specific template
-            _ = await _casparCGWsService.SendDataToTemplateAsync(templateType, data);
-        }
-
-        public async Task CGWSUpdateQuestionTemplateData(string templateType, QuestionModel question)
-        {
-            var data = new
-            {
-                type = "show_question",
-                Question = question.Question,
-                QuestionImage = question.QuestionImage,
-                Answers = question.Answers
-            };
-            _ = await _casparCGWsService.SendDataToTemplateAsync(templateType, data);
-        }
-
-        public async Task CGWSCountdown_(string templateType, int duration, CountdownStopMode action, long endTimestamp)
-        {
-
-            if (_currentGameMode == GameMode.Round1)
-                return;
-
-            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now}  Trigger Countdown Start in Template '{templateType}' for {action} sec");
-
-            var message = new
-            {
-                type = action.ToString(),
-                endTime = endTimestamp
-            };
-
-
-            _ = await _casparCGWsService.SendDataToTemplateAsync(templateType, message);
-        }
-
-        public async Task CGWSCountdown(string templateType, int duration, CountdownStopMode action, long endTimestamp)
-        {
-            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now}  Trigger Countdown Start in Template '{templateType}' for {action} sec");
-            if (_currentGameMode == GameMode.Round1) return;
-            var message = new { type = action.ToString(), endTime = endTimestamp };
-            _ = await _casparCGWsService.SendDataToTemplateAsync(templateType, message);
-        }
-
-        public async Task CGWSYTVote(string templateType, VoteResultsMessage message)
-        {
-            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now}  YT graphic  sec");
-
-            ;
-
-            // Use the new method that targets a specific template
-            _ = await _casparCGWsService.SendDataToTemplateAsync(templateType, message);
-        }
-
-
-        public async Task<OperationResult> CGEnsureTemplateLoadedAsync(string templateName, int channel, int layer)
-        {
-            var res = new OperationResult(true);
-            var key = $"{channel}-{layer}";
-            if (!_isTemplateLoaded.ContainsKey(key))
-            {
-                res = await _caspar.LoadTemplate(templateName, channel, layer, 1, false, null);
-
-            }
-            return res;
-        }
-
-        public async Task CGPlayClip(int channel, int layer, string templateName)
-        {
-            templateName = _cgSettings.QuestionVideo.TemplateName + templateName;
-            templateName = templateName.Replace("\\", "/").Replace(".mp4", "");
-            await _caspar.PlayClip(channel, layer, templateName);
-        }
-
-        public async Task CGClearPlayClip(CGTemplateEnums templateType)
-        {
-            var (channel, _, layer, _) = _cgSettingsMap.GetValueOrDefault(templateType);
-            await _caspar.ClearChannelLayer(channel, layer);
-        }
-
-        public async Task CGSWSendScoreboardToCaspar(List<Player> players)
+		public async Task CGSWSendScoreboardToCaspar(List<Player> players)
         {
             await CGSWOnPlayerScoreChanged();
 
@@ -514,27 +387,27 @@ namespace GameController.Server.Hubs
 
 
 
-        public async Task ClientStartCountdown(int durationSeconds)
+        public async Task ClientStartCountDown(int durationSeconds)
         {
 
             var endTimestamp = DateTimeOffset.UtcNow.AddSeconds(durationSeconds).ToUnixTimeMilliseconds();
-            await Clients.All.SendAsync("ReceiveCountdown", endTimestamp);
+            await Clients.All.SendAsync("ReceiveCountDown", endTimestamp);
 
-            _isCountdownActiveOnCG = true;
+            _isCountDownActiveOnCG = true;
         }
 
         public async Task StartYTVoting()
         {
-            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} StartYTVoting: Voting Starting {"duration"} Secs.");
+            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff")} StartYTVoting: Voting Starting {"duration"} Secs.");
             if (_isYTVotingModeActive)
             {
-                _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} StartYTVoting: Already Active, Return.");
+                _logger.LogInformation($"{Environment.NewLine}{DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff")} StartYTVoting: Already Active, Return.");
                 return;
             }
 
             _isYTVotingModeActive = true;
 
-            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} StartYTVoting: Getting for accessToken...");
+            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff")} StartYTVoting: Getting for accessToken...");
             var accessToken = await _ytoauthTokenService.GetAccessTokenAsync();
             if (string.IsNullOrEmpty(accessToken))
             {
@@ -543,7 +416,7 @@ namespace GameController.Server.Hubs
             }
             else
             {
-                _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} StartVotingMode: Getting accessToken...DONE");
+                _logger.LogInformation($"{Environment.NewLine}{DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff")} StartVotingMode: Getting accessToken...DONE");
             }
 
 
@@ -559,25 +432,25 @@ namespace GameController.Server.Hubs
 
 
 
-            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} StartVotingMode: Getting LiveChatId...");
+            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff")} StartVotingMode: Getting LiveChatId...");
             var _liveChatId = await _youtubeChatService.GetLiveChatIdAsync(videoId, accessToken);
-            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} StartVotingMode: Getting LiveChatId...DONE " + _liveChatId);
+            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff")} StartVotingMode: Getting LiveChatId...DONE " + _liveChatId);
 
 
 
             if (!string.IsNullOrEmpty(_liveChatId))
             {
-                _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} StartVotingMode: Starting New Question...");
+                _logger.LogInformation($"{Environment.NewLine}{DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff")} StartVotingMode: Starting New Question...");
                 await _ytAudienceVoteManager.StartNewQuestion(0, "შეკითხვა");
-                _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} StartVotingMode: Starting New Question...DONE");
+                _logger.LogInformation($"{Environment.NewLine}{DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff")} StartVotingMode: Starting New Question...DONE");
 
-                _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} StartVotingMode: Sending Chat Message...");
+                _logger.LogInformation($"{Environment.NewLine}{DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff")} StartVotingMode: Sending Chat Message...");
                 await _youtubeChatService.PostChatMessageAsync(_liveChatId, "ხმის მიცემა ჩართულია!", accessToken);
-                _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} StartVotingMode: Sending Chat Message...DONE");
+                _logger.LogInformation($"{Environment.NewLine}{DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff")} StartVotingMode: Sending Chat Message...DONE");
 
             }
 
-            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} StartVotingMode: Method finished OK.");
+            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff")} StartVotingMode: Method finished OK.");
 
         }
 
@@ -590,7 +463,7 @@ namespace GameController.Server.Hubs
             }
 
             _isYTVotingModeActive = true;
-            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} StartVotingModeIndefinite: Voting Starting for undefined Duration.");
+            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff")} StartVotingModeIndefinite: Voting Starting for undefined Duration.");
             var accessToken = await _ytoauthTokenService.GetAccessTokenAsync();
             if (string.IsNullOrEmpty(accessToken))
             {
@@ -599,7 +472,7 @@ namespace GameController.Server.Hubs
             }
             else
             {
-                _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} StartVotingModeIndefinite: Getting accessToken...DONE");
+                _logger.LogInformation($"{Environment.NewLine}{DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff")} StartVotingModeIndefinite: Getting accessToken...DONE");
             }
 
             var videoId = _configuration["YTVotingSettings:Video_id"];
@@ -626,7 +499,7 @@ namespace GameController.Server.Hubs
             }
 
             _isYTVotingModeActive = false;
-            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} ხმის მიცემა შეჩერდა.");
+            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff")} ხმის მიცემა შეჩერდა.");
 
             var accessToken = await _ytoauthTokenService.GetAccessTokenAsync();
             var videoId = _configuration["YTVotingSettings:Video_id"];
@@ -647,7 +520,7 @@ namespace GameController.Server.Hubs
         public async Task KickUserFromVoting(string authorChannelId)
         {
             await _ytAudienceVoteManager.KickUserAsync(authorChannelId);
-            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} მომხმარებელი {authorChannelId} გაგდებულია.");
+            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff")} მომხმარებელი {authorChannelId} გაგდებულია.");
 
             var accessToken = await _ytoauthTokenService.GetAccessTokenAsync();
             var videoId = _configuration["YTVotingSettings:Video_id"];
@@ -666,19 +539,19 @@ namespace GameController.Server.Hubs
 
         public async Task ReceiveAudienceDat(string accessToken)
         {
-            //TODO
-            return;
-        }
+			//TODO
+			await Task.CompletedTask;
+		}
 
         public async Task StartYTDataCollectingAsync()
         {
-            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} GameHub:StartYTDataCollectingAsync:  Going to star Collector Service.");
+            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff")} GameHub:StartYTDataCollectingAsync:  Going to star Collector Service.");
             _ = await _ytdataCollectorService.StartCollectingAsync();
         }
         public async Task SaveYTOAuthTokens(string accessToken, string refreshToken)
         {
 
-            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} YouTube OAuth Tokens Saved in GameHub-ში.  accessToken {accessToken}, refreshToken {refreshToken}");
+            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff")} YouTube OAuth Tokens Saved in GameHub-ში.  accessToken {accessToken}, refreshToken {refreshToken}");
             // ვინახავთ ტოკენებს OAuthTokenService-ში
             await _ytoauthTokenService.SaveTokensAsync(accessToken, refreshToken);
 
@@ -703,7 +576,7 @@ namespace GameController.Server.Hubs
                 // Deserialize the file content into our Question list on a background thread
                 _questions = await Task.Run(() => System.Text.Json.JsonSerializer.Deserialize<List<QuestionModel>>(fileContent));
                 int questionCount = _questions?.Count ?? 0;
-                _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} Successfully loaded {questionCount} questions from a file");
+                _logger.LogInformation($"{Environment.NewLine}{DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff")} Successfully loaded {questionCount} questions from a file");
                 return _questions ?? new List<QuestionModel>();
             }
             catch (System.Text.Json.JsonException ex)
@@ -778,7 +651,7 @@ namespace GameController.Server.Hubs
                                                                              //// Replace this line:
                                                                              //var isRegisteredClient = _registeredClients.FirstOrDefault(c => clientIp?.Contains(c.ip) && c.clientName == clientName);
 
-            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} Client connected. ConnectionId: {Context.ConnectionId}, IP: {clientIp}, Name: {clientName}");
+            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff")} Client connected. ConnectionId: {Context.ConnectionId}, IP: {clientIp}, Name: {clientName}");
 
             // With this corrected version:
             var isRegisteredClient = _registeredClients.FirstOrDefault(
@@ -802,7 +675,7 @@ namespace GameController.Server.Hubs
                     // We need to remove the old entry and add the new one with the updated ConnectionId.
                     if (_gameService.ConnectedPlayers.TryRemove(existingPlayer.ConnectionId, out _))
                     {
-                        _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} Client '{existingPlayer.Name}' from {existingPlayer.Ip} reconnected. Removed old entry with ConnectionId: {existingPlayer.ConnectionId}.");
+                        _logger.LogInformation($"{Environment.NewLine}{DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff")} Client '{existingPlayer.Name}' from {existingPlayer.Ip} reconnected. Removed old entry with ConnectionId: {existingPlayer.ConnectionId}.");
                     }
                     // Note: The new player will be added in the next step.
                 }
@@ -827,7 +700,7 @@ namespace GameController.Server.Hubs
 
                 _ = _gameService.ConnectedPlayers.AddOrUpdate(Context.ConnectionId, newPlayer, (key, existingPlayer) => newPlayer);
 
-                _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} Client {Context.ConnectionId} '{isRegisteredClient.clientName}' from {clientIp} {isRegisteredClient.clientType} is REGISTERED. Total registered players: {_gameService.ConnectedPlayers.Count}");
+                _logger.LogInformation($"{Environment.NewLine}{DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff")} Client {Context.ConnectionId} '{isRegisteredClient.clientName}' from {clientIp} {isRegisteredClient.clientType} is REGISTERED. Total registered players: {_gameService.ConnectedPlayers.Count}");
 
                 await Clients.Caller.SendAsync("UpdateRegistrationStatus", true, newPlayer.Name, Context.ConnectionId, isRegisteredClient.clientType);
 
@@ -860,7 +733,7 @@ namespace GameController.Server.Hubs
 
             if (_gameService.ConnectedPlayers.TryRemove(Context.ConnectionId, out var player))
             {
-                _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} Client '{player.Name}' disconnected. Total registered players: {_gameService.ConnectedPlayers.Count}");
+                _logger.LogInformation($"{Environment.NewLine}{DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff")} Client '{player.Name}' disconnected. Total registered players: {_gameService.ConnectedPlayers.Count}");
                 await Clients.All.SendAsync("UpdatePlayerList", _gameService.ConnectedPlayers.Values.ToList());
 
 
@@ -879,7 +752,7 @@ namespace GameController.Server.Hubs
             {
                 var sender = _gameService.ConnectedPlayers[Context.ConnectionId];
                 await Clients.Client(connectionId).SendAsync("ReceiveCustomMessage", sender.Name, message);
-                _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} Message from '{sender.Name}' sent to client '{connectionId}': {message}");
+                _logger.LogInformation($"{Environment.NewLine}{DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff")} Message from '{sender.Name}' sent to client '{connectionId}': {message}");
             }
             else
             {
@@ -887,62 +760,7 @@ namespace GameController.Server.Hubs
             }
         }
 
-
-
-        public async Task SendQuestion_(QuestionModel question, int durationSeconds, GameMode mode, bool disableInput, List<Player>? clients)
-        {
-
-            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} Sending question '{question.Question}' with a {durationSeconds}s countdown.");
-
-            _activeQuestion = question; // Set the active question here
-            _answersReceivedCount = 0; // Reset the counter for each new question
-                                       //_currentCountdownMode = mode; // Store the selected mode
-            _currentGameMode = mode;
-            _currentDisableInput = disableInput; // Store the input disable state
-                                                 //_isRapidFireActive = false; 
-
-            //_midiLightingService.SendNoteOn(
-            //    _midiSettings.CountdownNote,
-            //    _midiSettings.CountdownVelocity
-            //);
-
-
-
-            var endTimestamp = DateTimeOffset.UtcNow.AddSeconds(durationSeconds).ToUnixTimeMilliseconds();
-            if (clients == null || clients.Count == 0)
-            {
-                // თუ სია არ არის გადმოცემული ან ცარიელია, გაუგზავნეთ ყველას
-                _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} No specific clients provided. Sending to all connected clients.");
-
-                _activePlayerIds = _gameService.ConnectedPlayers.Where(p => p.Value.ClientType == "Contestant").Select(p => p.Key).ToList();
-                await Clients.All.SendAsync("ReceiveQuestion", question, disableInput);
-                await Clients.All.SendAsync("ReceiveCountdown", endTimestamp);
-            }
-            else
-            {
-                // გაუგზავნეთ კითხვა მხოლოდ კონკრეტულ კლიენტებს
-                _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} Sending question to {clients.Count} specified clients.");
-                _activePlayerIds = clients.Select(c => c.ConnectionId).ToList();
-
-                await Clients.Clients(_activePlayerIds).SendAsync("ReceiveQuestion", question, disableInput);
-                await Clients.Clients(_activePlayerIds).SendAsync("ReceiveCountdown", endTimestamp);
-            }
-
-
-
-
-            await Clients.Clients(GetOperatorConnectionId()).SendAsync("ReceiveCountdown", endTimestamp);
-            await CGWSCountdown(CGTemplateEnums.Countdown.ToString(), durationSeconds, CountdownStopMode.Start, endTimestamp);
-
-
-
-            await CGWSUpdateQuestionTemplateData(CGTemplateEnums.QuestionFull.ToString(), question);
-            await CGWSUpdateQuestionTemplateData(CGTemplateEnums.QuestionLower.ToString(), question);
-            if (!String.IsNullOrEmpty(question.QuestionVideo))
-            {
-                await CGPlayClip(_cgSettings.QuestionVideo.Channel, _cgSettings.QuestionVideo.Layer, question.QuestionVideo);
-            }
-        }
+       
 
 
         public async Task SendQuestion(QuestionModel question, int durationSeconds, GameMode mode, bool disableInput, List<Player>? clients)
@@ -953,7 +771,7 @@ namespace GameController.Server.Hubs
             _answersReceivedCount = 0;
             _currentGameMode = mode;
 
-            _midiLightingService.SendNoteOn(_midiSettings.CountdownNote, _midiSettings.CountdownVelocity);
+            _midiLightingService.SendNoteOn(_midiSettings.CountDownNote, _midiSettings.CountDownVelocity);
 
             var endTimestamp = DateTimeOffset.UtcNow.AddSeconds(durationSeconds).ToUnixTimeMilliseconds();
 
@@ -965,10 +783,10 @@ namespace GameController.Server.Hubs
                 : Clients.All;
 
             await clientGroup.SendAsync("ReceiveQuestion", question, disableInput);
-            if (_currentGameMode == GameMode.RapidMode) await clientGroup.SendAsync("ReceiveCountdown", endTimestamp);
-            await Clients.Client(GetOperatorConnectionId()).SendAsync("ReceiveCountdown", endTimestamp);
+            if (_currentGameMode == GameMode.RapidMode) await clientGroup.SendAsync("ReceiveCountDown", endTimestamp);
+            await Clients.Client(GetOperatorConnectionId()).SendAsync("ReceiveCountDown", endTimestamp);
 
-            if (_currentGameMode == GameMode.RapidMode) await CGWSCountdown(CGTemplateEnums.Countdown.ToString(), durationSeconds, CountdownStopMode.Start, endTimestamp);
+            if (_currentGameMode == GameMode.RapidMode) await CGWSCountDown(CGTemplateEnums.CountDown.ToString(), durationSeconds, CountDownStopMode.Start, endTimestamp);
             await CGWSUpdateQuestionTemplateData(CGTemplateEnums.QuestionFull.ToString(), question);
             await CGWSUpdateQuestionTemplateData(CGTemplateEnums.QuestionLower.ToString(), question);
 
@@ -998,7 +816,7 @@ namespace GameController.Server.Hubs
                         connectedPlayer.Score = incomingPlayer.Score;
                         scoresUpdated = true; // დავაყენოთ დროშა, რომ ცვლილება მოხდა
 
-                        _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} Updated score for player '{connectedPlayer.Name}' from {connectedPlayer.Score} to {incomingPlayer.Score}");
+                        _logger.LogInformation($"{Environment.NewLine}{DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff")} Updated score for player '{connectedPlayer.Name}' from {connectedPlayer.Score} to {incomingPlayer.Score}");
                     }
                 }
             }
@@ -1034,11 +852,11 @@ namespace GameController.Server.Hubs
                     {
                         //player.AddScore(1);
                         _gameService.AddPoints(player, 1);
-                        _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} Player '{player.Name}' submitted a CORRECT answer. Score: {player.Score}");
+                        _logger.LogInformation($"{Environment.NewLine}{DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff")} Player '{player.Name}' submitted a CORRECT answer. Score: {player.Score}");
                     }
                     else
                     {
-                        _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} Player '{player.Name}' submitted an INCORRECT answer.");
+                        _logger.LogInformation($"{Environment.NewLine}{DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff")} Player '{player.Name}' submitted an INCORRECT answer.");
                     }
 
                     // This is the core logic for the new RapidFire UI control
@@ -1061,11 +879,11 @@ namespace GameController.Server.Hubs
                     }
                     else
                     {
-                        //if (_currentCountdownMode == CountdownMode.FirstAnswer)
+                        //if (_currentCountDownMode == CountDownMode.FirstAnswer)
                         if (_currentGameMode == GameMode.FirstAnswer)
                         {
-                            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} active player have submitted an answer. Stopping countdown.");
-                            await Clients.All.SendAsync("StopCountdown", CountdownStopMode.Pause.ToString()); // Send a signal to stop the countdown
+                            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff")} active player have submitted an answer. Stopping countdown.");
+                            await Clients.All.SendAsync("StopCountDown", CountDownStopMode.Pause.ToString()); // Send a signal to stop the countdown
 
                         }
                     }
@@ -1076,8 +894,8 @@ namespace GameController.Server.Hubs
                         _answersReceivedCount++;
                         if (_answersReceivedCount >= _activePlayerIds.Count)
                         {
-                            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} All active players have submitted an answer. Stopping countdown.");
-                            await Clients.All.SendAsync("StopCountdown", CountdownStopMode.TimeUp.ToString()); // Send a signal to stop the countdown
+                            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff")} All active players have submitted an answer. Stopping countdown.");
+                            await Clients.All.SendAsync("StopCountDown", CountDownStopMode.TimeUp.ToString()); // Send a signal to stop the countdown
                         }
                     }
 
@@ -1101,7 +919,7 @@ namespace GameController.Server.Hubs
 
         public async Task EndRound(RoundEndAction action = RoundEndAction.Reset)
         {
-            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} Round has ended. Processing results.");
+            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff")} Round has ended. Processing results.");
 
             // Clear the active question and player list for the next round.
             _isRapidFireActive = false; // Reset the flag
@@ -1119,7 +937,7 @@ namespace GameController.Server.Hubs
 
         public async Task SendRapidFireQuestionFromUI(QuestionModel nextQuestion, bool disableInput)
         {
-            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} Rapid Fire: Sending question '{nextQuestion.Question}'");
+            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff")} Rapid Fire: Sending question '{nextQuestion.Question}'");
 
             _activeQuestion = nextQuestion;
             _currentDisableInput = disableInput;
@@ -1131,7 +949,7 @@ namespace GameController.Server.Hubs
         }
         public async Task StartRapidFire(List<Player> clients, int durationSeconds, bool disableInput)
         {
-            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} Starting Rapid Fire mode.");
+            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff")} Starting Rapid Fire mode.");
             //_isRapidFireActive = true; // Set the flag to true
             _currentGameMode = GameMode.RapidMode;
             _currentDisableInput = disableInput;
@@ -1142,12 +960,12 @@ namespace GameController.Server.Hubs
 
             // Set up the countdown for the entire Rapid Fire session
             var endTimestamp = DateTimeOffset.UtcNow.AddSeconds(durationSeconds).ToUnixTimeMilliseconds();
-            await Clients.Clients(_activePlayerIds).SendAsync("ReceiveCountdown", endTimestamp);
+            await Clients.Clients(_activePlayerIds).SendAsync("ReceiveCountDown", endTimestamp);
 
-            await Clients.Clients(GetOperatorConnectionId()).SendAsync("ReceiveCountdown", endTimestamp);
+            await Clients.Clients(GetOperatorConnectionId()).SendAsync("ReceiveCountDown", endTimestamp);
 
 
-            await CGWSCountdown(CGTemplateEnums.Countdown.ToString(), durationSeconds, CountdownStopMode.Start, endTimestamp);
+            await CGWSCountDown(CGTemplateEnums.CountDown.ToString(), durationSeconds, CountDownStopMode.Start, endTimestamp);
 
         }
 
@@ -1161,7 +979,7 @@ namespace GameController.Server.Hubs
                 else
                     player.AddScore(1);
 
-                _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} Corrected Score for '{player.Name}'. Score: {player.Score}");
+                _logger.LogInformation($"{Environment.NewLine}{DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff")} Corrected Score for '{player.Name}'. Score: {player.Score}");
 
 
                 await Clients.All.SendAsync("UpdatePlayerList", _gameService.ConnectedPlayers.Values.ToList());
@@ -1196,14 +1014,14 @@ namespace GameController.Server.Hubs
                     if (activePlayerId != null && _gameService.ConnectedPlayers.TryGetValue(activePlayerId, out var player))
                     {
                         player.AddScore(_activeQuestion.ScorePrice);
-                        _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} RapidFire No Input: Operator confirmed a correct answer for player '{player.Name}'. Score: {player.Score}");
+                        _logger.LogInformation($"{Environment.NewLine}{DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff")} RapidFire No Input: Operator confirmed a correct answer for player '{player.Name}'. Score: {player.Score}");
 
 
                     }
                 }
                 else
                 {
-                    _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} RapidFire No Input: Operator confirmed an incorrect answer.");
+                    _logger.LogInformation($"{Environment.NewLine}{DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff")} RapidFire No Input: Operator confirmed an incorrect answer.");
 
                 }
 
@@ -1239,7 +1057,7 @@ namespace GameController.Server.Hubs
 
         public Task SendConnectionId(ConnectionIdMessage message)
         {
-            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} Received Connection ID from service {message.ServiceName}, {message.ConnectionId}");
+            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff")} Received Connection ID from service {message.ServiceName}, {message.ConnectionId}");
 
             // Sends the connection ID to all clients except the sender.
             return Clients.Others.SendAsync("ReceiveConnectionId", message);
@@ -1248,10 +1066,11 @@ namespace GameController.Server.Hubs
 
         public async Task PassMessageToYTVoteManager(MessageToYTManager msg)
         {
-            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} GameHub: PassMessageToYTVoteManager");
+            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff")} GameHub: PassMessageToYTVoteManager");
             msg.SenderConnectionId = Context.ConnectionId;
             var destClientId = GetYTVoteMangerConnectionId();
-            await Clients.Clients(destClientId).SendAsync("ReceiveMessageAsync", msg);
+            if (destClientId!= null)
+                await Clients.Clients(destClientId).SendAsync("ReceiveMessageAsync", msg);
         }
 
         /// <summary>
@@ -1260,9 +1079,10 @@ namespace GameController.Server.Hubs
         /// <param name="message">The voting request message.</param>
         public async Task StartVoting(VoteRequestMessage message)
         {
-            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} GameHub: Received a voting request from an operator: IsVotingActive = {message.IsVotingActive}");
+            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff")} GameHub: Received a voting request from an operator: IsVotingActive = {message.IsVotingActive}");
             var destClientId = GetYTVoteMangerConnectionId();
-            await Clients.Clients(destClientId).SendAsync("ReceiveVoteRequest", message);
+			if (destClientId != null)
+				await Clients.Clients(destClientId).SendAsync("ReceiveVoteRequest", message);
         }
 
         /// <summary>
@@ -1271,15 +1091,16 @@ namespace GameController.Server.Hubs
         /// <param name="message">The voting request message.</param>
         public async Task StopVoting(VoteRequestMessage message)
         {
-            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} GameHub: Received a voting request from an operator: IsVotingActive = {message.IsVotingActive}");
+            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff")} GameHub: Received a voting request from an operator: IsVotingActive = {message.IsVotingActive}");
             var destClientId = GetYTVoteMangerConnectionId();
-            await Clients.Clients(destClientId).SendAsync("ReceiveVoteRequest", message);
+			if (destClientId != null)
+				await Clients.Clients(destClientId).SendAsync("ReceiveVoteRequest", message);
 
         }
         public Task Ping()
         {
 
-            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} Received Ping from client: {Context.ConnectionId}");
+            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff")} Received Ping from client: {Context.ConnectionId}");
             return Clients.Client(Context.ConnectionId).SendAsync("Pong");
 
         }
@@ -1287,7 +1108,7 @@ namespace GameController.Server.Hubs
 
         public async Task ReceiveVoteResults(VoteResultsMessage message)
         {
-            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} GameHub: Received vote results from YouTubeChatService");
+            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff")} GameHub: Received vote results from YouTubeChatService");
             // This is where we would trigger the CasparCG template.
             // For now, we are just logging the received data.
             var chatMessageBuilder = new StringBuilder();

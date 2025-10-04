@@ -45,12 +45,13 @@ namespace GameController.Server.Services
                 }
 
                 byte[] buffer = Encoding.UTF8.GetBytes(cmd + "\r\n");
-                lock (_lock)
-                {
-                    //_stream.Write(buffer, 0, buffer.Length);
-                    _ = _stream.WriteAsync(buffer, 0, buffer.Length);
-                }
-                res.Message = "Command sent successfully";
+                //lock (_lock)
+                //{
+                    
+                  //_ = _stream.WriteAsync(buffer, 0, buffer.Length);
+					await _stream.WriteAsync(buffer, 0, buffer.Length);
+				//}
+				res.SetSuccess($"Command sent successfully {cmd}");
             }
             catch (Exception ex)
             {
@@ -75,7 +76,7 @@ namespace GameController.Server.Services
 
         public Task<OperationResult> LoadTemplate(string templateName, int channel, int layer, int layerCg, bool autoPlay, object? data)
         {
-            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} Going to Load template '{templateName}' {channel}-{layer}");
+            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff")} Going to Load template '{templateName}' {channel}-{layer}");
             _ = JsonSerializer.Serialize(data);
             return SendCommand($"CG {channel}-{layer} ADD {layerCg} {templateName}  0");
 
@@ -132,14 +133,14 @@ namespace GameController.Server.Services
 
         public Task ClearChannel(int channel)
         {
-            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} Going to Clear Channel {channel}");
+            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff")} Going to Clear Channel {channel}");
 
             return SendCommand($"CLEAR {channel}");
         }
 
         public Task ClearChannelLayer(int channel, int layer)
         {
-            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} Going to Clear Channel {channel}-{layer}");
+            _logger.LogInformation($"{Environment.NewLine}{DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff")} Going to Clear Channel {channel}-{layer}");
 
             return SendCommand($"CLEAR {channel}-{layer}");
         }

@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.SignalR;
 // ახალი ჩამატებული
 using Microsoft.Extensions.FileProviders;
 using System.Text;
+using GameController.Server.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -86,6 +87,7 @@ builder.Services.AddSingleton<ICasparService>(provider =>
     }
 });
 
+builder.Services.AddScoped<ICasparManager, CasparManager>();
 
 builder.Services.Configure<MidiSettingsModels>(
     builder.Configuration.GetSection("MidiSettings"));
@@ -96,17 +98,28 @@ Console.WriteLine($"MIDI Device Name from Config: {midiDeviceName}");
 //var midiCorrectAnswerNote = builder.Configuration.GetSection("MidiSettings:CorrectAnswerNote").Value;
 //Console.WriteLine($"Correct Answer Note from Config: {midiCorrectAnswerNote}");
 
+//builder.Services.AddSignalR(options =>
+//{
+//    options.AddFilter<LogHubFilter>();
+//    //options.
+//});
+//
+//
+//builder.Services.AddSignalR()
+//    .AddJsonProtocol(options => {
+//        options.PayloadSerializerOptions.PropertyNamingPolicy = null;
+//    });
+
+
 builder.Services.AddSignalR(options =>
 {
-    options.AddFilter<LogHubFilter>();
-    //options.
+	// Add your custom filter
+	options.AddFilter<LogHubFilter>();
+})
+.AddJsonProtocol(options => {
+	// Configure the JSON serializer
+	options.PayloadSerializerOptions.PropertyNamingPolicy = null;
 });
-
-
-builder.Services.AddSignalR()
-    .AddJsonProtocol(options => {
-        options.PayloadSerializerOptions.PropertyNamingPolicy = null;
-    });
 
 
 // Register the filter itself
@@ -144,7 +157,7 @@ app.UseWebSockets();
 
 app.Use(async (context, next) =>
 {
-    Console.WriteLine($"{Environment.NewLine}{DateTime.Now}  Incoming request path: {context.Request.Path}");
+    Console.WriteLine($"{Environment.NewLine}{DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff")}  Incoming request path: {context.Request.Path}");
 
     if (context.Request.Path == "/ws-casparcg")
     {

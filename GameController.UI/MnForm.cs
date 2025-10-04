@@ -6,6 +6,7 @@ using GameController.Shared.Models;
 using GameController.Shared.Models.Connection;
 using GameController.Shared.Models.YouTube;
 using GameController.UI;
+using GameController.UI.Model;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -69,9 +70,9 @@ namespace GameShowCtrl
 
         private readonly string _serverBaseUrl; // ახალი ცვლადი
         private readonly IConfiguration _config; // ახალი ცვლადი კონფიგურაციისთვის
-        private readonly IConfiguration _configCG; 
+        private readonly IConfiguration _configCG;
 
-        private readonly ILogger<MnForm> _logger;
+        //private readonly ILogger<MnForm> _logger;
 
         private string ClientId = "თქვენი_Client_ID"; // ჩაანაცვლეთ თქვენი Client ID-ით
         private string ClientSecret = "თქვენი_Client_ID"; // ჩაანაცვლეთ თქვენი Client ID-ით
@@ -84,11 +85,12 @@ namespace GameShowCtrl
 
         public string? _currentPlayerId;
 
-        private static readonly Dictionary<CGTemplateEnums, (int channel, string templateName, int layer, int layerCg)> _cgSettingsMap = new();
+        //private static readonly Dictionary<CGTemplateEnums, (string serverIP, int channel, string templateName, int layer, int layerCg)> _cgSettingsMap = new();
+        private static readonly Dictionary<CGTemplateEnums, templateSettingModel> _cgSettingsMap = new();
         public MnForm()
         {
             InitializeComponent();
-            cmbCountdownMode.DataSource = Enum.GetValues(typeof(GameMode));
+            cmbCountDownMode.DataSource = Enum.GetValues(typeof(GameMode));
 
             _config = new ConfigurationBuilder()
             .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
@@ -154,41 +156,74 @@ namespace GameShowCtrl
 
             if (_cgSettings != null)
             {
-                _cgSettingsMap[CGTemplateEnums.QuestionFull] = (_cgSettings.QuestionFull.Channel, _cgSettings.QuestionFull.TemplateName, _cgSettings.QuestionFull.Layer, _cgSettings.QuestionFull.LayerCg);
-                _cgSettingsMap[CGTemplateEnums.QuestionLower] = (_cgSettings.QuestionLower.Channel, _cgSettings.QuestionLower.TemplateName, _cgSettings.QuestionLower.Layer, _cgSettings.QuestionLower.LayerCg);
-                _cgSettingsMap[CGTemplateEnums.Countdown] = (_cgSettings.CountDown.Channel, _cgSettings.CountDown.TemplateName, _cgSettings.CountDown.Layer, _cgSettings.CountDown.LayerCg);
-                _cgSettingsMap[CGTemplateEnums.LeaderBoard] = (_cgSettings.LeaderBoard.Channel, _cgSettings.LeaderBoard.TemplateName, _cgSettings.LeaderBoard.Layer, _cgSettings.LeaderBoard.LayerCg);
-                _cgSettingsMap[CGTemplateEnums.YTVote] = (_cgSettings.YTVote.Channel, _cgSettings.YTVote.TemplateName, _cgSettings.YTVote.Layer, _cgSettings.YTVote.LayerCg);
-                _cgSettingsMap[CGTemplateEnums.QuestionVideo] = (_cgSettings.QuestionVideo.Channel, _cgSettings.QuestionVideo.TemplateName, _cgSettings.QuestionVideo.Layer, _cgSettings.QuestionVideo.LayerCg);
+                _cgSettingsMap[CGTemplateEnums.QuestionFull] = new templateSettingModel(
+                    CGTemplateEnums.QuestionFull.ToString(),
+                    _cgSettings.QuestionFull.TemplateName,
+                    _cgSettings.QuestionFull.TemplateUrl,
+                    _cgSettings.QuestionFull.Channel,
+                    _cgSettings.QuestionFull.Layer,
+                    _cgSettings.QuestionFull.LayerCg,
+                    _cgSettings.QuestionFull.ServerIp ?? string.Empty
+                );
+                _cgSettingsMap[CGTemplateEnums.QuestionLower] = new templateSettingModel(
+                    CGTemplateEnums.QuestionLower.ToString(),
+                    _cgSettings.QuestionLower.TemplateName,
+                    _cgSettings.QuestionLower.TemplateUrl,
+                    _cgSettings.QuestionLower.Channel,
+                    _cgSettings.QuestionLower.Layer,
+                    _cgSettings.QuestionLower.LayerCg,
+                    _cgSettings.QuestionLower.ServerIp ?? string.Empty
+                );
+                _cgSettingsMap[CGTemplateEnums.CountDown] = new templateSettingModel(
+                    CGTemplateEnums.CountDown.ToString(),
+                    _cgSettings.CountDown.TemplateName,
+                    _cgSettings.CountDown.TemplateUrl,
+                    _cgSettings.CountDown.Channel,
+                    _cgSettings.CountDown.Layer,
+                    _cgSettings.CountDown.LayerCg,
+                    _cgSettings.CountDown.ServerIp ?? string.Empty
+                );
+                _cgSettingsMap[CGTemplateEnums.LeaderBoard] = new templateSettingModel(
+                    CGTemplateEnums.LeaderBoard.ToString(),
+                    _cgSettings.LeaderBoard.TemplateName,
+                    _cgSettings.LeaderBoard.TemplateUrl,
+                    _cgSettings.LeaderBoard.Channel,
+                    _cgSettings.LeaderBoard.Layer,
+                    _cgSettings.LeaderBoard.LayerCg,
+                    _cgSettings.LeaderBoard.ServerIp ?? string.Empty
+                );
+                _cgSettingsMap[CGTemplateEnums.YTVote] = new templateSettingModel(
+                    CGTemplateEnums.YTVote.ToString(),
+                    _cgSettings.YTVote.TemplateName,
+                    _cgSettings.YTVote.TemplateUrl,
+                    _cgSettings.YTVote.Channel,
+                    _cgSettings.YTVote.Layer,
+                    _cgSettings.YTVote.LayerCg,
+                    _cgSettings.YTVote.ServerIp ?? string.Empty
+                );
+                _cgSettingsMap[CGTemplateEnums.QuestionVideo] = new templateSettingModel(
+                    CGTemplateEnums.QuestionVideo.ToString(),
+                    _cgSettings.QuestionVideo.TemplateName,
+                    _cgSettings.QuestionVideo.TemplateUrl,
+                    _cgSettings.QuestionVideo.Channel,
+                    _cgSettings.QuestionVideo.Layer,
+                    _cgSettings.QuestionVideo.LayerCg,
+                    _cgSettings.QuestionVideo.ServerIp ?? string.Empty
+                );
+                _cgSettingsMap[CGTemplateEnums.tPs1] = new templateSettingModel(
+                    CGTemplateEnums.tPs1.ToString(),
+                    _cgSettings.tPs1.TemplateName,
+                    _cgSettings.tPs1.TemplateUrl,
+                    _cgSettings.tPs1.Channel,
+                    _cgSettings.tPs1.Layer,
+                    _cgSettings.tPs1.LayerCg,
+                    _cgSettings.tPs1.ServerIp ?? string.Empty
+                );
+
             }
 
 
-        ////    var (channel, templateName, layer, _) = _cgSettingsMap.GetValueOrDefault(CGTemplateEnums.QuestionFull);
-        ////    Loader_FullQuestion.Btn_Load.Text = "Load Full Question Template";
-        ////    Loader_FullQuestion.Channel.Value = channel;
-        ////    Loader_FullQuestion.Layer.Value = layer;
-        ////    //Loader_FullQuestion.Btn_Load.Click += BtnLoadFullQuestion_Click(sender: null, e: null);
-        ////
-        ////
-        ////    (channel, templateName, layer, _) = _cgSettingsMap.GetValueOrDefault(CGTemplateEnums.QuestionLower);
-        ////    Loader_LowerQuestion.Btn_Load.Text = "Load Lower Question Template";
-        ////    Loader_LowerQuestion.Channel.Value = channel;
-        ////    Loader_LowerQuestion.Layer.Value = layer;
-        ////
-        ////    (channel, templateName, layer, _) = _cgSettingsMap.GetValueOrDefault(CGTemplateEnums.Countdown);
-        ////    Loader_CountDown.Btn_Load.Text = "Load CountDown Template";
-        ////    Loader_CountDown.Channel.Value = channel;
-        ////    Loader_CountDown.Layer.Value = layer;
-        ////
-        ////    (channel, templateName, layer, _) = _cgSettingsMap.GetValueOrDefault(CGTemplateEnums.QuestionVideo);
-        ////    Loader_VideoQuestion.Btn_Load.Text = "Load Video Question Template";
-        ////    Loader_VideoQuestion.Channel.Value = channel;
-        ////    Loader_VideoQuestion.Layer.Value = layer;
-        ////
-        ////    (channel, templateName, layer, _) = _cgSettingsMap.GetValueOrDefault(CGTemplateEnums.LeaderBoard);
-        ////    Loader_LeaderBoard.Btn_Load.Text = "Load LeaderBoard Template";
-        ////    Loader_LeaderBoard.Channel.Value = channel;
-        ////    Loader_LeaderBoard.Layer.Value = layer;
+
 
 
 
@@ -203,7 +238,128 @@ namespace GameShowCtrl
             bSrc_TcpListeningState.DataSource = _tcpListeningState;
 
 
+            dgvTemplateSettings_InitializeData(true);
         }
+
+
+        #region dgvTemplateSettings
+        private async void dgvTemplateSettings_InitializeData(bool AddButton = false)
+        {
+            // მონაცემების ჩატვირთვა
+            var settingsList = _cgSettingsMap.Select(kvp => new templateSettingModel
+            {
+                TemplateType = kvp.Key.ToString(),
+                TemplateName = kvp.Value.TemplateName,
+                ServerIP = kvp.Value.ServerIP,
+                Channel = kvp.Value.Channel,
+                TemplateUrl = kvp.Value.TemplateUrl,
+                Layer = kvp.Value.Layer,
+                LayerCg = kvp.Value.LayerCg,
+                IsRegistered = kvp.Value.IsRegistered
+            }).ToList();
+
+
+
+            if (dgvTemplateSettings.InvokeRequired)
+            {
+                dgvTemplateSettings.Invoke(new Action(() => dgvTemplateSettings.DataSource = settingsList));
+            }
+            else
+            {
+                dgvTemplateSettings.DataSource = settingsList;
+            }
+
+            // დაამატე ღილაკის სვეტი
+            if (AddButton)
+                dgvTemplateSettings_AddButtonColumn();
+        }
+        private void dgvTemplateSettings_AddButtonColumn()
+        {
+            // შექმენი ღილაკის სვეტი
+            DataGridViewButtonColumn buttonColumn = new DataGridViewButtonColumn();
+            buttonColumn.Name = "ActionColumn";
+            buttonColumn.HeaderText = "Action";
+            buttonColumn.Text = "Reload";
+            buttonColumn.UseColumnTextForButtonValue = true;
+            buttonColumn.Width = 80;
+
+            if (dgvTemplateSettings.InvokeRequired)
+            {
+                dgvTemplateSettings.Invoke(new Action(() => dgvTemplateSettings.Columns.Add(buttonColumn)));
+                dgvTemplateSettings.Invoke(new Action(() => dgvTemplateSettings.CellClick += dgvTemplateSettings_CellClick));
+            }
+            else
+            {
+                dgvTemplateSettings.Columns.Add(buttonColumn);
+                dgvTemplateSettings.CellClick += dgvTemplateSettings_CellClick;
+            }
+
+            // დაამატე სვეტი DataGridView-ში
+            //dgvTemplateSettings.Columns.Add(buttonColumn);
+
+            // დაარეგისტრირე CellClick ივენთი
+            //dgvTemplateSettings.CellClick += dgvTemplateSettings_CellClick;
+        }
+
+
+        private void dgvTemplateSettings_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            // გაიგე თუ ღილაკის სვეტზე დააწკაპუნეს
+            if (e.RowIndex >= 0 && e.ColumnIndex == dgvTemplateSettings.Columns["ActionColumn"].Index)
+            {
+                // მიიღე მონაცემები ამ მწკრივიდან
+                var rowData = (templateSettingModel)dgvTemplateSettings.Rows[e.RowIndex].DataBoundItem;
+
+                // გამოიძახე ღილაკის ფუნქცია
+                dgvTemplateSettings_OnPreviewButtonClick(rowData);
+            }
+        }
+
+        private async void dgvTemplateSettings_OnPreviewButtonClick(templateSettingModel templateData)
+        {
+            // აქ დაამუშავე ღილაკის დაჭერის ლოგიკა
+            //MessageBox.Show($"Preview clicked for: {templateData.TemplateType}\n" +
+            //			   $"Template: {templateData.TemplateName}\n" +
+            //			   $"Server: {templateData.ServerIP}");
+
+            if (Enum.TryParse<CGTemplateEnums>(templateData.TemplateName, out var templateEnum))
+            {
+
+                var result = await _hubConnection.InvokeAsync<OperationResult>("CGLoadTemplate", templateEnum);
+                AppendLog($"[WinForms UI] <- Hub {templateEnum} - ის ჩატვირთვა: {result.Message}");
+
+            }
+
+
+            // ან გამოიძახე სხვა მეთოდი
+            // PreviewTemplate(templateData);
+        }
+
+        private async void dgvTemplateSettings_CellValueChanged(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex >= 0 && e.ColumnIndex >= 0)
+            {
+                var editedItem = (templateSettingModel)dgvTemplateSettings.Rows[e.RowIndex].DataBoundItem;
+
+                // განაახლე _cgSettingsMap
+                if (Enum.TryParse<CGTemplateEnums>(editedItem.TemplateType, out var templateEnum))
+                {
+                    _cgSettingsMap[templateEnum] = new templateSettingModel(
+                        editedItem.TemplateType,
+                        editedItem.TemplateName,
+                        editedItem.TemplateUrl,
+                        editedItem.Channel,
+                        editedItem.Layer,
+                        editedItem.LayerCg,
+                        editedItem.ServerIP
+                    );
+
+                    await _hubConnection.InvokeAsync("UpdatecgSettingsMap", templateEnum, _cgSettingsMap);
+                }
+            }
+        }
+
+        #endregion
 
         private async Task SetupHubConnection()
         {
@@ -266,7 +422,7 @@ namespace GameShowCtrl
             arduinoServer = new ArduinoTcpServer(
                 // ლოგირების მეთოდი
                 message => this.Invoke(new MethodInvoker(() => textBoxLog.AppendText(message))),
-                        // მონაცემთა დამუშავების მეთოდი
+               // მონაცემთა დამუშავების მეთოდი
                (processMessage, clientIp) => this.Invoke(new MethodInvoker(() => ProcessArduinoData(processMessage, clientIp))),
             ip,
             port
@@ -289,12 +445,12 @@ namespace GameShowCtrl
             {
                 JsonDocument doc = JsonDocument.Parse(jsonData);
 
-                doc.RootElement.TryGetProperty("answer", out var msgtype) ;//.GetProperty("object")
-                //string answer = doc.RootElement.GetProperty("object").GetString();
+                doc.RootElement.TryGetProperty("answer", out var msgtype);//.GetProperty("object")
+                                                                          //string answer = doc.RootElement.GetProperty("object").GetString();
                 string playerName = "ArduinoPlayer1";
 
-                 
-                if (clientIp== ardPlayer1IP && msgtype.GetString() == "Answer 1")
+
+                if (clientIp == ardPlayer1IP && msgtype.GetString() == "Answer 1")
                 {
                     SetCurrentPlayer("Player1");
                 }
@@ -334,32 +490,41 @@ namespace GameShowCtrl
             if (_hubConnection.State != HubConnectionState.Connected)
             {
 
-                AppendLog($"[WinForms UI]\t{"კავშირი სერვერთან არ არის აქტიური, ვერ ხერხდება საწყისი ტემპლეტების ჩატვირთვა."}");
+                AppendLog($"[WinForms UI]\t{"კავშირი საკომუნიკაციო სერვერთან არ არის აქტიური, ვერ ხერხდება საწყისი ტემპლეტების ჩატვირთვა."}");
                 return;
             }
 
             try
             {
-                AppendLog($"[WinForms UI]\tიწყება CG თემლეიტების ჩატვირთვა");
 
-
-
-                var useYt = _config["YTVotingSettings:UseYT"] ?? "NO";
-
-                var resultQF = await _hubConnection.InvokeAsync<OperationResult>("CGLoadTemplate", CGTemplateEnums.QuestionFull);
-                AppendLog($"[WinForms UI] <- Hub QuestionFull - ის ჩატვირთვა: {resultQF.Message}");
-                var resultLB = await _hubConnection.InvokeAsync<OperationResult>("CGLoadTemplate", CGTemplateEnums.LeaderBoard);
-                AppendLog($"[WinForms UI] <- Hub LeaderBoard - ის ჩატვირთვა: {resultLB.Message}");
-                var resultQL = await _hubConnection.InvokeAsync<OperationResult>("CGLoadTemplate", CGTemplateEnums.QuestionLower);
-                AppendLog($"[WinForms UI] <- Hub QuestionLower - ის ჩატვირთვა: {resultQL.Message}");
-                var resultCD = await _hubConnection.InvokeAsync<OperationResult>("CGLoadTemplate", CGTemplateEnums.Countdown);
-                AppendLog($"[WinForms UI] <- Hub Countdown - ის ჩატვირთვა: {resultCD.Message}");
-
-                if (useYt.ToUpper() == "YES")
+                var autoLoad = _config.GetValue<bool>("ServerSettings:AutoLoadTemplates", false);
+                if (autoLoad)
                 {
-                    var resultYT = await _hubConnection.InvokeAsync<OperationResult>("CGLoadTemplate", CGTemplateEnums.YTVote);
-                    AppendLog($"[WinForms UI] <- Hub YTVote - ის ჩატვირთვა: {resultYT.Message}");
+                    AppendLog($"[WinForms UI]\tიწყება CG თემლეიტების ჩატვირთვა");
+                    var useYt = _config["YTVotingSettings:UseYT"] ?? "NO";
+
+                    var resultPs1 = await _hubConnection.InvokeAsync<OperationResult>("CGLoadTemplate", CGTemplateEnums.tPs1);
+                    AppendLog($"[WinForms UI] <- Hub LowerThird PS1 - ის ჩატვირთვა: {resultPs1.Message}");
+                    ////                    var resultQF = await _hubConnection.InvokeAsync<OperationResult>("CGLoadTemplate", CGTemplateEnums.QuestionFull);
+                    ////                    AppendLog($"[WinForms UI] <- Hub QuestionFull - ის ჩატვირთვა: {resultQF.Message}");
+                    ////                    var resultLB = await _hubConnection.InvokeAsync<OperationResult>("CGLoadTemplate", CGTemplateEnums.LeaderBoard);
+                    ////                    AppendLog($"[WinForms UI] <- Hub LeaderBoard - ის ჩატვირთვა: {resultLB.Message}");
+                    ////                    var resultQL = await _hubConnection.InvokeAsync<OperationResult>("CGLoadTemplate", CGTemplateEnums.QuestionLower);
+                    ////                    AppendLog($"[WinForms UI] <- Hub QuestionLower - ის ჩატვირთვა: {resultQL.Message}");
+                    ////                    var resultCD = await _hubConnection.InvokeAsync<OperationResult>("CGLoadTemplate", CGTemplateEnums.CountDown);
+                    ////                    AppendLog($"[WinForms UI] <- Hub CountDown - ის ჩატვირთვა: {resultCD.Message}");
+
+                    if (useYt.ToUpper() == "YES")
+                    {
+                        var resultYT = await _hubConnection.InvokeAsync<OperationResult>("CGLoadTemplate", CGTemplateEnums.YTVote);
+                        AppendLog($"[WinForms UI] <- Hub YTVote - ის ჩატვირთვა: {resultYT.Message}");
+                    }
                 }
+                else
+                {
+                    AppendLog($"[WinForms UI]\t AutoLoad Template is OFF");
+                }
+
             }
             catch (Exception ex)
             {
@@ -405,6 +570,23 @@ namespace GameShowCtrl
                 PopulateQuestionGrid(questions);
             });
 
+            _hubConnection.On<TemplateRegistrationModel>("CGTemplateStatusUpdate", (TemplateRegistrationModel) =>
+            {
+                var isreg = TemplateRegistrationModel.IsRegistered == true ? "Registered" : "";
+                AppendLog($"[WinForms UI] <- Hub\tCGTemplateStatusUpdate {TemplateRegistrationModel.TemplateName} {isreg}");
+
+
+                if (Enum.TryParse<CGTemplateEnums>(TemplateRegistrationModel.TemplateName, out var templateEnum))
+                {
+                    _cgSettingsMap[templateEnum].IsRegistered = TemplateRegistrationModel.IsRegistered.Value;
+                    dgvTemplateSettings_InitializeData();
+                }
+
+            });
+
+
+
+
             _hubConnection.On<bool>("ReceiveMidiStatus", (isConnected) =>
             {
                 AppendLog($"[WinForms UI] <- Hub\tReceiveMidiStatus");
@@ -419,9 +601,9 @@ namespace GameShowCtrl
                 }
             });
 
-            _hubConnection.On<long>("ReceiveCountdown", async (endTimestamp) =>
+            _hubConnection.On<long>("ReceiveCountDown", async (endTimestamp) =>
             {
-                AppendLog($"[WinForms UI] <- Hub\tReceiveCountdown");
+                AppendLog($"[WinForms UI] <- Hub\tReceiveCountDown");
                 // Invoke-ის გამოყენება UI-ს მანიპულაციისთვის
                 if (this.InvokeRequired)
                 {
@@ -436,33 +618,33 @@ namespace GameShowCtrl
                     _countdownEndTime = DateTimeOffset.FromUnixTimeMilliseconds(endTimestamp).LocalDateTime;
                     countdownTimer.Start();
                 }
-                await _hubConnection.InvokeAsync("CGWSCountdown", CGTemplateEnums.Countdown.ToString(), (int)CountdownDuration.Value, CountdownStopMode.Start.ToString(), endTimestamp);
+                await _hubConnection.InvokeAsync("CGWSCountDown", CGTemplateEnums.CountDown.ToString(), (int)CountDownDuration.Value, CountDownStopMode.Start.ToString(), endTimestamp);
 
             });
 
-            _hubConnection.On<string>("StopCountdown", async (mode) =>
+            _hubConnection.On<string>("StopCountDown", async (mode) =>
             {
-                AppendLog($"[WinForms UI] <- Hub\tStopCountdown");
+                AppendLog($"[WinForms UI] <- Hub\tStopCountDown");
                 if (this.InvokeRequired)
                 {
                     this.Invoke(new Action(async () =>
                     {
                         countdownTimer.Stop();
-                        if (mode == CountdownStopMode.Reset.ToString())
+                        if (mode == CountDownStopMode.Reset.ToString())
                         {
-                            await _hubConnection.InvokeAsync("CGWSCountdown", CGTemplateEnums.Countdown.ToString(), (int)CountdownDuration.Value, CountdownStopMode.Reset, 0);
-                            lblCountdown.Text = "";
+                            await _hubConnection.InvokeAsync("CGWSCountDown", CGTemplateEnums.CountDown.ToString(), (int)CountDownDuration.Value, CountDownStopMode.Reset, 0);
+                            lblCountDown.Text = "";
                         }
 
-                        else if (mode == CountdownStopMode.Pause.ToString())
+                        else if (mode == CountDownStopMode.Pause.ToString())
                         {
-                            await _hubConnection.InvokeAsync("CGWSCountdown", CGTemplateEnums.Countdown.ToString(), (int)CountdownDuration.Value, CountdownStopMode.Pause, 0);
-                            lblCountdown.Text = lblCountdown.Text;
+                            await _hubConnection.InvokeAsync("CGWSCountDown", CGTemplateEnums.CountDown.ToString(), (int)CountDownDuration.Value, CountDownStopMode.Pause, 0);
+                            lblCountDown.Text = lblCountDown.Text;
                         }
                         else
                         {
-                            lblCountdown.Text = "დრო ამოოიწურა!";
-                            await _hubConnection.InvokeAsync("CGWSCountdown", CGTemplateEnums.Countdown.ToString(), (int)CountdownDuration.Value, CountdownStopMode.Reset, 0);
+                            lblCountDown.Text = "დრო ამოოიწურა!";
+                            await _hubConnection.InvokeAsync("CGWSCountDown", CGTemplateEnums.CountDown.ToString(), (int)CountDownDuration.Value, CountDownStopMode.Reset, 0);
                         }
 
 
@@ -471,12 +653,12 @@ namespace GameShowCtrl
                 else
                 {
                     countdownTimer.Stop();
-                    if (mode == CountdownStopMode.Reset.ToString())
-                        lblCountdown.Text = "0";
-                    else if (mode == CountdownStopMode.Pause.ToString())
-                        lblCountdown.Text = lblCountdown.Text;
+                    if (mode == CountDownStopMode.Reset.ToString())
+                        lblCountDown.Text = "0";
+                    else if (mode == CountDownStopMode.Pause.ToString())
+                        lblCountDown.Text = lblCountDown.Text;
                     else
-                        lblCountdown.Text = "დრო ამოოიწურა!";
+                        lblCountDown.Text = "დრო ამოოიწურა!";
 
                 }
 
@@ -493,7 +675,7 @@ namespace GameShowCtrl
                         countdownTimer.Stop();
                         if (action == RoundEndAction.Reset)
                         {
-                            lblCountdown.Text = "0s";
+                            lblCountDown.Text = "0s";
                         }
                         else if (action == RoundEndAction.Pause)
                         {
@@ -507,7 +689,7 @@ namespace GameShowCtrl
                     countdownTimer.Stop();
                     if (action == RoundEndAction.Reset)
                     {
-                        lblCountdown.Text = "0s";
+                        lblCountDown.Text = "0s";
                     }
                     // No action needed for Pause, as the timer is already stopped.
                 }
@@ -547,9 +729,9 @@ namespace GameShowCtrl
                         var nextQuestion = GetNextQuestionFromGrid();
                         if (nextQuestion != null)
                         {
-                            if ((GameMode)cmbCountdownMode.SelectedItem == GameMode.RapidMode)
+                            if ((GameMode)cmbCountDownMode.SelectedItem == GameMode.RapidMode)
                                 await _hubConnection.InvokeAsync("SendRapidFireQuestionFromUI", nextQuestion, cBoxDisableInput.Checked);
-                            //if ((GameMode)cmbCountdownMode.SelectedItem == GameMode.Round1)
+                            //if ((GameMode)cmbCountDownMode.SelectedItem == GameMode.Round1)
                             //	btnSendQuestion.PerformClick();
 
                         }
@@ -606,18 +788,18 @@ namespace GameShowCtrl
 
 
         }
-        private void AppendChatBoxMessage(string message)
-        {
-            // Invoke საჭიროა, რადგან SignalR მუშაობს სხვა ნაკადზე, ხოლო UI-ის განახლება უნდა მოხდეს მთავარ ნაკადზე.
-            if (this.InvokeRequired)
-            {
-                this.Invoke(new Action<string>(AppendChatBoxMessage), message);
-            }
-            else
-            {
-                textBoxLog.Text = $"{message}{Environment.NewLine}{textBoxLog.Text}";
-            }
-        }
+        //private void AppendChatBoxMessage(string message)
+        //{
+        //	// Invoke საჭიროა, რადგან SignalR მუშაობს სხვა ნაკადზე, ხოლო UI-ის განახლება უნდა მოხდეს მთავარ ნაკადზე.
+        //	if (this.InvokeRequired)
+        //	{
+        //		this.Invoke(new Action<string>(AppendChatBoxMessage), message);
+        //	}
+        //	else
+        //	{
+        //		textBoxLog.Text = $"{message}{Environment.NewLine}{textBoxLog.Text}";
+        //	}
+        //}
         private QuestionModel? GetNextQuestionFromGrid()
         {
             if (dgvQuestions.SelectedRows.Count == 0)
@@ -833,9 +1015,9 @@ namespace GameShowCtrl
 
 
 
-        private async void btnStartCountdown_Click(object sender, EventArgs e)
+        private async void btnStartCountDown_Click(object sender, EventArgs e)
         {
-            await _hubConnection.InvokeAsync("StartCountdown", 30);
+            await _hubConnection.InvokeAsync("StartCountDown", 30);
 
         }
 
@@ -852,7 +1034,7 @@ namespace GameShowCtrl
 
                 countdownTimer.Stop();
 
-                lblCountdown.Text = "Time's Up!";
+                lblCountDown.Text = "Time's Up!";
 
                 return;
 
@@ -860,7 +1042,7 @@ namespace GameShowCtrl
 
 
 
-            lblCountdown.Text = $"{(int)timeLeft.TotalSeconds}s";
+            lblCountDown.Text = $"{(int)timeLeft.TotalSeconds}s";
 
         }
 
@@ -875,10 +1057,10 @@ namespace GameShowCtrl
 
 
 
-                int countdownDuration = (int)CountdownDuration.Value;
+                int countdownDuration = (int)CountDownDuration.Value;
 
 
-                var selectedMode = (GameMode)cmbCountdownMode.SelectedItem;
+                var selectedMode = (GameMode)cmbCountDownMode.SelectedItem;
 
                 var allPlayers = dgvContestants.DataSource as List<Player>;
                 dgvContestants.MultiSelect = false;
@@ -981,7 +1163,7 @@ namespace GameShowCtrl
             }
 
 
-            int rapidFireDuration = (int)CountdownDuration.Value; // 60-second countdown for the session
+            int rapidFireDuration = (int)CountDownDuration.Value; // 60-second countdown for the session
 
 
             await _hubConnection.InvokeAsync("UpdateScoresFromUIToMEM", targetClients);
@@ -1006,7 +1188,7 @@ namespace GameShowCtrl
             //btn_R1CorrectAnswer.Enabled = false;
             //btnIncorrectAnswer.Enabled = false;
             //
-            //if ((GameMode)cmbCountdownMode.SelectedItem == GameMode.Round1 && cBoxDisableInput.Checked)
+            //if ((GameMode)cmbCountDownMode.SelectedItem == GameMode.Round1 && cBoxDisableInput.Checked)
             //{
             //	btn_R1PrepareNext.Visible = true;
             //}
@@ -1029,7 +1211,7 @@ namespace GameShowCtrl
 
             //btn_R1CorrectAnswer.Enabled = false;
             //btnIncorrectAnswer.Enabled = true;
-            //if ((GameMode)cmbCountdownMode.SelectedItem == GameMode.Round1 && cBoxDisableInput.Checked)
+            //if ((GameMode)cmbCountDownMode.SelectedItem == GameMode.Round1 && cBoxDisableInput.Checked)
             //{
             //	btn_R1PrepareNext.Visible = true;
             //}
@@ -1041,7 +1223,7 @@ namespace GameShowCtrl
         {
             return;
 
-            if ((GameMode)cmbCountdownMode.SelectedItem == GameMode.Round1 && cBoxDisableInput.Checked)
+            if ((GameMode)cmbCountDownMode.SelectedItem == GameMode.Round1 && cBoxDisableInput.Checked)
             {
                 tabPageRound1.Enabled = true;
                 btn_R1CorrectAnswer.Visible = cBoxDisableInput.Checked;
@@ -1058,7 +1240,7 @@ namespace GameShowCtrl
 
                 btn_R1PrepareNext.Enabled = false;
             }
-            else if ((GameMode)cmbCountdownMode.SelectedItem == GameMode.Round2 && !cBoxDisableInput.Checked)
+            else if ((GameMode)cmbCountDownMode.SelectedItem == GameMode.Round2 && !cBoxDisableInput.Checked)
             {
                 tabPageRound2.Enabled = true;
                 tabPageRound1.Enabled = false;
@@ -1066,7 +1248,7 @@ namespace GameShowCtrl
                 tabPageRapidFire.Enabled = false;
 
             }
-            else if ((GameMode)cmbCountdownMode.SelectedItem == GameMode.Round3 && !cBoxDisableInput.Checked)
+            else if ((GameMode)cmbCountDownMode.SelectedItem == GameMode.Round3 && !cBoxDisableInput.Checked)
             {
                 tabPageRound3.Enabled = true;
                 tabPageRound1.Enabled = false;
@@ -1074,7 +1256,7 @@ namespace GameShowCtrl
                 tabPageRapidFire.Enabled = false;
 
             }
-            else if ((GameMode)cmbCountdownMode.SelectedItem == GameMode.RapidMode && !cBoxDisableInput.Checked)
+            else if ((GameMode)cmbCountDownMode.SelectedItem == GameMode.RapidMode && !cBoxDisableInput.Checked)
             {
                 tabPageRapidFire.Enabled = true;
                 tabPageRound1.Enabled = false;
@@ -1143,12 +1325,12 @@ namespace GameShowCtrl
 
         }
 
-        private async void btnTestCountdown_Click(object sender, EventArgs e)
+        private async void btnTestCountDown_Click(object sender, EventArgs e)
         {
 
-            await _hubConnection.InvokeAsync("CGEnsureTemplateLoadedAsync", CGTemplateEnums.Countdown.ToString(), 2, 13);
+            await _hubConnection.InvokeAsync("CGEnsureTemplateLoadedAsync", CGTemplateEnums.CountDown.ToString(), 2, 13);
 
-            //await _hubConnection.InvokeAsync("CGLoadTemplate", CGTemplateEnums.Countdown);
+            //await _hubConnection.InvokeAsync("CGLoadTemplate", CGTemplateEnums.CountDown);
 
             var endTimestamp = DateTimeOffset.UtcNow.AddSeconds(60).ToUnixTimeMilliseconds();
             var jsonData = JsonConvert.SerializeObject(new { endTimestamp = endTimestamp });
@@ -1160,7 +1342,7 @@ namespace GameShowCtrl
         private async void btnTestLeaderBoard_Click(object sender, EventArgs e)
         {
             //await _hubConnection.InvokeAsync("CGLoadTemplate", CGTemplateEnums.LeaderBoard);
-            await _hubConnection.InvokeAsync("CGStartCountdown", 60);
+            await _hubConnection.InvokeAsync("CGStartCountDown", 60);
 
         }
 
@@ -1185,7 +1367,7 @@ namespace GameShowCtrl
             await Task.Delay(50);
             await _hubConnection.InvokeAsync("CGClearChannel", CGTemplateEnums.QuestionFull);
             await Task.Delay(50);
-            await _hubConnection.InvokeAsync("CGClearChannel", CGTemplateEnums.Countdown);
+            await _hubConnection.InvokeAsync("CGClearChannel", CGTemplateEnums.CountDown);
             await Task.Delay(50);
             await _hubConnection.InvokeAsync("CGClearChannel", CGTemplateEnums.LeaderBoard);
             await Task.Delay(50);
@@ -1207,38 +1389,38 @@ namespace GameShowCtrl
 
         private async void rf_Btn_LoadCountDown_Click(object sender, EventArgs e)
         {
-            await _hubConnection.InvokeAsync("CGLoadTemplate", CGTemplateEnums.Countdown);
+            await _hubConnection.InvokeAsync("CGLoadTemplate", CGTemplateEnums.CountDown);
             await Task.Delay(500);
         }
 
         private async void button2_Click(object sender, EventArgs e)
         {
-            var durationSeconds = (int)CountdownDuration.Value;
+            var durationSeconds = (int)CountDownDuration.Value;
             var endTimestamp = DateTimeOffset.UtcNow.AddSeconds(durationSeconds).ToUnixTimeMilliseconds();
-            await _hubConnection.InvokeAsync("CGWSCountdown", CGTemplateEnums.Countdown.ToString(), (int)CountdownDuration.Value, CountdownStopMode.Start, endTimestamp);
+            await _hubConnection.InvokeAsync("CGWSCountDown", CGTemplateEnums.CountDown.ToString(), (int)CountDownDuration.Value, CountDownStopMode.Start, endTimestamp);
 
         }
 
         private async void button3_Click(object sender, EventArgs e)
         {
-            var durationSeconds = (int)CountdownDuration.Value;
+            var durationSeconds = (int)CountDownDuration.Value;
             var endTimestamp = DateTimeOffset.UtcNow.AddSeconds(durationSeconds).ToUnixTimeMilliseconds();
-            await _hubConnection.InvokeAsync("CGWSCountdown", CGTemplateEnums.Countdown.ToString(), (int)CountdownDuration.Value, CountdownStopMode.Pause, endTimestamp);
+            await _hubConnection.InvokeAsync("CGWSCountDown", CGTemplateEnums.CountDown.ToString(), (int)CountDownDuration.Value, CountDownStopMode.Pause, endTimestamp);
 
         }
 
         private async void button5_Click(object sender, EventArgs e)
         {
-            var durationSeconds = (int)CountdownDuration.Value;
+            var durationSeconds = (int)CountDownDuration.Value;
             var endTimestamp = DateTimeOffset.UtcNow.AddSeconds(durationSeconds).ToUnixTimeMilliseconds();
-            await _hubConnection.InvokeAsync("CGWSCountdown", CGTemplateEnums.Countdown.ToString(), (int)CountdownDuration.Value, CountdownStopMode.Resume, endTimestamp);
+            await _hubConnection.InvokeAsync("CGWSCountDown", CGTemplateEnums.CountDown.ToString(), (int)CountDownDuration.Value, CountDownStopMode.Resume, endTimestamp);
         }
 
         private async void button4_Click(object sender, EventArgs e)
         {
-            var durationSeconds = (int)CountdownDuration.Value;
+            var durationSeconds = (int)CountDownDuration.Value;
             var endTimestamp = DateTimeOffset.UtcNow.AddSeconds(durationSeconds).ToUnixTimeMilliseconds();
-            await _hubConnection.InvokeAsync("CGWSCountdown", CGTemplateEnums.Countdown.ToString(), (int)CountdownDuration.Value, CountdownStopMode.Reset, endTimestamp);
+            await _hubConnection.InvokeAsync("CGWSCountDown", CGTemplateEnums.CountDown.ToString(), (int)CountDownDuration.Value, CountDownStopMode.Reset, endTimestamp);
 
         }
 
@@ -1428,50 +1610,13 @@ namespace GameShowCtrl
             var message = new VoteRequestMessage()
             {
                 IsVotingActive = true,
-                Duration = TimeSpan.FromSeconds((int)AudienceCountdownDuration.Value)
+                Duration = TimeSpan.FromSeconds((int)AudienceCountDownDuration.Value)
             };
 
             await _hubConnection.InvokeAsync("StartVoting", message);
         }
 
-        private async void btn_StartAudienceVoting_Click_(object sender, EventArgs e)
-        {
-            textBoxLog.Text = $"btn_StartAudienceVoting_Click{Environment.NewLine}{textBoxLog.Text}";
 
-
-
-
-            var duration = (int)AudienceCountdownDuration.Value;
-            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(8));
-
-
-
-            if (_hubConnection.State != HubConnectionState.Connected)
-            {
-                textBoxLog.Text = $"შეცდომა: SignalR კავშირი არ არის აქტიური. სცადეთ დაკავშირება.{Environment.NewLine}{textBoxLog.Text}";
-                return;
-            }
-            else
-            {
-                textBoxLog.Text = $"SignalR კავშირი აქტიურია.{Environment.NewLine}{textBoxLog.Text}";
-            }
-
-            await _hubConnection.InvokeAsync("StartYTDataCollectingAsync");
-
-            try
-            {
-                await _hubConnection.InvokeAsync("StartYTVoting");//, duration,cts.Token);			
-                textBoxLog.Text = $"Audience Voting Started{Environment.NewLine}{textBoxLog.Text}";
-            }
-            catch (OperationCanceledException ocex)
-            {
-                textBoxLog.Text = $"StartVotingMode timed out {ocex.Message} {Environment.NewLine}{textBoxLog.Text}";
-            }
-            catch (Exception ex)
-            {
-                textBoxLog.Text = $"{ex.Message}{Environment.NewLine}{textBoxLog.Text}";
-            }
-        }
 
 
 
@@ -1481,7 +1626,7 @@ namespace GameShowCtrl
             var message = new VoteRequestMessage()
             {
                 IsVotingActive = false,
-                Duration = TimeSpan.FromSeconds((int)AudienceCountdownDuration.Value)
+                Duration = TimeSpan.FromSeconds((int)AudienceCountDownDuration.Value)
             };
 
             await _hubConnection.InvokeAsync("StopVoting", message);
@@ -1526,7 +1671,7 @@ namespace GameShowCtrl
                 return;
 
             var message = new VoteRequestMessage();
-            message.Duration = TimeSpan.FromSeconds((int)AudienceCountdownDuration.Value);
+            message.Duration = TimeSpan.FromSeconds((int)AudienceCountDownDuration.Value);
             if (button.BackColor == Color.LightCoral)
             {
                 message.IsVotingActive = true;
@@ -1564,8 +1709,8 @@ namespace GameShowCtrl
 
         private async void BtnLoadCountDown_Click(object sender, EventArgs e)
         {
-            var result = await _hubConnection.InvokeAsync<OperationResult>("CGLoadTemplate", CGTemplateEnums.Countdown);
-            AppendLog($"[WinForms UI] <- Hub Countdown - ის ჩატვირთვა: {result.Message}");
+            var result = await _hubConnection.InvokeAsync<OperationResult>("CGLoadTemplate", CGTemplateEnums.CountDown);
+            AppendLog($"[WinForms UI] <- Hub CountDown - ის ჩატვირთვა: {result.Message}");
         }
 
         private async void btnLoadBackGround_Click(object sender, EventArgs e)
@@ -1624,7 +1769,7 @@ namespace GameShowCtrl
         private void tabGameModes_Selecting(object sender, TabControlCancelEventArgs e)
         {
             e.Cancel = false;
-            var currGameMode = (GameMode)cmbCountdownMode.SelectedItem;
+            var currGameMode = (GameMode)cmbCountDownMode.SelectedItem;
             if (e.TabPage == tabControl1.TabPages[0] && currGameMode == GameMode.Round1)
             {
                 e.Cancel = true;
@@ -1673,7 +1818,7 @@ namespace GameShowCtrl
 
         }
 
-        private async void button2_Click_1(object sender, EventArgs e)
+        private void button2_Click_1(object sender, EventArgs e)
         {
             SetCurrentPlayer("Player1");
         }
@@ -1703,15 +1848,59 @@ namespace GameShowCtrl
             toolTipDgvContestant.Hide(dgvContestants);
         }
 
-        private void Loader_FullQuestion_Load(object sender, EventArgs e)
+        private void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
 
         }
 
-        private void Loader_FullQuestion_Click(object sender, EventArgs e)
+        private void btn_TitleShowHide_Click(object sender, EventArgs e)
         {
 
-            
+            var curTitle = new TitleDataModel()
+            {
+                Status = "show",
+                BreakingNews = "სპორტული ამბები",
+                Headline = "საქართველო ევროპის ჩემპიონია",
+                SecondLine = "ისტორიული გამარჯვება"
+            };
+
+            if (btn_TitleShowHide.Text == "Show Title")
+            {
+                curTitle.Status = "show";
+                btn_TitleShowHide.Text = "Hide Title";
+                btn_TitleShowHide.BackColor = Color.LightGreen;
+                _ = _hubConnection.InvokeAsync("CGSWToggleTitle", curTitle, true);
+            }
+            else
+            {
+                curTitle.Status = "hide";
+                btn_TitleShowHide.Text = "Show Title";
+                btn_TitleShowHide.BackColor = Color.LightCoral;
+                _ = _hubConnection.InvokeAsync("CGSWToggleTitle", curTitle, false);
+            }
+        }
+
+        
+        private void button3_Click_1(object sender, EventArgs e)
+        {
+            var curTitle = new TitleDataModel()
+            {
+                Status = "nextSecondLine",
+                BreakingNews = "სპორტული ამბები",
+                Headline = "საქართველო ევროპის ჩემპიონია",
+                SecondLine = "ისტორიული გამარჯვება Second line 1"
+            };
+
+
+            if (curTitle.SecondLine == "ისტორიული გამარჯვება Second line 1")
+                curTitle.SecondLine = "ისტორიული გამარჯვება Second line 2";
+            else
+                curTitle.SecondLine = "ისტორიული გამარჯვება Second line 1";
+
+
+
+                _ = _hubConnection.InvokeAsync("CGSWToggleTitle", curTitle, true);
+
         }
     }
 }

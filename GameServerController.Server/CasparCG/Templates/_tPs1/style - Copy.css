@@ -1,0 +1,62 @@
+﻿:root {
+    --primary-color: #E21C21;
+    --secondary-color: #000000;
+    --text-color: #FFFFFF;
+}
+
+body {
+    background: transparent;
+    font-family: 'Arial', sans-serif;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    color: var(--text-color);
+}
+
+#container {
+    position: absolute;
+    bottom: 50px;
+    display: flex;
+    align-items: stretch;
+    left: 0;
+    transform: translateX(-100%);
+}
+
+#left-bar {
+    width: 5px;
+    height: 100%;
+    background-color: var(--text-color);
+}
+
+#breaking-news-box {
+    background-color: var(--primary-color);
+    font-size: 14px;
+    font-weight: bold;
+    padding: 10px 15px;
+    display: flex;
+    align-items: center;
+    text-transform: uppercase;
+    transform: translateX(-100%);
+    opacity: 0;
+}
+
+#main-box {
+    background-color: var(--secondary-color);
+    padding: 10px 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    transform: translateX(-100%);
+    opacity: 0;
+}
+
+#headline-text {
+    font-size: 32px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+#second-line-text {
+    font-size: 16px;
+    opacity: 0.8;
+}

@@ -1,4 +1,4 @@
-﻿// Countdown.js
+﻿// CountDown.js
 const ws = new WebSocket('ws://localhost:5000/ws-casparcg');
 let countdownInterval;
 let endTime; // მიზნობრივი დასრულების დრო
@@ -6,16 +6,16 @@ let isPaused = false;
 let pauseTime = 0;
 
 ws.onopen = () => {
-    console.log('WebSocket connection established to C# server from Countdown.');
+    console.log('WebSocket connection established to C# server from CountDown.');
     const registrationMessage = JSON.stringify({
         type: 'register',
-        templateName: 'Countdown',
+        templateName: 'CountDown',
     });
     ws.send(registrationMessage);
 };
 
 ws.onmessage = (event) => {
-    console.log('Received data for Countdown: ' + event.data);
+    console.log('Received data for CountDown: ' + event.data);
 
     try {
         const jsonData = JSON.parse(event.data);
@@ -28,14 +28,14 @@ ws.onmessage = (event) => {
             pauseTime = 0;
 
             // დავამატოთ ლოგიკა, რომელიც ითვლის დროს
-            startCountdownLogic();
+            startCountDownLogic();
         } else if (jsonData.type === 'pause_countdown') {
             // პაუზის ლოგიკა
             if (!isPaused) {
                 isPaused = true;
                 pauseTime = Date.now(); // შევინახოთ პაუზის დრო
                 clearInterval(countdownInterval);
-                console.log('Countdown paused.');
+                console.log('CountDown paused.');
             }
         } else if (jsonData.type === 'resume_countdown') {
             // განახლების ლოგიკა
@@ -45,8 +45,8 @@ ws.onmessage = (event) => {
                 const timePassedDuringPause = Date.now() - pauseTime;
                 endTime += timePassedDuringPause;
 
-                startCountdownLogic();
-                console.log('Countdown resumed.');
+                startCountDownLogic();
+                console.log('CountDown resumed.');
             }
         }
     } catch (e) {
@@ -54,7 +54,7 @@ ws.onmessage = (event) => {
     }
 };
 
-function startCountdownLogic() {
+function startCountDownLogic() {
     // გავაჩეროთ წინა კაუნტდაუნი, თუ არსებობს
     if (countdownInterval) {
         clearInterval(countdownInterval);
@@ -74,7 +74,7 @@ function startCountdownLogic() {
         if (timeLeft <= 0) {
             clearInterval(countdownInterval);
             countdownTextElement.innerText = '0';
-            console.log('Countdown finished.');
+            console.log('CountDown finished.');
             // აქ შეგიძლიათ დაამატოთ ლოგიკა, მაგალითად, ელემენტის დამალვა
         }
     }, 100); // 100ms განახლება უფრო ზუსტია

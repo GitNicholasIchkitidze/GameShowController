@@ -26,6 +26,14 @@ namespace GameController.Shared.Models
 				SetSuccess();
 		}
 
+		public OperationResult(bool result, string msg)
+		{
+			if (result)
+				SetSuccess(msg);
+			else
+				SetError(msg);
+		}
+
 		public void SetSuccess()
 		{
 			Message = "ოპერაცია წარმატებით განხორციელდა";

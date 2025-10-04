@@ -35,13 +35,14 @@
             textBoxLog = new TextBox();
             PnlRapidFire = new TableLayoutPanel();
             tabControlMain = new TabControl();
-            tPageTest = new TabPage();
+            tab_Settings = new TabPage();
             pnl_Test = new Panel();
+            dgvTemplateSettings = new DataGridView();
             votingUserListBox = new ListBox();
             btn_YTAuth = new Button();
-            tPageRapidFire = new TabPage();
-            tableLayoutPanel1 = new TableLayoutPanel();
-            tableLayoutPanel2 = new TableLayoutPanel();
+            tab_GameShow = new TabPage();
+            tableLayoutPanel_0 = new TableLayoutPanel();
+            tableLayoutPanel_0_Left = new TableLayoutPanel();
             groupBox1 = new GroupBox();
             cBoxUseAudioControl = new CheckBox();
             cBoxUseLightControl = new CheckBox();
@@ -52,7 +53,7 @@
             btnShowLeaderBoard = new Button();
             btnShowFinalResults = new Button();
             btnStoreResults = new Button();
-            tableLayoutPanel3 = new TableLayoutPanel();
+            tableLayoutPanel_0_Center = new TableLayoutPanel();
             panel2 = new Panel();
             tabGameModes = new TabControl();
             tabPageRound1 = new TabPage();
@@ -73,10 +74,10 @@
             tableLayoutPanel5 = new TableLayoutPanel();
             dgvQuestions = new DataGridView();
             dgvContestants = new DataGridView();
-            tableLayoutPanel4 = new TableLayoutPanel();
+            tableLayoutPanel_0_Right = new TableLayoutPanel();
             flowLayoutPanelYutubeButtons = new FlowLayoutPanel();
             tabControl1 = new TabControl();
-            tabPage1 = new TabPage();
+            tab_Graphics = new TabPage();
             flowLayoutPanelLoads = new FlowLayoutPanel();
             BtnLoadFullQuestion = new Button();
             BtnLoadLowerQuestion = new Button();
@@ -85,41 +86,47 @@
             BtnLoadYutubeVote = new Button();
             btnLoadBackGround = new Button();
             btnClearGraphics = new Button();
-            tabPage2 = new TabPage();
+            tab_YT = new TabPage();
             tbx_YTVideoId = new TextBox();
-            AudienceCountdownDuration = new NumericUpDown();
+            AudienceCountDownDuration = new NumericUpDown();
             groupBox2 = new GroupBox();
             richTextBox1 = new RichTextBox();
             flowLayoutPanel1 = new FlowLayoutPanel();
             btn_ytVotingOnOFF = new Button();
             button11 = new Button();
             button12 = new Button();
-            tabPage3 = new TabPage();
-            tabPage4 = new TabPage();
+            tab_FB = new TabPage();
+            tab_DMX = new TabPage();
             btn_SendMidiNote = new Button();
             tBox_MidiVelocity = new TextBox();
             tBox_MidiNote = new TextBox();
             button1 = new Button();
+            tab_Titler = new TabPage();
+            button3 = new Button();
+            btn_TitleShowHide = new Button();
+            dataGridView1 = new DataGridView();
+            templatesBindingSource = new BindingSource(components);
             panel1 = new Panel();
             tableLayoutPanel6 = new TableLayoutPanel();
-            cmbCountdownMode = new ComboBox();
+            cmbCountDownMode = new ComboBox();
             listBoxClients = new ListBox();
-            lblCountdown = new Label();
-            CountdownDuration = new NumericUpDown();
+            lblCountDown = new Label();
+            CountDownDuration = new NumericUpDown();
             playerBindingSource = new BindingSource(components);
             countdownTimer = new System.Windows.Forms.Timer(components);
             toolTipDgvContestant = new ToolTip(components);
             btn_R1CorrectAnswer = new Button();
             PnlRapidFire.SuspendLayout();
             tabControlMain.SuspendLayout();
-            tPageTest.SuspendLayout();
+            tab_Settings.SuspendLayout();
             pnl_Test.SuspendLayout();
-            tPageRapidFire.SuspendLayout();
-            tableLayoutPanel1.SuspendLayout();
-            tableLayoutPanel2.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)dgvTemplateSettings).BeginInit();
+            tab_GameShow.SuspendLayout();
+            tableLayoutPanel_0.SuspendLayout();
+            tableLayoutPanel_0_Left.SuspendLayout();
             groupBox1.SuspendLayout();
             flowLayoutPanel2.SuspendLayout();
-            tableLayoutPanel3.SuspendLayout();
+            tableLayoutPanel_0_Center.SuspendLayout();
             panel2.SuspendLayout();
             tabGameModes.SuspendLayout();
             tabPageRound1.SuspendLayout();
@@ -129,18 +136,21 @@
             tableLayoutPanel5.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dgvQuestions).BeginInit();
             ((System.ComponentModel.ISupportInitialize)dgvContestants).BeginInit();
-            tableLayoutPanel4.SuspendLayout();
+            tableLayoutPanel_0_Right.SuspendLayout();
             tabControl1.SuspendLayout();
-            tabPage1.SuspendLayout();
+            tab_Graphics.SuspendLayout();
             flowLayoutPanelLoads.SuspendLayout();
-            tabPage2.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)AudienceCountdownDuration).BeginInit();
+            tab_YT.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)AudienceCountDownDuration).BeginInit();
             groupBox2.SuspendLayout();
             flowLayoutPanel1.SuspendLayout();
-            tabPage4.SuspendLayout();
+            tab_DMX.SuspendLayout();
+            tab_Titler.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)dataGridView1).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)templatesBindingSource).BeginInit();
             panel1.SuspendLayout();
             tableLayoutPanel6.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)CountdownDuration).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)CountDownDuration).BeginInit();
             ((System.ComponentModel.ISupportInitialize)playerBindingSource).BeginInit();
             SuspendLayout();
             // 
@@ -218,8 +228,9 @@
             // 
             // tabControlMain
             // 
-            tabControlMain.Controls.Add(tPageTest);
-            tabControlMain.Controls.Add(tPageRapidFire);
+            tabControlMain.Controls.Add(tab_Settings);
+            tabControlMain.Controls.Add(tab_GameShow);
+            tabControlMain.Controls.Add(tab_Titler);
             tabControlMain.Dock = DockStyle.Fill;
             tabControlMain.Location = new Point(3, 174);
             tabControlMain.Margin = new Padding(3, 2, 3, 2);
@@ -228,20 +239,21 @@
             tabControlMain.Size = new Size(2142, 686);
             tabControlMain.TabIndex = 3;
             // 
-            // tPageTest
+            // tab_Settings
             // 
-            tPageTest.Controls.Add(pnl_Test);
-            tPageTest.Location = new Point(4, 24);
-            tPageTest.Margin = new Padding(3, 2, 3, 2);
-            tPageTest.Name = "tPageTest";
-            tPageTest.Padding = new Padding(3, 2, 3, 2);
-            tPageTest.Size = new Size(2134, 658);
-            tPageTest.TabIndex = 0;
-            tPageTest.Text = "TEST";
-            tPageTest.UseVisualStyleBackColor = true;
+            tab_Settings.Controls.Add(pnl_Test);
+            tab_Settings.Location = new Point(4, 24);
+            tab_Settings.Margin = new Padding(3, 2, 3, 2);
+            tab_Settings.Name = "tab_Settings";
+            tab_Settings.Padding = new Padding(3, 2, 3, 2);
+            tab_Settings.Size = new Size(2134, 658);
+            tab_Settings.TabIndex = 0;
+            tab_Settings.Text = "TEST";
+            tab_Settings.UseVisualStyleBackColor = true;
             // 
             // pnl_Test
             // 
+            pnl_Test.Controls.Add(dgvTemplateSettings);
             pnl_Test.Controls.Add(votingUserListBox);
             pnl_Test.Controls.Add(btn_YTAuth);
             pnl_Test.Dock = DockStyle.Fill;
@@ -250,6 +262,16 @@
             pnl_Test.Name = "pnl_Test";
             pnl_Test.Size = new Size(2128, 654);
             pnl_Test.TabIndex = 47;
+            // 
+            // dgvTemplateSettings
+            // 
+            dgvTemplateSettings.AllowUserToOrderColumns = true;
+            dgvTemplateSettings.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dgvTemplateSettings.Location = new Point(92, 71);
+            dgvTemplateSettings.Name = "dgvTemplateSettings";
+            dgvTemplateSettings.Size = new Size(950, 320);
+            dgvTemplateSettings.TabIndex = 66;
+            dgvTemplateSettings.CellValueChanged += dgvTemplateSettings_CellValueChanged;
             // 
             // votingUserListBox
             // 
@@ -264,7 +286,7 @@
             // btn_YTAuth
             // 
             btn_YTAuth.Font = new Font("Microsoft Sans Serif", 14F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            btn_YTAuth.Location = new Point(452, 165);
+            btn_YTAuth.Location = new Point(1102, 323);
             btn_YTAuth.Margin = new Padding(3, 2, 3, 2);
             btn_YTAuth.Name = "btn_YTAuth";
             btn_YTAuth.Size = new Size(183, 81);
@@ -273,61 +295,61 @@
             btn_YTAuth.UseVisualStyleBackColor = true;
             btn_YTAuth.Click += btn_YTAuth_Click;
             // 
-            // tPageRapidFire
+            // tab_GameShow
             // 
-            tPageRapidFire.Controls.Add(tableLayoutPanel1);
-            tPageRapidFire.Location = new Point(4, 24);
-            tPageRapidFire.Margin = new Padding(3, 2, 3, 2);
-            tPageRapidFire.Name = "tPageRapidFire";
-            tPageRapidFire.Padding = new Padding(3, 2, 3, 2);
-            tPageRapidFire.Size = new Size(2134, 658);
-            tPageRapidFire.TabIndex = 1;
-            tPageRapidFire.Text = "RapidFire";
-            tPageRapidFire.UseVisualStyleBackColor = true;
-            tPageRapidFire.Click += tPageRapidFire_Click;
+            tab_GameShow.Controls.Add(tableLayoutPanel_0);
+            tab_GameShow.Location = new Point(4, 24);
+            tab_GameShow.Margin = new Padding(3, 2, 3, 2);
+            tab_GameShow.Name = "tab_GameShow";
+            tab_GameShow.Padding = new Padding(3, 2, 3, 2);
+            tab_GameShow.Size = new Size(2134, 658);
+            tab_GameShow.TabIndex = 1;
+            tab_GameShow.Text = "RapidFire";
+            tab_GameShow.UseVisualStyleBackColor = true;
+            tab_GameShow.Click += tPageRapidFire_Click;
             // 
-            // tableLayoutPanel1
+            // tableLayoutPanel_0
             // 
-            tableLayoutPanel1.ColumnCount = 3;
-            tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 20F));
-            tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 60F));
-            tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 20F));
-            tableLayoutPanel1.Controls.Add(tableLayoutPanel2, 0, 0);
-            tableLayoutPanel1.Controls.Add(tableLayoutPanel3, 1, 0);
-            tableLayoutPanel1.Controls.Add(tableLayoutPanel4, 2, 0);
-            tableLayoutPanel1.Dock = DockStyle.Fill;
-            tableLayoutPanel1.Location = new Point(3, 2);
-            tableLayoutPanel1.Margin = new Padding(3, 2, 3, 2);
-            tableLayoutPanel1.Name = "tableLayoutPanel1";
-            tableLayoutPanel1.RowCount = 1;
-            tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-            tableLayoutPanel1.Size = new Size(2128, 654);
-            tableLayoutPanel1.TabIndex = 77;
+            tableLayoutPanel_0.ColumnCount = 3;
+            tableLayoutPanel_0.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 20F));
+            tableLayoutPanel_0.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 60F));
+            tableLayoutPanel_0.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 20F));
+            tableLayoutPanel_0.Controls.Add(tableLayoutPanel_0_Left, 0, 0);
+            tableLayoutPanel_0.Controls.Add(tableLayoutPanel_0_Center, 1, 0);
+            tableLayoutPanel_0.Controls.Add(tableLayoutPanel_0_Right, 2, 0);
+            tableLayoutPanel_0.Dock = DockStyle.Fill;
+            tableLayoutPanel_0.Location = new Point(3, 2);
+            tableLayoutPanel_0.Margin = new Padding(3, 2, 3, 2);
+            tableLayoutPanel_0.Name = "tableLayoutPanel_0";
+            tableLayoutPanel_0.RowCount = 1;
+            tableLayoutPanel_0.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+            tableLayoutPanel_0.Size = new Size(2128, 654);
+            tableLayoutPanel_0.TabIndex = 77;
             // 
-            // tableLayoutPanel2
+            // tableLayoutPanel_0_Left
             // 
-            tableLayoutPanel2.ColumnCount = 1;
-            tableLayoutPanel2.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-            tableLayoutPanel2.Controls.Add(groupBox1, 0, 6);
-            tableLayoutPanel2.Controls.Add(btn_ConnectLightDevice, 0, 7);
-            tableLayoutPanel2.Controls.Add(flowLayoutPanel2, 0, 5);
-            tableLayoutPanel2.Dock = DockStyle.Fill;
-            tableLayoutPanel2.Location = new Point(3, 2);
-            tableLayoutPanel2.Margin = new Padding(3, 2, 3, 2);
-            tableLayoutPanel2.Name = "tableLayoutPanel2";
-            tableLayoutPanel2.RowCount = 9;
-            tableLayoutPanel2.RowStyles.Add(new RowStyle());
-            tableLayoutPanel2.RowStyles.Add(new RowStyle());
-            tableLayoutPanel2.RowStyles.Add(new RowStyle());
-            tableLayoutPanel2.RowStyles.Add(new RowStyle());
-            tableLayoutPanel2.RowStyles.Add(new RowStyle());
-            tableLayoutPanel2.RowStyles.Add(new RowStyle(SizeType.Absolute, 210F));
-            tableLayoutPanel2.RowStyles.Add(new RowStyle(SizeType.Absolute, 146F));
-            tableLayoutPanel2.RowStyles.Add(new RowStyle(SizeType.Absolute, 150F));
-            tableLayoutPanel2.RowStyles.Add(new RowStyle(SizeType.Absolute, 6F));
-            tableLayoutPanel2.Size = new Size(419, 650);
-            tableLayoutPanel2.TabIndex = 0;
-            tableLayoutPanel2.Paint += tableLayoutPanel2_Paint;
+            tableLayoutPanel_0_Left.ColumnCount = 1;
+            tableLayoutPanel_0_Left.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+            tableLayoutPanel_0_Left.Controls.Add(groupBox1, 0, 6);
+            tableLayoutPanel_0_Left.Controls.Add(btn_ConnectLightDevice, 0, 7);
+            tableLayoutPanel_0_Left.Controls.Add(flowLayoutPanel2, 0, 5);
+            tableLayoutPanel_0_Left.Dock = DockStyle.Fill;
+            tableLayoutPanel_0_Left.Location = new Point(3, 2);
+            tableLayoutPanel_0_Left.Margin = new Padding(3, 2, 3, 2);
+            tableLayoutPanel_0_Left.Name = "tableLayoutPanel_0_Left";
+            tableLayoutPanel_0_Left.RowCount = 9;
+            tableLayoutPanel_0_Left.RowStyles.Add(new RowStyle());
+            tableLayoutPanel_0_Left.RowStyles.Add(new RowStyle());
+            tableLayoutPanel_0_Left.RowStyles.Add(new RowStyle());
+            tableLayoutPanel_0_Left.RowStyles.Add(new RowStyle());
+            tableLayoutPanel_0_Left.RowStyles.Add(new RowStyle());
+            tableLayoutPanel_0_Left.RowStyles.Add(new RowStyle(SizeType.Absolute, 210F));
+            tableLayoutPanel_0_Left.RowStyles.Add(new RowStyle(SizeType.Absolute, 146F));
+            tableLayoutPanel_0_Left.RowStyles.Add(new RowStyle(SizeType.Absolute, 150F));
+            tableLayoutPanel_0_Left.RowStyles.Add(new RowStyle(SizeType.Absolute, 6F));
+            tableLayoutPanel_0_Left.Size = new Size(419, 650);
+            tableLayoutPanel_0_Left.TabIndex = 0;
+            tableLayoutPanel_0_Left.Paint += tableLayoutPanel2_Paint;
             // 
             // groupBox1
             // 
@@ -453,23 +475,23 @@
             btnStoreResults.UseVisualStyleBackColor = true;
             btnStoreResults.Click += btnStoreResults_Click;
             // 
-            // tableLayoutPanel3
+            // tableLayoutPanel_0_Center
             // 
-            tableLayoutPanel3.ColumnCount = 1;
-            tableLayoutPanel3.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-            tableLayoutPanel3.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 18F));
-            tableLayoutPanel3.Controls.Add(panel2, 0, 1);
-            tableLayoutPanel3.Controls.Add(tableLayoutPanel5, 0, 0);
-            tableLayoutPanel3.Dock = DockStyle.Fill;
-            tableLayoutPanel3.Location = new Point(428, 2);
-            tableLayoutPanel3.Margin = new Padding(3, 2, 3, 2);
-            tableLayoutPanel3.Name = "tableLayoutPanel3";
-            tableLayoutPanel3.RowCount = 3;
-            tableLayoutPanel3.RowStyles.Add(new RowStyle(SizeType.Percent, 54.8585472F));
-            tableLayoutPanel3.RowStyles.Add(new RowStyle(SizeType.Percent, 45.1414528F));
-            tableLayoutPanel3.RowStyles.Add(new RowStyle(SizeType.Absolute, 15F));
-            tableLayoutPanel3.Size = new Size(1270, 650);
-            tableLayoutPanel3.TabIndex = 1;
+            tableLayoutPanel_0_Center.ColumnCount = 1;
+            tableLayoutPanel_0_Center.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+            tableLayoutPanel_0_Center.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 18F));
+            tableLayoutPanel_0_Center.Controls.Add(panel2, 0, 1);
+            tableLayoutPanel_0_Center.Controls.Add(tableLayoutPanel5, 0, 0);
+            tableLayoutPanel_0_Center.Dock = DockStyle.Fill;
+            tableLayoutPanel_0_Center.Location = new Point(428, 2);
+            tableLayoutPanel_0_Center.Margin = new Padding(3, 2, 3, 2);
+            tableLayoutPanel_0_Center.Name = "tableLayoutPanel_0_Center";
+            tableLayoutPanel_0_Center.RowCount = 3;
+            tableLayoutPanel_0_Center.RowStyles.Add(new RowStyle(SizeType.Percent, 54.8585472F));
+            tableLayoutPanel_0_Center.RowStyles.Add(new RowStyle(SizeType.Percent, 45.1414528F));
+            tableLayoutPanel_0_Center.RowStyles.Add(new RowStyle(SizeType.Absolute, 15F));
+            tableLayoutPanel_0_Center.Size = new Size(1270, 650);
+            tableLayoutPanel_0_Center.TabIndex = 1;
             // 
             // panel2
             // 
@@ -713,26 +735,26 @@
             dgvContestants.CellMouseEnter += dgvContestants_CellMouseEnter;
             dgvContestants.CellMouseLeave += dgvContestants_CellMouseLeave;
             // 
-            // tableLayoutPanel4
+            // tableLayoutPanel_0_Right
             // 
-            tableLayoutPanel4.BackColor = Color.Gainsboro;
-            tableLayoutPanel4.ColumnCount = 1;
-            tableLayoutPanel4.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-            tableLayoutPanel4.Controls.Add(flowLayoutPanelYutubeButtons, 0, 1);
-            tableLayoutPanel4.Controls.Add(tabControl1, 0, 4);
-            tableLayoutPanel4.Dock = DockStyle.Fill;
-            tableLayoutPanel4.Location = new Point(1704, 2);
-            tableLayoutPanel4.Margin = new Padding(3, 2, 3, 2);
-            tableLayoutPanel4.Name = "tableLayoutPanel4";
-            tableLayoutPanel4.RowCount = 6;
-            tableLayoutPanel4.RowStyles.Add(new RowStyle());
-            tableLayoutPanel4.RowStyles.Add(new RowStyle());
-            tableLayoutPanel4.RowStyles.Add(new RowStyle(SizeType.Percent, 3.053435F));
-            tableLayoutPanel4.RowStyles.Add(new RowStyle());
-            tableLayoutPanel4.RowStyles.Add(new RowStyle(SizeType.Percent, 96.94656F));
-            tableLayoutPanel4.RowStyles.Add(new RowStyle(SizeType.Absolute, 15F));
-            tableLayoutPanel4.Size = new Size(421, 650);
-            tableLayoutPanel4.TabIndex = 2;
+            tableLayoutPanel_0_Right.BackColor = Color.Gainsboro;
+            tableLayoutPanel_0_Right.ColumnCount = 1;
+            tableLayoutPanel_0_Right.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+            tableLayoutPanel_0_Right.Controls.Add(flowLayoutPanelYutubeButtons, 0, 1);
+            tableLayoutPanel_0_Right.Controls.Add(tabControl1, 0, 4);
+            tableLayoutPanel_0_Right.Dock = DockStyle.Fill;
+            tableLayoutPanel_0_Right.Location = new Point(1704, 2);
+            tableLayoutPanel_0_Right.Margin = new Padding(3, 2, 3, 2);
+            tableLayoutPanel_0_Right.Name = "tableLayoutPanel_0_Right";
+            tableLayoutPanel_0_Right.RowCount = 6;
+            tableLayoutPanel_0_Right.RowStyles.Add(new RowStyle());
+            tableLayoutPanel_0_Right.RowStyles.Add(new RowStyle());
+            tableLayoutPanel_0_Right.RowStyles.Add(new RowStyle(SizeType.Percent, 3.053435F));
+            tableLayoutPanel_0_Right.RowStyles.Add(new RowStyle());
+            tableLayoutPanel_0_Right.RowStyles.Add(new RowStyle(SizeType.Percent, 96.94656F));
+            tableLayoutPanel_0_Right.RowStyles.Add(new RowStyle(SizeType.Absolute, 15F));
+            tableLayoutPanel_0_Right.Size = new Size(421, 650);
+            tableLayoutPanel_0_Right.TabIndex = 2;
             // 
             // flowLayoutPanelYutubeButtons
             // 
@@ -747,10 +769,10 @@
             // 
             // tabControl1
             // 
-            tabControl1.Controls.Add(tabPage1);
-            tabControl1.Controls.Add(tabPage2);
-            tabControl1.Controls.Add(tabPage3);
-            tabControl1.Controls.Add(tabPage4);
+            tabControl1.Controls.Add(tab_Graphics);
+            tabControl1.Controls.Add(tab_YT);
+            tabControl1.Controls.Add(tab_FB);
+            tabControl1.Controls.Add(tab_DMX);
             tabControl1.Dock = DockStyle.Fill;
             tabControl1.Location = new Point(3, 25);
             tabControl1.Margin = new Padding(3, 2, 3, 2);
@@ -759,17 +781,17 @@
             tabControl1.Size = new Size(415, 607);
             tabControl1.TabIndex = 82;
             // 
-            // tabPage1
+            // tab_Graphics
             // 
-            tabPage1.Controls.Add(flowLayoutPanelLoads);
-            tabPage1.Location = new Point(4, 24);
-            tabPage1.Margin = new Padding(3, 2, 3, 2);
-            tabPage1.Name = "tabPage1";
-            tabPage1.Padding = new Padding(3, 2, 3, 2);
-            tabPage1.Size = new Size(407, 579);
-            tabPage1.TabIndex = 0;
-            tabPage1.Text = "Graphics";
-            tabPage1.UseVisualStyleBackColor = true;
+            tab_Graphics.Controls.Add(flowLayoutPanelLoads);
+            tab_Graphics.Location = new Point(4, 24);
+            tab_Graphics.Margin = new Padding(3, 2, 3, 2);
+            tab_Graphics.Name = "tab_Graphics";
+            tab_Graphics.Padding = new Padding(3, 2, 3, 2);
+            tab_Graphics.Size = new Size(407, 579);
+            tab_Graphics.TabIndex = 0;
+            tab_Graphics.Text = "Graphics";
+            tab_Graphics.UseVisualStyleBackColor = true;
             // 
             // flowLayoutPanelLoads
             // 
@@ -864,20 +886,20 @@
             btnClearGraphics.UseVisualStyleBackColor = true;
             btnClearGraphics.Click += btnClearGraphics_Click;
             // 
-            // tabPage2
+            // tab_YT
             // 
-            tabPage2.Controls.Add(tbx_YTVideoId);
-            tabPage2.Controls.Add(AudienceCountdownDuration);
-            tabPage2.Controls.Add(groupBox2);
-            tabPage2.Controls.Add(flowLayoutPanel1);
-            tabPage2.Location = new Point(4, 24);
-            tabPage2.Margin = new Padding(3, 2, 3, 2);
-            tabPage2.Name = "tabPage2";
-            tabPage2.Padding = new Padding(3, 2, 3, 2);
-            tabPage2.Size = new Size(407, 579);
-            tabPage2.TabIndex = 1;
-            tabPage2.Text = "YouTUBE";
-            tabPage2.UseVisualStyleBackColor = true;
+            tab_YT.Controls.Add(tbx_YTVideoId);
+            tab_YT.Controls.Add(AudienceCountDownDuration);
+            tab_YT.Controls.Add(groupBox2);
+            tab_YT.Controls.Add(flowLayoutPanel1);
+            tab_YT.Location = new Point(4, 24);
+            tab_YT.Margin = new Padding(3, 2, 3, 2);
+            tab_YT.Name = "tab_YT";
+            tab_YT.Padding = new Padding(3, 2, 3, 2);
+            tab_YT.Size = new Size(407, 579);
+            tab_YT.TabIndex = 1;
+            tab_YT.Text = "YouTUBE";
+            tab_YT.UseVisualStyleBackColor = true;
             // 
             // tbx_YTVideoId
             // 
@@ -888,15 +910,15 @@
             tbx_YTVideoId.Size = new Size(183, 29);
             tbx_YTVideoId.TabIndex = 86;
             // 
-            // AudienceCountdownDuration
+            // AudienceCountDownDuration
             // 
-            AudienceCountdownDuration.Font = new Font("Segoe UI", 25F);
-            AudienceCountdownDuration.Location = new Point(222, 158);
-            AudienceCountdownDuration.Margin = new Padding(3, 2, 3, 2);
-            AudienceCountdownDuration.Name = "AudienceCountdownDuration";
-            AudienceCountdownDuration.Size = new Size(87, 52);
-            AudienceCountdownDuration.TabIndex = 85;
-            AudienceCountdownDuration.Value = new decimal(new int[] { 60, 0, 0, 0 });
+            AudienceCountDownDuration.Font = new Font("Segoe UI", 25F);
+            AudienceCountDownDuration.Location = new Point(222, 158);
+            AudienceCountDownDuration.Margin = new Padding(3, 2, 3, 2);
+            AudienceCountDownDuration.Name = "AudienceCountDownDuration";
+            AudienceCountDownDuration.Size = new Size(87, 52);
+            AudienceCountDownDuration.TabIndex = 85;
+            AudienceCountDownDuration.Value = new decimal(new int[] { 60, 0, 0, 0 });
             // 
             // groupBox2
             // 
@@ -964,31 +986,31 @@
             button12.Text = "Show Result";
             button12.UseVisualStyleBackColor = true;
             // 
-            // tabPage3
+            // tab_FB
             // 
-            tabPage3.Location = new Point(4, 24);
-            tabPage3.Margin = new Padding(3, 2, 3, 2);
-            tabPage3.Name = "tabPage3";
-            tabPage3.Padding = new Padding(3, 2, 3, 2);
-            tabPage3.Size = new Size(407, 579);
-            tabPage3.TabIndex = 2;
-            tabPage3.Text = "FaceBOOK";
-            tabPage3.UseVisualStyleBackColor = true;
+            tab_FB.Location = new Point(4, 24);
+            tab_FB.Margin = new Padding(3, 2, 3, 2);
+            tab_FB.Name = "tab_FB";
+            tab_FB.Padding = new Padding(3, 2, 3, 2);
+            tab_FB.Size = new Size(407, 579);
+            tab_FB.TabIndex = 2;
+            tab_FB.Text = "FaceBOOK";
+            tab_FB.UseVisualStyleBackColor = true;
             // 
-            // tabPage4
+            // tab_DMX
             // 
-            tabPage4.Controls.Add(btn_SendMidiNote);
-            tabPage4.Controls.Add(tBox_MidiVelocity);
-            tabPage4.Controls.Add(tBox_MidiNote);
-            tabPage4.Controls.Add(button1);
-            tabPage4.Location = new Point(4, 24);
-            tabPage4.Margin = new Padding(3, 2, 3, 2);
-            tabPage4.Name = "tabPage4";
-            tabPage4.Padding = new Padding(3, 2, 3, 2);
-            tabPage4.Size = new Size(407, 579);
-            tabPage4.TabIndex = 3;
-            tabPage4.Text = "DMX";
-            tabPage4.UseVisualStyleBackColor = true;
+            tab_DMX.Controls.Add(btn_SendMidiNote);
+            tab_DMX.Controls.Add(tBox_MidiVelocity);
+            tab_DMX.Controls.Add(tBox_MidiNote);
+            tab_DMX.Controls.Add(button1);
+            tab_DMX.Location = new Point(4, 24);
+            tab_DMX.Margin = new Padding(3, 2, 3, 2);
+            tab_DMX.Name = "tab_DMX";
+            tab_DMX.Padding = new Padding(3, 2, 3, 2);
+            tab_DMX.Size = new Size(407, 579);
+            tab_DMX.TabIndex = 3;
+            tab_DMX.Text = "DMX";
+            tab_DMX.UseVisualStyleBackColor = true;
             // 
             // btn_SendMidiNote
             // 
@@ -1024,6 +1046,56 @@
             button1.Text = "DMX";
             button1.UseVisualStyleBackColor = true;
             // 
+            // tab_Titler
+            // 
+            tab_Titler.Controls.Add(button3);
+            tab_Titler.Controls.Add(btn_TitleShowHide);
+            tab_Titler.Controls.Add(dataGridView1);
+            tab_Titler.Location = new Point(4, 24);
+            tab_Titler.Name = "tab_Titler";
+            tab_Titler.Padding = new Padding(3);
+            tab_Titler.Size = new Size(2134, 658);
+            tab_Titler.TabIndex = 2;
+            tab_Titler.Text = "TITLER";
+            tab_Titler.UseVisualStyleBackColor = true;
+            // 
+            // button3
+            // 
+            button3.AllowDrop = true;
+            button3.Location = new Point(576, 398);
+            button3.Name = "button3";
+            button3.Size = new Size(246, 91);
+            button3.TabIndex = 2;
+            button3.Text = "Show Title";
+            button3.UseVisualStyleBackColor = true;
+            button3.Click += button3_Click_1;
+            // 
+            // btn_TitleShowHide
+            // 
+            btn_TitleShowHide.AllowDrop = true;
+            btn_TitleShowHide.Location = new Point(442, 217);
+            btn_TitleShowHide.Name = "btn_TitleShowHide";
+            btn_TitleShowHide.Size = new Size(246, 91);
+            btn_TitleShowHide.TabIndex = 1;
+            btn_TitleShowHide.Text = "Show Title";
+            btn_TitleShowHide.UseVisualStyleBackColor = true;
+            btn_TitleShowHide.Click += btn_TitleShowHide_Click;
+            // 
+            // dataGridView1
+            // 
+            dataGridView1.AutoGenerateColumns = false;
+            dataGridView1.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dataGridView1.DataSource = templatesBindingSource;
+            dataGridView1.Location = new Point(1057, 217);
+            dataGridView1.Name = "dataGridView1";
+            dataGridView1.Size = new Size(240, 150);
+            dataGridView1.TabIndex = 0;
+            dataGridView1.CellContentClick += dataGridView1_CellContentClick;
+            // 
+            // templatesBindingSource
+            // 
+            templatesBindingSource.DataSource = typeof(GameController.Server.Services.CasparManager);
+            // 
             // panel1
             // 
             panel1.BackColor = SystemColors.ActiveBorder;
@@ -1042,10 +1114,10 @@
             tableLayoutPanel6.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 24.1584167F));
             tableLayoutPanel6.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 1131F));
             tableLayoutPanel6.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 505F));
-            tableLayoutPanel6.Controls.Add(cmbCountdownMode, 0, 0);
+            tableLayoutPanel6.Controls.Add(cmbCountDownMode, 0, 0);
             tableLayoutPanel6.Controls.Add(listBoxClients, 3, 0);
-            tableLayoutPanel6.Controls.Add(lblCountdown, 2, 0);
-            tableLayoutPanel6.Controls.Add(CountdownDuration, 1, 0);
+            tableLayoutPanel6.Controls.Add(lblCountDown, 2, 0);
+            tableLayoutPanel6.Controls.Add(CountDownDuration, 1, 0);
             tableLayoutPanel6.Dock = DockStyle.Fill;
             tableLayoutPanel6.Location = new Point(0, 0);
             tableLayoutPanel6.Name = "tableLayoutPanel6";
@@ -1054,16 +1126,16 @@
             tableLayoutPanel6.Size = new Size(2142, 93);
             tableLayoutPanel6.TabIndex = 46;
             // 
-            // cmbCountdownMode
+            // cmbCountDownMode
             // 
-            cmbCountdownMode.Dock = DockStyle.Fill;
-            cmbCountdownMode.Font = new Font("Segoe UI", 25F);
-            cmbCountdownMode.FormattingEnabled = true;
-            cmbCountdownMode.Location = new Point(3, 2);
-            cmbCountdownMode.Margin = new Padding(3, 2, 3, 2);
-            cmbCountdownMode.Name = "cmbCountdownMode";
-            cmbCountdownMode.Size = new Size(377, 53);
-            cmbCountdownMode.TabIndex = 46;
+            cmbCountDownMode.Dock = DockStyle.Fill;
+            cmbCountDownMode.Font = new Font("Segoe UI", 25F);
+            cmbCountDownMode.FormattingEnabled = true;
+            cmbCountDownMode.Location = new Point(3, 2);
+            cmbCountDownMode.Margin = new Padding(3, 2, 3, 2);
+            cmbCountDownMode.Name = "cmbCountDownMode";
+            cmbCountDownMode.Size = new Size(377, 53);
+            cmbCountDownMode.TabIndex = 46;
             // 
             // listBoxClients
             // 
@@ -1076,31 +1148,31 @@
             listBoxClients.Size = new Size(500, 89);
             listBoxClients.TabIndex = 8;
             // 
-            // lblCountdown
+            // lblCountDown
             // 
-            lblCountdown.AutoSize = true;
-            lblCountdown.BorderStyle = BorderStyle.FixedSingle;
-            lblCountdown.Dock = DockStyle.Fill;
-            lblCountdown.Font = new Font("Microsoft Sans Serif", 50F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            lblCountdown.ForeColor = Color.Lime;
-            lblCountdown.LiveSetting = System.Windows.Forms.Automation.AutomationLiveSetting.Polite;
-            lblCountdown.Location = new Point(508, 0);
-            lblCountdown.Name = "lblCountdown";
-            lblCountdown.Size = new Size(1125, 93);
-            lblCountdown.TabIndex = 37;
-            lblCountdown.Text = "00";
-            lblCountdown.TextAlign = ContentAlignment.MiddleCenter;
+            lblCountDown.AutoSize = true;
+            lblCountDown.BorderStyle = BorderStyle.FixedSingle;
+            lblCountDown.Dock = DockStyle.Fill;
+            lblCountDown.Font = new Font("Microsoft Sans Serif", 50F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            lblCountDown.ForeColor = Color.Lime;
+            lblCountDown.LiveSetting = System.Windows.Forms.Automation.AutomationLiveSetting.Polite;
+            lblCountDown.Location = new Point(508, 0);
+            lblCountDown.Name = "lblCountDown";
+            lblCountDown.Size = new Size(1125, 93);
+            lblCountDown.TabIndex = 37;
+            lblCountDown.Text = "00";
+            lblCountDown.TextAlign = ContentAlignment.MiddleCenter;
             // 
-            // CountdownDuration
+            // CountDownDuration
             // 
-            CountdownDuration.Dock = DockStyle.Fill;
-            CountdownDuration.Font = new Font("Segoe UI", 25F);
-            CountdownDuration.Location = new Point(386, 2);
-            CountdownDuration.Margin = new Padding(3, 2, 3, 2);
-            CountdownDuration.Name = "CountdownDuration";
-            CountdownDuration.Size = new Size(116, 52);
-            CountdownDuration.TabIndex = 42;
-            CountdownDuration.Value = new decimal(new int[] { 60, 0, 0, 0 });
+            CountDownDuration.Dock = DockStyle.Fill;
+            CountDownDuration.Font = new Font("Segoe UI", 25F);
+            CountDownDuration.Location = new Point(386, 2);
+            CountDownDuration.Margin = new Padding(3, 2, 3, 2);
+            CountDownDuration.Name = "CountDownDuration";
+            CountDownDuration.Size = new Size(116, 52);
+            CountDownDuration.TabIndex = 42;
+            CountDownDuration.Value = new decimal(new int[] { 60, 0, 0, 0 });
             // 
             // countdownTimer
             // 
@@ -1122,16 +1194,17 @@
             PnlRapidFire.ResumeLayout(false);
             PnlRapidFire.PerformLayout();
             tabControlMain.ResumeLayout(false);
-            tPageTest.ResumeLayout(false);
+            tab_Settings.ResumeLayout(false);
             pnl_Test.ResumeLayout(false);
-            tPageRapidFire.ResumeLayout(false);
-            tableLayoutPanel1.ResumeLayout(false);
-            tableLayoutPanel2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)dgvTemplateSettings).EndInit();
+            tab_GameShow.ResumeLayout(false);
+            tableLayoutPanel_0.ResumeLayout(false);
+            tableLayoutPanel_0_Left.ResumeLayout(false);
             groupBox1.ResumeLayout(false);
             groupBox1.PerformLayout();
             flowLayoutPanel2.ResumeLayout(false);
-            tableLayoutPanel3.ResumeLayout(false);
-            tableLayoutPanel3.PerformLayout();
+            tableLayoutPanel_0_Center.ResumeLayout(false);
+            tableLayoutPanel_0_Center.PerformLayout();
             panel2.ResumeLayout(false);
             tabGameModes.ResumeLayout(false);
             tabPageRound1.ResumeLayout(false);
@@ -1142,22 +1215,25 @@
             tableLayoutPanel5.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)dgvQuestions).EndInit();
             ((System.ComponentModel.ISupportInitialize)dgvContestants).EndInit();
-            tableLayoutPanel4.ResumeLayout(false);
-            tableLayoutPanel4.PerformLayout();
+            tableLayoutPanel_0_Right.ResumeLayout(false);
+            tableLayoutPanel_0_Right.PerformLayout();
             tabControl1.ResumeLayout(false);
-            tabPage1.ResumeLayout(false);
+            tab_Graphics.ResumeLayout(false);
             flowLayoutPanelLoads.ResumeLayout(false);
-            tabPage2.ResumeLayout(false);
-            tabPage2.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)AudienceCountdownDuration).EndInit();
+            tab_YT.ResumeLayout(false);
+            tab_YT.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)AudienceCountDownDuration).EndInit();
             groupBox2.ResumeLayout(false);
             flowLayoutPanel1.ResumeLayout(false);
-            tabPage4.ResumeLayout(false);
-            tabPage4.PerformLayout();
+            tab_DMX.ResumeLayout(false);
+            tab_DMX.PerformLayout();
+            tab_Titler.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)dataGridView1).EndInit();
+            ((System.ComponentModel.ISupportInitialize)templatesBindingSource).EndInit();
             panel1.ResumeLayout(false);
             tableLayoutPanel6.ResumeLayout(false);
             tableLayoutPanel6.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)CountdownDuration).EndInit();
+            ((System.ComponentModel.ISupportInitialize)CountDownDuration).EndInit();
             ((System.ComponentModel.ISupportInitialize)playerBindingSource).EndInit();
             ResumeLayout(false);
             PerformLayout();
@@ -1170,10 +1246,10 @@
 		private System.Windows.Forms.TextBox textBoxLog;
 		private System.Windows.Forms.TableLayoutPanel PnlRapidFire;
 		private System.Windows.Forms.TabControl tabControlMain;
-		private System.Windows.Forms.TabPage tPageTest;
-		private System.Windows.Forms.TabPage tPageRapidFire;
-		private System.Windows.Forms.Label lblCountdown;
-		private System.Windows.Forms.NumericUpDown CountdownDuration;
+		private System.Windows.Forms.TabPage tab_Settings;
+		private System.Windows.Forms.TabPage tab_GameShow;
+		private System.Windows.Forms.Label lblCountDown;
+		private System.Windows.Forms.NumericUpDown CountDownDuration;
 		private System.Windows.Forms.Panel panel1;
 		private System.Windows.Forms.ListBox listBoxClients;
 		private System.Windows.Forms.ComboBox rf_CBoxRapidFireMode;
@@ -1186,10 +1262,10 @@
 		private System.Windows.Forms.Button btnSendToSelectedClient;
 		private System.Windows.Forms.Button btnSendMessageToClients;
 		private System.Windows.Forms.ComboBox cmbPollingMode;
-		private Button btnStartCountdown;
+		private Button btnStartCountDown;
 		private System.Windows.Forms.Timer countdownTimer;
 		private Button button4;
-		private Button button3;
+		private Button btn_TitleShowHide;
 		private Button btn_R1InCorrectAnswer;
 		private Button button5;
 		private Button btnShowFinalResults;
@@ -1198,23 +1274,23 @@
 		public DataGridView dgvContestants;
 		private BindingSource playerBindingSource;
 		private ListBox votingUserListBox;
-		private TableLayoutPanel tableLayoutPanel1;
+		private TableLayoutPanel tableLayoutPanel_0;
 		private Button rf_BtnLoadQuestions;
-		private TableLayoutPanel tableLayoutPanel2;
+		private TableLayoutPanel tableLayoutPanel_0_Left;
 		private Button btn_ConnectLightDevice;
 		private GroupBox groupBox1;
 		private CheckBox cBoxUseAudioControl;
 		private CheckBox cBoxUseLightControl;
 		private CheckBox cBoxDisableInput;
-		private TableLayoutPanel tableLayoutPanel3;
+		private TableLayoutPanel tableLayoutPanel_0_Center;
 		public DataGridView dgvQuestions;
 		private Panel panel2;
 		private FlowLayoutPanel flowLayoutPanel2;
 		private TableLayoutPanel tableLayoutPanel5;
-		private TableLayoutPanel tableLayoutPanel4;
+		private TableLayoutPanel tableLayoutPanel_0_Right;
 		private FlowLayoutPanel flowLayoutPanelYutubeButtons;
 		private TabControl tabControl1;
-		private TabPage tabPage1;
+		private TabPage tab_Graphics;
 		private FlowLayoutPanel flowLayoutPanelLoads;
 		private Button BtnLoadFullQuestion;
 		private Button BtnLoadLowerQuestion;
@@ -1223,21 +1299,21 @@
 		private Button BtnLoadYutubeVote;
 		private Button btnClearGraphics;
 		private Button btnLoadBackGround;
-		private TabPage tabPage2;
+		private TabPage tab_YT;
 		private GroupBox groupBox2;
 		private RichTextBox richTextBox1;
 		private FlowLayoutPanel flowLayoutPanel1;
 		private Button btn_ytVotingOnOFF;
 		private Button button11;
 		private Button button12;
-		private TabPage tabPage3;
-		private TabPage tabPage4;
+		private TabPage tab_FB;
+		private TabPage tab_DMX;
 		private Button button1;
 		private Button btn_SendMidiNote;
 		private TextBox tBox_MidiVelocity;
 		private TextBox tBox_MidiNote;
 		private Button btnUuupsAnswer;
-		private NumericUpDown AudienceCountdownDuration;
+		private NumericUpDown AudienceCountDownDuration;
 		private TextBox tbx_YTVideoId;
 		private TabControl tabGameModes;
 		private TabPage tabPageRound1;
@@ -1255,11 +1331,16 @@
 		private Button button6;
 		private Button button2;
         private TableLayoutPanel tableLayoutPanel6;
-        private ComboBox cmbCountdownMode;
+        private ComboBox cmbCountDownMode;
         private ToolTip toolTipDgvContestant;
 
         private BindingSource bSrc_TcpListeningState;
         private TextBox txtBoxTcpListeningMode;
+		private TabPage tab_Titler;
+		private DataGridView dataGridView1;
+		private BindingSource templatesBindingSource;
+		private DataGridView dgvTemplateSettings;
+        private Button button3;
     }
 }
 

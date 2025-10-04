@@ -14,7 +14,9 @@ namespace GameController.Server.Hubs
             _isTrackerLogEnabled = configuration.GetValue<bool>("TrackerLogEnabled");
         }
 
-        public async ValueTask<object> InvokeMethodAsync(HubInvocationContext invocationContext, Func<HubInvocationContext, ValueTask<object>> next)
+        public async ValueTask<object?> InvokeMethodAsync(
+            HubInvocationContext invocationContext,
+            Func<HubInvocationContext, ValueTask<object?>> next)
         {
             if (_isTrackerLogEnabled)
             {

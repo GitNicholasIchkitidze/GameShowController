@@ -50,7 +50,7 @@ namespace GameController.Server.VotingServices
                         var liveChatId = items[0].GetProperty("liveStreamingDetails")
                                                  .GetProperty("activeLiveChatId").GetString();
 
-                        _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} GetLiveChatIdAsync: Successfully fetched Live Chat ID: {liveChatId}");
+                        _logger.LogInformation($"{Environment.NewLine}{DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff")} GetLiveChatIdAsync: Successfully fetched Live Chat ID: {liveChatId}");
                         return liveChatId;
                     }
                 }
@@ -185,7 +185,7 @@ namespace GameController.Server.VotingServices
 
                 if (response.IsSuccessStatusCode)
                 {
-                    _logger.LogInformation($"{Environment.NewLine}{DateTime.Now} PostChatMessageAsync: Message sent to Live chat: {message}");
+                    _logger.LogInformation($"{Environment.NewLine}{DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff")} PostChatMessageAsync: Message sent to Live chat: {message}");
                 }
                 else
                 {
