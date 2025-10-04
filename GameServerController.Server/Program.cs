@@ -1,5 +1,6 @@
 ﻿using GameController.Server.Hubs;
 using GameController.Server.Services;
+using GameController.Server.Services.SoundLight;
 using GameController.Server.VotingManagers;
 using GameController.Server.VotingServices;
 using GameController.Shared.Models;
@@ -95,8 +96,24 @@ builder.Services.Configure<MidiSettingsModels>(
 var midiDeviceName = builder.Configuration.GetSection("MidiSettings:DeviceName").Value;
 Console.WriteLine($"MIDI Device Name from Config: {midiDeviceName}");
 
-//var midiCorrectAnswerNote = builder.Configuration.GetSection("MidiSettings:CorrectAnswerNote").Value;
-//Console.WriteLine($"Correct Answer Note from Config: {midiCorrectAnswerNote}");
+
+
+
+var UseDmx = builder.Configuration.GetValue<bool>("Lighting:UseDMX", false);
+if (UseDmx)
+{
+    builder.Services.AddSingleton<IArtNetDmxService>(sp =>
+    {
+        // IP მისამართის აღება appsettings.json-დან
+        var dmxIp = builder.Configuration["Lighting:DMXIpAddress"];
+        var dmxPort = builder.Configuration.GetValue<int>("Lighting:UsePort", 6454);
+        var logger = sp.GetRequiredService<ILogger<ArtNetDmxService>>();
+        return new ArtNetDmxService(logger, dmxIp, dmxPort);
+    });
+}
+
+
+
 
 //builder.Services.AddSignalR(options =>
 //{

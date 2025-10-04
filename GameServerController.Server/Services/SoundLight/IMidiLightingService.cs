@@ -1,6 +1,6 @@
 ﻿using Melanchall.DryWetMidi.MusicTheory;
 
-namespace GameController.Server.Services
+namespace GameController.Server.Services.SoundLight
 {
     // ინტერფეისი, რომელიც განსაზღვრავს MIDI განათების სერვისის ფუნქციონალს
     public interface IMidiLightingService

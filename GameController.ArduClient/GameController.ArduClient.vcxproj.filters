@@ -21,6 +21,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GameController.ArduClient.ino" />
+    <ClCompile Include="GameController.ino" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="__vm\.GameController.ArduClient.vsarduino.h">
