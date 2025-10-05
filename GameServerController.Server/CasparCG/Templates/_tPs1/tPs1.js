@@ -1,5 +1,9 @@
 ﻿const ws = new WebSocket('ws://192.168.0.4:5000/ws-casparcg');
 let flipInterval;
+let secondLineInterval;
+let currentSecondLineIndex = 0;
+let currentSecondLines = [];
+
 
 const getCssVar = (varName) => {
     return getComputedStyle(document.documentElement).getPropertyValue(varName);
@@ -7,6 +11,7 @@ const getCssVar = (varName) => {
 
 const showDuration = parseFloat(getCssVar('--show-duration'));
 const hideDuration = parseFloat(getCssVar('--hide-duration'));
+const currentSecondLinesRotateInterval = parseFloat(getCssVar('--currentSecondLinesRotate-interval'));
 
 ws.onopen = () => {
     console.log('WebSocket connection established from Lower Third GSAP.');
@@ -23,9 +28,24 @@ ws.onmessage = (event) => {
 
     try {
         const jsonData = JSON.parse(event.data);
-        if (jsonData.Status === 'show') {
+        if (jsonData.Status === 'show' && jsonData.SecondLines.length < 1) {
             updateText(jsonData);
             showAnimation();
+        } else if (jsonData.Status === 'show' && jsonData.SecondLines.length > 1) {
+            console.log('loop SecondLines: ' + jsonData.SecondLines.length);
+            currentSecondLines = jsonData.SecondLines;
+            currentSecondLineIndex = 0; // რესეტი ინდექსის
+            updateText(jsonData);
+            showAnimation();
+            // ციკლის დაწყება showAnimation-ის შემდეგ
+            stopSecondLineCycle(); // წინა ციკლი გაჩერება თუ იყო
+            secondLineInterval = setInterval(() => {
+                if (currentSecondLines.length > 0) {
+                    currentSecondLineIndex = (currentSecondLineIndex + 1) % currentSecondLines.length;
+                    nextSecondLine(currentSecondLines[currentSecondLineIndex]);
+                }
+            }, currentSecondLinesRotateInterval); 
+            
         } else if (jsonData.Status === 'hide') {
             hideAnimation();
         } else if (jsonData.Status === 'update') {
@@ -55,6 +75,12 @@ function updateText(data) {
     }
 }
 
+function stopSecondLineCycle() {
+    if (secondLineInterval) {
+        clearInterval(secondLineInterval);
+        secondLineInterval = null;
+    }
+}
 function nextSecondLine(newText) {
     // ანიმაცია იგივე რჩება
     const secondLineElement = document.getElementById('second-line-text');
@@ -103,6 +129,7 @@ function showAnimation() {
 
 function hideAnimation() {
     stopLogoFlip();
+    stopSecondLineCycle();
     gsap.timeline()
         .to("#container", { duration: hideDuration, x: "100%", ease: "power2.in" });
 }

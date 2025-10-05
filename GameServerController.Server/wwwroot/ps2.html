@@ -1,0 +1,411 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>GameShow Player Console</title>
+    <!-- SignalR ბიბლიოთეკა (თუ არაა უკვე შენს პროექტში) -->
+    <script src="js/signalr.min.js"></script>
+    <style>
+        /* გლობალური სტილები */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            font-size: 2.5em;
+        }
+
+        .status {
+            text-align: center;
+            background: rgba(255,255,255,0.2);
+            padding: 10px;
+            border-radius: 10px;
+            color: white;
+            margin-bottom: 30px;
+            font-weight: bold;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.7;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+
+        #lowerThirdControl {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            padding: 30px;
+            overflow: hidden;
+        }
+
+        h3 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        select, input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            margin-bottom: 15px;
+        }
+
+            select:focus, input[type="text"]:focus {
+                outline: none;
+                border-color: #667eea;
+                box-shadow: 0 0 10px rgba(102, 126, 234, 0.3);
+            }
+
+        #titleToggleButton {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-bottom: 20px;
+        }
+
+            #titleToggleButton:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            }
+
+            #titleToggleButton:active {
+                transform: translateY(0);
+            }
+
+        /* რედაქტირების ველები */
+        #editFields {
+            background: #f8f9ff;
+            border: 2px solid #e0e6ff;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+
+            #editFields h4 {
+                color: #667eea;
+                margin-bottom: 15px;
+                text-align: center;
+            }
+
+            #editFields label {
+                margin-bottom: 5px;
+            }
+
+        /* ახალი ტიტრის სექცია */
+        .add-section {
+            background: #f0f4ff;
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+            .add-section h4 {
+                color: #764ba2;
+                margin-bottom: 15px;
+                text-align: center;
+            }
+
+        #addTitleButton {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+            margin-top: 10px;
+        }
+
+            #addTitleButton:hover {
+                transform: translateY(-1px);
+            }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+
+            #lowerThirdControl {
+                padding: 20px;
+            }
+        }
+
+        /* Dark mode toggle (ოპციური, თუ გინდა) */
+        /* body.dark { background: #121212; color: white; } */
+    </style>
+</head>
+<body>
+    <h1>GameShow Player Console</h1>
+    <div>Connecting... ...</div>
+
+    <div id="lowerThirdControl">
+        <h3>Lower Third Control</h3>
+        <label for="titleInput">შეარჩიე ტიტლი:</label>
+        <select id="titleInput">
+            <option value="">აირჩიე ტიტლი...</option>
+            <!-- წინასწარი ტიტლები JS-ში დაემატება -->
+        </select>
+        <button id="titleToggleButton">Show Title</button>  <!-- დაწყება "Show Title"-ით, როგორც შენს კოდში -->
+        <!-- რედაქტირების ველები არჩეული ტიტლისთვის (ნაგულისხმევად ფარული) -->
+        <div id="editFields" style="display: none; margin-top: 10px; padding: 10px; border: 1px solid #ccc;">
+            <h4>არჩეული ტიტლის რედაქტირება</h4>
+            <label for="editBreakingNews">BreakingNews:</label>
+            <input type="text" id="editBreakingNews" placeholder="BreakingNews">
+            <br>
+            <label for="editHeadline">Headline:</label>
+            <input type="text" id="editHeadline" placeholder="Headline">
+            <br>
+            <label for="editSecondLine">SecondLine:</label>
+            <input type="text" id="editSecondLine" placeholder="SecondLine">
+            <br>
+            <label for="editSecondLines">SecondLines:</label>
+            <input type="text" id="editSecondLines" placeholder="SecondLines">
+        </div>
+
+        <!-- ახალი ტიტრის დამატების ველები -->
+        <div>
+            <h4>ახალი ტიტრის დამატება</h4>
+            <input type="text" id="newBreakingNews" placeholder="BreakingNews (მაგ. სპორტული ამბები)">
+            <input type="text" id="newHeadline" placeholder="Headline (მაგ. საქართველო ევროპის ჩემპიონია)">
+            <input type="text" id="newSecondLine" placeholder="SecondLine (მაგ. ისტორიული გამარჯვება)">
+            <input type="text" id="newSecondLines" placeholder="SecondLines (მაგ. ისტორიული გამარჯვება)">
+            <button id="addTitleButton">დამატება Dropdown-ში</button>
+        </div>
+    </div>
+
+    <script>
+        // შენი SignalR კოდი (უცვლელი)
+        const urlParams = new URLSearchParams(window.location.search);
+        let clientName = urlParams.get('name');
+
+        // თუ სახელი არ არის მითითებული URL-ში, სთხოვეთ მომხმარებელს შეიყვანოს ის
+        if (!clientName) {
+            clientName = prompt("გთხოვთ შეიყვანოთ თქვენი სახელი:");
+        }
+
+        // დარწმუნდით, რომ სახელი არ არის ცარიელი
+        if (!clientName) {
+            clientName = `Player_${Math.floor(Math.random() * 1000)}`;
+            console.warn("სახელი არ არის შეყვანილი, გამოყენებულია ნაგულისხმევი სახელი.");
+        }
+
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl(`/gamehub?name=${encodeURIComponent(clientName)}`)
+            .build();
+
+        // SignalR კავშირის დაწყება
+        connection.start().then(function () {
+            console.log('SignalR კავშირი დამყარებულია.');
+            document.querySelector('div').textContent = 'Connected';
+        }).catch(function (err) {
+            console.error('SignalR კავშირის შეცდომა:', err);
+        });
+
+        // წინასწარ მომზადებული ტიტლები (ახალი სტრუქტურა curTitle-ის მიხედვით)
+        let predefinedTitles = [
+            {
+                Status: 'show',  // ნაგულისხმევი
+                BreakingNews: 'სპორტული ამბები',
+                Headline: 'საქართველო ევროპის ჩემპიონია',
+                SecondLine: 'ისტორიული გამარჯვება',
+                SecondLines: [ 'გამარჯვება', 'ისტორიული გამარჯვება' ]
+            },
+            {
+                Status: 'show',
+                BreakingNews: 'შოუს დაწყება',
+                Headline: 'კონკურსანტის შესავალი',
+                SecondLine: 'მისალმება მაყურებლისთვის',
+                SecondLines: ['გამაaaaა', 'aaa გამარჯვება']
+            },
+            {
+                Status: 'show',
+                BreakingNews: 'ფინალური ეტაპი',
+                Headline: 'ფინალური კითხვა',
+                SecondLine: 'გამარჯვებული იმსხვერპლება',
+                SecondLines: ['გაssssaaaა', 'aaa გამარჯვება']
+            }
+        ];
+
+        // LocalStorage-დან ჩატვირთვა
+        function loadTitles() {
+            const saved = localStorage.getItem('titles');
+            if (saved) {
+                predefinedTitles = JSON.parse(saved);
+            }
+            updateDropdown();
+        }
+
+        // Dropdown-ის განახლება
+        function updateDropdown() {
+            const select = document.getElementById('titleInput');
+            select.innerHTML = '<option value="">აირჩიე ტიტლი...</option>';
+            predefinedTitles.forEach((title, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = `${title.Headline} (${title.BreakingNews})`;
+                select.appendChild(option);
+            });
+        }
+
+        // რედაქტირების ველების შევსება არჩეული ტიტლით
+        function populateEditFields() {
+            const select = document.getElementById('titleInput');
+            const selectedIndex = select.value;
+
+            const editDiv = document.getElementById('editFields');            
+            //const secondLinesText = document.getElementById('secondLinesInput').value; // textarea-ს ID
+
+            if (selectedIndex === '') {
+                editDiv.style.display = 'none';
+                return;
+            }
+
+            const selectedTitle = predefinedTitles[selectedIndex];
+            document.getElementById('editBreakingNews').value = selectedTitle.BreakingNews || '';
+            document.getElementById('editHeadline').value = selectedTitle.Headline || '';
+            document.getElementById('editSecondLine').value = selectedTitle.SecondLine || '';
+            document.getElementById('editSecondLines').value = selectedTitle.SecondLines || '';
+
+            editDiv.style.display = 'block';
+        }
+
+
+        document.getElementById('titleInput').addEventListener('change', populateEditFields);
+
+        // ახალი ტიტრის დამატება
+        document.getElementById('addTitleButton').addEventListener('click', function () {
+            const breakingNews = document.getElementById('newBreakingNews').value.trim();
+            const headline = document.getElementById('newHeadline').value.trim();
+            const secondLine = document.getElementById('newSecondLine').value.trim();
+            const secondLines = document.getElementById('newSecondLines').value.trim();
+
+            if (!headline || !breakingNews) {
+                alert('BreakingNews და Headline უნდა შეიყვანოთ!');
+                return;
+            }
+
+            predefinedTitles.push({
+                Status: 'show',  // ნაგულისხმევი
+                BreakingNews: breakingNews,
+                Headline: headline,
+                SecondLine: secondLine || ''
+            });
+            localStorage.setItem('titles', JSON.stringify(predefinedTitles));
+            updateDropdown();
+
+            // ველების გასუფთავება
+            document.getElementById('newBreakingNews').value = '';
+            document.getElementById('newHeadline').value = '';
+            document.getElementById('newSecondLine').value = '';
+            document.getElementById('newSecondLines').value = '';
+
+            console.log('დაემატა ახალი ტიტლი:', headline);
+        });
+
+        // Toggle Lower Third (შენი მუშაობს ლოგიკა + dropdown ინტეგრაცია)
+        document.getElementById('titleToggleButton').addEventListener('click', () => {
+            const select = document.getElementById('titleInput');
+            const selectedIndex = select.value;
+
+            if (selectedIndex === '') {
+                alert('ტიტლი უნდა შეარჩიო!');
+                return;
+            }
+
+            
+            // მიიღე მნიშვნელობები რედაქტირების ველებიდან და განაახლე array
+            const breakingNews = document.getElementById('editBreakingNews').value.trim();
+            const headline = document.getElementById('editHeadline').value.trim();
+            const secondLine = document.getElementById('editSecondLine').value.trim();
+            const secondLinesText = document.getElementById('editSecondLines').value; // textarea-ს ID
+            const secondLines = secondLinesText.split('*').filter(line => line.trim() !== '');
+
+            if (!headline || !breakingNews) {
+                alert('რედაქტირების ველები უნდა შეავსოთ!');
+                return;
+            }
+            // განაახლე selected title ველებიდან
+            predefinedTitles[selectedIndex].BreakingNews = breakingNews;
+            predefinedTitles[selectedIndex].Headline = headline;
+            predefinedTitles[selectedIndex].SecondLine = secondLine;
+            predefinedTitles[selectedIndex].SecondLines = secondLines;
+
+            let currentStatus = titleToggleButton.innerText === "Show Title" ? "show" : "hide";
+            let curTitle = predefinedTitles[selectedIndex];  // dropdown-დან მიღებული ობიექტი
+            curTitle.Status = currentStatus;  // განაახლე Status
+
+            // შენი მუშაობს invoke: ორი პარამეტრი (curTitle + bool)
+            connection.invoke("CGSWToggleTitle", curTitle, currentStatus === "show")
+                .then(() => {
+                    // შენი UI განახლება
+                    if (currentStatus === "show") {
+                        titleToggleButton.innerText = "Hide Title";
+                        titleToggleButton.style.backgroundColor = "lightgreen";
+                    } else {
+                        titleToggleButton.innerText = "Show Title";
+                        titleToggleButton.style.backgroundColor = "lightcoral";
+                    }
+                    console.log('წარმატებით გაგზავნილი curTitle:', curTitle);
+                })
+                .catch(err => console.error(err.toString()));
+        });
+
+        // ჩატვირთვა გვერდის ჩატვირთვისას
+        loadTitles();
+    </script>
+</body>
+</html>

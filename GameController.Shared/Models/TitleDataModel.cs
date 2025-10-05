@@ -13,5 +13,6 @@ namespace GameController.Shared.Models
         public string BreakingNews  { get; set; }
         public string Headline { get; set; }
         public string SecondLine { get; set; }
+        public List<string> SecondLines { get; set; }
     }
 }

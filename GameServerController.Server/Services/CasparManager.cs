@@ -1,4 +1,5 @@
 ﻿using GameController.Server.Extensions;
+using GameController.Server.Helpers;
 using GameController.Server.Services;
 using GameController.Shared.Enums;
 using GameController.Shared.Models;
@@ -43,75 +44,19 @@ namespace GameController.Server.Services
 			_gameService = gameService;
 			_cgSettings = configuration.GetSection("CG").Get<CasparCGSettings>();
 
-			if (_cgSettings != null)
-			{
-				_cgSettingsMap[CGTemplateEnums.QuestionFull] = new templateSettingModel(
-					CGTemplateEnums.QuestionFull.ToString(),
-					_cgSettings.QuestionFull.TemplateName,
-					_cgSettings.QuestionFull.TemplateUrl,					
-					_cgSettings.QuestionFull.Channel,					
-					_cgSettings.QuestionFull.Layer,
-					_cgSettings.QuestionFull.LayerCg,
-					_cgSettings.QuestionFull.ServerIp ?? string.Empty
-				);
-				_cgSettingsMap[CGTemplateEnums.QuestionLower] = new templateSettingModel(
-					CGTemplateEnums.QuestionLower.ToString(),
-					_cgSettings.QuestionLower.TemplateName,
-					_cgSettings.QuestionLower.TemplateUrl,
-					_cgSettings.QuestionLower.Channel,
-					_cgSettings.QuestionLower.Layer,
-					_cgSettings.QuestionLower.LayerCg,
-					_cgSettings.QuestionLower.ServerIp ?? string.Empty
-				);
-				_cgSettingsMap[CGTemplateEnums.CountDown] = new templateSettingModel(
-					CGTemplateEnums.CountDown.ToString(),
-					_cgSettings.CountDown.TemplateName,
-					_cgSettings.CountDown.TemplateUrl,
-					_cgSettings.CountDown.Channel,
-					_cgSettings.CountDown.Layer,
-					_cgSettings.CountDown.LayerCg,
-					_cgSettings.CountDown.ServerIp ?? string.Empty
-				);
-				_cgSettingsMap[CGTemplateEnums.LeaderBoard] = new templateSettingModel(
-					CGTemplateEnums.LeaderBoard.ToString(),
-					_cgSettings.LeaderBoard.TemplateName,
-					_cgSettings.LeaderBoard.TemplateUrl,
-					_cgSettings.LeaderBoard.Channel,
-					_cgSettings.LeaderBoard.Layer,
-					_cgSettings.LeaderBoard.LayerCg,
-					_cgSettings.LeaderBoard.ServerIp ?? string.Empty
-				);
-				_cgSettingsMap[CGTemplateEnums.YTVote] = new templateSettingModel(
-					CGTemplateEnums.YTVote.ToString(),
-					_cgSettings.YTVote.TemplateName,
-					_cgSettings.YTVote.TemplateUrl,
-					_cgSettings.YTVote.Channel,
-					_cgSettings.YTVote.Layer,
-					_cgSettings.YTVote.LayerCg,
-					_cgSettings.YTVote.ServerIp ?? string.Empty
-				);
-				_cgSettingsMap[CGTemplateEnums.QuestionVideo] = new templateSettingModel(
-					CGTemplateEnums.QuestionVideo.ToString(),
-					_cgSettings.QuestionVideo.TemplateName,
-					_cgSettings.QuestionVideo.TemplateUrl,
-					_cgSettings.QuestionVideo.Channel,
-					_cgSettings.QuestionVideo.Layer,
-					_cgSettings.QuestionVideo.LayerCg,
-					_cgSettings.QuestionVideo.ServerIp ?? string.Empty
-				);
-                _cgSettingsMap[CGTemplateEnums.tPs1] = new templateSettingModel(
-                    CGTemplateEnums.tPs1.ToString(),
-                    _cgSettings.tPs1.TemplateName,
-                    _cgSettings.tPs1.TemplateUrl,
-                    _cgSettings.tPs1.Channel,
-                    _cgSettings.tPs1.Layer,
-                    _cgSettings.tPs1.LayerCg,
-                    _cgSettings.tPs1.ServerIp ?? string.Empty
-                );
-            }
+
+            _cgSettingsMap = CasparCGSettingsMapper.MapSettings(_cgSettings);
+
+
+
+
+   
+
+
+
 
 			_logger.LogInformationWithCaller("CasparCGManager instance created");
-			//_logger.LogInformation(new EventId(1000, "CasparManagerConstructor"), $"{Environment.NewLine}{DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff")} CasparCGManager instance created.");
+		
 		}
 
 		
@@ -235,8 +180,9 @@ namespace GameController.Server.Services
 					Status = title.Status,
 					BreakingNews = title.BreakingNews,
 					Headline = title.Headline,
-					SecondLine = title.SecondLine
-				};
+					SecondLine = title.SecondLine,
+                    SecondLines = title.SecondLines
+                };
 				await _casparCGWsService.SendDataToTemplateAsync("tPs1", data);
 				_logger.LogInformationWithCaller($"Toggled title to {(show ? "show" : "hide")} with headline: {title.Headline}");
 				return new OperationResult(true);

@@ -8,7 +8,7 @@ namespace GameController.Shared.Enums
 {
 	public enum CGTemplateEnums
 	{
-		// CountDown stops only when time runs out
+		
 		QuestionFull,
 		QuestionLower,
 		QuestionVideo,

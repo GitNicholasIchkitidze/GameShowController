@@ -82,6 +82,33 @@
     <None Update="CasparCG\Templates\_qLow\QuestionLower.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="CasparCG\Templates\_tPs2\tPs2.css">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="CasparCG\Templates\_tPs2\tPs2.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="CasparCG\Templates\_tPs2\tPs2.js">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="CasparCG\Templates\_tPs1\tPs1.css">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="CasparCG\Templates\_tPs1\tPs1.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="CasparCG\Templates\_tPs1\tPs1.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="CasparCG\Templates\_tPs1\tPs2.css">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="CasparCG\Templates\_tPs1\tPs2.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="CasparCG\Templates\_tPs1\tPs2.js">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="CasparCG\Templates\_ytVoting\YTVote.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

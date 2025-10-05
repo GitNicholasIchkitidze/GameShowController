@@ -17,6 +17,7 @@
     --headline-font-size: 32px;
     --second-line-font-size: 16px;
     /* Animation Durations (in seconds) */
+    --currentSecondLinesRotateInterval: 5000;
     --show-duration: 0.5;
     --hide-duration: 0.5;
     --text-swap-duration: 0.4;

@@ -11,6 +11,11 @@
     <h2 id="questionText"></h2>
     <div id="answerButtons"></div>
 
+    <hr> <div id="titleControls">
+        <h3>Lower Third Control</h3>
+        <button id="titleToggleButton" style="padding: 10px 20px; font-size: 16px;">Show Title</button>
+    </div>
+
     <script src="js/signalr.min.js"></script>
 
     <style>
@@ -46,41 +51,50 @@
             max-width: 800px;
         }
 
-        #answerButtons button {
-            font-size: 2rem;
-            font-weight: bold;
-            padding: 20px;
-            border: 2px solid #5cb85c;
-            border-radius: 8px;
-            background-color: #f7f7f7;
-            color: #333;
+            #answerButtons button {
+                font-size: 2rem;
+                font-weight: bold;
+                padding: 20px;
+                border: 2px solid #5cb85c;
+                border-radius: 8px;
+                background-color: #f7f7f7;
+                color: #333;
+                cursor: pointer;
+                transition: background-color 0.3s ease, transform 0.2s ease;
+            }
+
+                #answerButtons button:disabled {
+                    background-color: #ddd;
+                    cursor: not-allowed;
+                    color: #666;
+                    border-color: #ddd;
+                    transform: none;
+                }
+
+        /* ახალი სტილები */
+        #titleControls {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        #titleToggleButton {
+            background-color: lightcoral;
+            color: white;
+            border: none;
             cursor: pointer;
-            transition: background-color 0.3s ease, transform 0.2s ease;
+            transition: background-color 0.3s ease;
         }
-
-        #answerButtons button:disabled {
-            background-color: #ddd;
-            cursor: not-allowed;
-            color: #666;
-            border-color: #ddd;
-            transform: none;
-        }
-
     </style>
 
 
     <script>
         const statusDiv = document.getElementById('status');
-        //const clientName = "Player1"; // Set the client name here for testing
         let countdownInterval;
         const questionTextElement = document.getElementById('questionText');
         const answerButtonsContainer = document.getElementById('answerButtons');
 
-        
-  
-
-        // შეცვალეთ ეს ხაზი
-        // const clientName = "Player1";
+        // ახალი ღილაკის ელემენტი
+        const titleToggleButton = document.getElementById('titleToggleButton');
 
         // მიიღეთ კლიენტის სახელი URL-ის პარამეტრიდან
         const urlParams = new URLSearchParams(window.location.search);
@@ -100,64 +114,34 @@
 
         const connection = new signalR.HubConnectionBuilder()
             .withUrl(`/gamehub?name=${encodeURIComponent(clientName)}`)
-            .build();
+            .build();   
 
 
-        connection.on("StopCountDown", (stopMode) => {
-            clearInterval(countdownInterval);
-            console.log("CountDown Stopped." + stopMode);
-            const countdownElement = document.getElementById('countdown');
-            if (stopMode === "Reset")
-                countdownElement.innerText = "0";
-            else if (stopMode == "Pause")
-                countdownElement.innerText = countdownElement.innerText;
-            else if (stopMode == "TimeUp")
-                countdownElement.innerText = "დრო ამოოიწურა!";
-            else
-                countdownElement.innerText = "ups!";
+        // ღილაკზე დაჭერისას მოქმედება
+        titleToggleButton.addEventListener('click', () => {
+            let currentStatus = titleToggleButton.innerText === "Show Title" ? "show" : "hide";
+            let curTitle = {
+                Status: currentStatus,
+                BreakingNews: "სპორტული ამბები",
+                Headline: "საქართველო ევროპის ჩემპიონია",
+                SecondLine: "ისტორიული გამარჯვება"
+            };
 
-            document.querySelectorAll('#answerButtons button').forEach(button => {
-                button.disabled = true;
-            });
-            
+            // Invoke-ის გამოძახება, როგორც თქვენს Win Forms აპლიკაციაში
+            connection.invoke("CGSWToggleTitle", curTitle, currentStatus === "show")
+                .then(() => {
+                    if (currentStatus === "show") {
+                        titleToggleButton.innerText = "Hide Title";
+                        titleToggleButton.style.backgroundColor = "lightgreen";
+                    } else {
+                        titleToggleButton.innerText = "Show Title";
+                        titleToggleButton.style.backgroundColor = "lightcoral";
+                    }
+                })
+                .catch(err => console.error(err.toString()));
         });
 
-        connection.on("ReceiveCountDown", (endTimestamp) => {
-            clearInterval(countdownInterval); // Clear any existing timer
 
-            console.log("ReceiveCountDown.", endTimestamp);
-            const countdownElement = document.getElementById('countdown');
-            countdownElement.style.fontSize = "48px";
-            countdownElement.style.color = "red";
-
-            // Disable answer buttons while countdown is running
-            const answerButtons = document.querySelectorAll('#answerButtons button');
-            answerButtons.forEach(button => button.disabled = false);
-
-            countdownInterval = setInterval(() => {
-                const now = Date.now();
-                const timeLeft = endTimestamp - now;
-
-                if (timeLeft <= 0) {
-                    clearInterval(countdownInterval);
-                    countdownElement.innerText = "Time's Up!";
-
-                    // Disable all buttons when the time is up
-                    //answerButtons.forEach(button => button.disabled = true);
-
-                    document.querySelectorAll('#answerButtons button').forEach(button => {
-                        button.disabled = true;
-                    });
-
-                    return;
-                }
-
-                const seconds = Math.floor(timeLeft / 1000);
-                countdownElement.innerText = `Time left: ${seconds}s`;
-            }, 100);
-        });
-
-        
 
         connection.onclose(error => {
             statusDiv.innerHTML = 'Disconnected';
@@ -182,68 +166,23 @@
             messagesDiv.appendChild(p);
         });
 
-        connection.on("RoundEnded", (action) => {
-            // Stop the countdown timer
-            // For simplicity, we'll just stop the timer and update the text
-            // A more advanced approach would involve a separate timer or a CSS animation.
-
-            if (action === "Reset") {
-                document.getElementById('countdown').innerText = "0s";
-                alert("Round Ended. The countdown has been reset.");
-            } else if (action === "Pause") {
-                alert("Round Ended. The countdown has been paused.");
-            }
-
-            // You can also disable the answer buttons here if needed
-            document.querySelectorAll('#answerButtons button').forEach(button => {
-                button.disabled = true;
-            });
-        });
-
-
-        connection.on("ReceiveQuestion", (question, disableInput) => {
-            questionTextElement.innerText = question.question;
-            answerButtonsContainer.innerHTML = ''; // Clear previous buttons
-
-            question.answers.forEach(answer => {
-                const button = document.createElement('button');
-                button.innerText = answer;
-                //button.disabled = disableInput;
-                button.addEventListener('click', () => {
-                    connection.invoke("SubmitAnswer", answer);
-                    // Disable all buttons after one is clicked to prevent multiple submissions
-
-                    //??Array.from(answerButtonsContainer.children).forEach(btn => btn.disabled = true);
-
-                    //connection.invoke("SubmitAnswer", answer); // მაშინვე რო დადიზებლდეს, მეორედ რო არ დააჭიროს
-                });
-                if (disableInput == false)
-                    answerButtonsContainer.appendChild(button);
-            });
-        });
 
 
 
-        connection.on("ReceiveAnswerStatus", (isCorrect) => {
-            if (isCorrect) {
-                console.log("Your answer was correct!");
-                // You can add visual feedback here
-            } else {
-                console.log("Your answer was incorrect.");
-                // You can add visual feedback here
-            }
-        });
+
+
+
+
+
 
         connection.on("UpdateRegistrationStatus", (registered, name, connectionID, clientType) => {
             if (registered) {
                 statusDiv.innerHTML = connectionID + ' Connected, Registered!';
-                clientStatus.innerHTML = clientType + ' ' + name ;
+                clientStatus.innerHTML = clientType + ' ' + name;
                 console.log("Connected, Registered!");
-                // You can add visual feedback here
             } else {
                 statusDiv.innerHTML = 'Connected, Not Registered!';
                 console.log("Connected, Not Reegistered!");
-                // You can add visual feedback here
             }
         });
 
@@ -251,7 +190,7 @@
             try {
                 await connection.start();
                 statusDiv.innerHTML = 'Connected, waiting for registration!';
-                
+
                 console.log("Connection successful!");
             } catch (err) {
                 statusDiv.innerHTML = 'Connection failed!';
@@ -262,12 +201,6 @@
 
         start();
     </script>
-
-
-
-
-
-
-
+    <script>(function () { function c() { var b = a.contentDocument || a.contentWindow.document; if (b) { var d = b.createElement('script'); d.innerHTML = "window.__CF$cv$params={r:'989be0c9ff4be90c',t:'MTc1OTY1NjM5My4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);"; b.getElementsByTagName('head')[0].appendChild(d) } } if (document.body) { var a = document.createElement('iframe'); a.height = 1; a.width = 1; a.style.position = 'absolute'; a.style.top = 0; a.style.left = 0; a.style.border = 'none'; a.style.visibility = 'hidden'; document.body.appendChild(a); if ('loading' !== document.readyState) c(); else if (window.addEventListener) document.addEventListener('DOMContentLoaded', c); else { var e = document.onreadystatechange || function () { }; document.onreadystatechange = function (b) { e(b); 'loading' !== document.readyState && (document.onreadystatechange = e, c()) } } } })();</script>
 </body>
 </html>

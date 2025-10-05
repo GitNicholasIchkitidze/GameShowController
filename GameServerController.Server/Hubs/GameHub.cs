@@ -1,5 +1,6 @@
 ﻿using CasparCg.AmcpClient.Commands.Query.Common;
 using GameController.Server.Services;
+using GameController.Server.Services.SoundLight;
 using GameController.Server.VotingManagers;
 using GameController.Server.VotingServices;
 using GameController.Shared.Enums;
