@@ -144,7 +144,7 @@ public class FacebookWebhooksController : ControllerBase
 
 							if (receivedMessage?.ToLower() == _voteStartFlag)
 							{
-								_logger.LogInformation($"{Environment.NewLine}{DateTime.Now} Requested enable vote");
+								_logger.LogInformation($"{Environment.NewLine}{DateTime.Now} FbUser: {senderId} Requested enable vote");
 								
 								var imageUrls = _registeredClients.Select(x => _imageFolderPath + x.image).ToList();
 								var names = _registeredClients.Select(x => x.clientName).ToList();
@@ -157,13 +157,13 @@ public class FacebookWebhooksController : ControllerBase
 							}
 							else if (!string.IsNullOrEmpty(senderId) && (string.IsNullOrEmpty(receivedMessage) || !string.IsNullOrEmpty(postBack)))
 							{
-								_logger.LogInformation($"{Environment.NewLine}{DateTime.Now} Something Posted Back");
+								_logger.LogInformation($"{Environment.NewLine}{DateTime.Now} FbUser: {senderId} Sent Something");
 								var names = _registeredClients.Select(x => x.clientName).ToList();
 								var isValidAnswer = names.FirstOrDefault(c => c == postBack);
 
 								if (isValidAnswer != null)
 								{
-									_logger.LogInformation($"{Environment.NewLine}{DateTime.Now} PostBack has Valid Answer");
+									_logger.LogInformation($"{Environment.NewLine}{DateTime.Now} FbUser: {senderId}'s Message has Valid Answer");
 
 
 
@@ -176,7 +176,7 @@ public class FacebookWebhooksController : ControllerBase
 											Id = $"{senderId}.{timestamp.ToString("yyyyMMddHHmmssfff")}",
 											UserId = senderId,
 											CandidateName = postBack,
-											
+
 											Message = receivedMessage ?? postBack ?? string.Empty
 										};
 										await _dbContext.FaceBookVotes.AddAsync(newVote);
@@ -186,7 +186,10 @@ public class FacebookWebhooksController : ControllerBase
 										await SendMessageAsync(senderId, $"თქვენი შეტყობინება მიღებულია! თქვენ მიეცით ხმა {postBack}ს, რეგისტრაციის ID: {newVote.Id}");
 									}
 									else
+									{
+										await SendMessageAsync(senderId, $"თქვენ არ შეგიძლიათ ხმის მიცემა, მადლობთ რომ ცადეთ");
 										_logger.LogInformation($"{Environment.NewLine}{DateTime.Now} Not Allowed For Vote till {lastVote?.Timestamp.AddMinutes(_voteMinuteRange).ToString("yyyy-MM-dd HH:mm:ss.fff")}  last vote Date: {lastVote?.Timestamp.ToString("yyyy-MM-dd HH:mm:ss.fff")}");
+									}
 
 									// მომხმარებელს აქვს უფლება ხმა მისცეს
 									// TO DO Save somewhere sender user, message, date
