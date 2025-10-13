@@ -31,10 +31,32 @@ namespace GameController.FBService
 
 			builder.Services.AddScoped<IRateLimitingService, RateLimitingService>();
 
+			builder.Services.AddSingleton<IMessageQueueService, MessageQueueService>(); // Singleton is often appropriate for queue clients
+			builder.Services.AddScoped<IWebhookProcessorService, WebhookProcessorService>();
+			builder.Services.AddHostedService<QueueWorkerService>();
+
+
+			builder.Services.AddStackExchangeRedisCache(options =>
+			{
+				options.Configuration = builder.Configuration.GetConnectionString("RedisConnection");
+				options.InstanceName = "GameController:"; // Prefix for keys
+			});
+
+			builder.Services.AddSingleton<StackExchange.Redis.IConnectionMultiplexer>(sp =>
+				StackExchange.Redis.ConnectionMultiplexer.Connect(
+					builder.Configuration.GetConnectionString("RedisConnection")
+				)
+			);
+
+			// 7. NEW: Register a specialized service for handling Redis locks and caching
+			builder.Services.AddSingleton<ICacheService, RedisCacheService>();
 
 
 
-			
+
+
+
+
 
 			// SignalR-ის HubConnectionBuilder-ის კონფიგურაცია და რეგისტრაცია Singleton-ად
 			builder.Services.AddSingleton(sp =>

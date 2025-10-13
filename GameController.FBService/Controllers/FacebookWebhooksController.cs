@@ -1,4 +1,5 @@
-﻿using GameController.FBService.Models;
+﻿using GameController.FBService.Extensions;
+using GameController.FBService.Models;
 using GameController.FBService.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -26,8 +27,10 @@ public class FacebookWebhooksController : ControllerBase
 	private readonly string _pageAccessToken;
 	private readonly string _verifyToken;
 	private readonly int _voteMinuteRange;
+	private readonly IMessageQueueService _messageQueueService;
 
-	public FacebookWebhooksController(ILogger<FacebookWebhooksController> logger, IConfiguration configuration, IHttpClientFactory httpClientFactory, ApplicationDbContext dbContext, IRateLimitingService rateLimitingService)
+
+	public FacebookWebhooksController(ILogger<FacebookWebhooksController> logger, IConfiguration configuration, IHttpClientFactory httpClientFactory, ApplicationDbContext dbContext, IRateLimitingService rateLimitingService, IMessageQueueService messageQueueService)
 	{
 		//_httpClient = new HttpClient();
 		_logger = logger;
@@ -37,12 +40,13 @@ public class FacebookWebhooksController : ControllerBase
 		_imageFolderPath = _configuration.GetValue<string>("imageFolderPath") ?? "";
 		_pageAccessToken = _configuration.GetValue<string>("pageAccessToken") ?? "";
 		_verifyToken = _configuration.GetValue<string>("verifyToken") ?? "";
-		_voteMinuteRange = _configuration.GetValue<int>("voteMinuteRange",5);
+		_voteMinuteRange = _configuration.GetValue<int>("voteMinuteRange", 5);
 
 		_rateLimitingService = rateLimitingService;
 
 		_httpClient = httpClientFactory.CreateClient();
 		_dbContext = dbContext;
+		_messageQueueService = messageQueueService;
 	}
 
 	[HttpGet]
@@ -59,21 +63,37 @@ public class FacebookWebhooksController : ControllerBase
 		return BadRequest("Verification failed.");
 	}
 
-
 	[HttpPost]
 	public async Task<IActionResult> HandleWebhook([FromBody] JsonObject payload)
 	{
-		_logger.LogInformation($"{Environment.NewLine}{DateTime.Now} entered in HandleWebHook");
-		_logger.LogInformation($"PayLoad {payload}");
+		_logger.LogInformationWithCaller($"PayLoad Received: {payload}");
+
+		try
+		{
+			// CRITICAL STEP: Offload the raw payload string to the worker queue
+			await _messageQueueService.EnqueueMessageAsync(payload.ToString());
+		}
+		catch (Exception ex)
+		{
+			// Log the queuing failure but still return 200 OK to Facebook
+			_logger.LogError($"Failed to enqueue message: {ex.Message}");
+		}
+
+		// MUST return 200 OK immediately to satisfy Facebook's 20-second timeout.
+		return Ok();
+	}
+	[HttpPost]
 
 
-		//await _rateLimitingService.LogApiCall();
 
-		//if (await _rateLimitingService.IsRateLimitExceeded())
-		//{
-		//	// დავუბრუნოთ შეცდომა ან დავამთავროთ დამუშავება
-		//	return StatusCode(429, "Too Many Requests");
-		//}
+	//[HttpPost]
+	private async Task<IActionResult> HandleWebhook_Old([FromBody] JsonObject payload)
+	{
+		_logger.LogInformationWithCaller($"Entered in HandleWebHook");
+		_logger.LogInformationWithCaller($"PayLoad {payload}");
+
+
+
 
 		try
 		{
@@ -81,13 +101,13 @@ public class FacebookWebhooksController : ControllerBase
 			var entry = payload["entry"]?.AsArray();
 			if (entry == null)
 			{
-				_logger.LogInformation($"invalid payload");
+				_logger.LogErrorWithCaller($"invalid payload");
 				return Ok();
 			}
 
 			foreach (var pageEntry in entry)
 			{
-				_logger.LogInformation($"{Environment.NewLine}{DateTime.Now} foreach in entry: {pageEntry}");
+				_logger.LogInformationWithCaller($"foreach in entry: {pageEntry}");
 
 				var changes = pageEntry["changes"]?.AsArray();
 				var messaging = pageEntry["messaging"]?.AsArray();
@@ -120,19 +140,20 @@ public class FacebookWebhooksController : ControllerBase
 					foreach (var messageObject in messaging)
 					{
 
-						_logger.LogInformation($"{Environment.NewLine}{DateTime.Now} foreach in messaging: {messageObject}");
+						_logger.LogInformationWithCaller($"foreach in messaging: {messageObject}");
 
 						var senderId = messageObject?["sender"]?["id"]?.GetValue<string>();
 						var receivedMessage = messageObject?["message"]?["text"]?.GetValue<string>();
 						var timeStamp = messageObject?["timestamp"]?.GetValue<long>();
 						var postBack = messageObject?["postback"]?["payload"]?.GetValue<string>();
+						var senderName = await GetUserNameAsync(senderId);
 
 						var lastVote = await _dbContext.FaceBookVotes
-														.Where(v => v.UserId == senderId)
+														.Where(v => v.UserId == senderId && v.Message != _voteStartFlag)
 														.OrderByDescending(v => v.Timestamp)
 														.FirstOrDefaultAsync();
 						var canVote = (lastVote == null || (lastVote != null && (DateTime.Now - lastVote.Timestamp).TotalMinutes >= _voteMinuteRange));
-						_logger.LogInformation($"{Environment.NewLine}{DateTime.Now} Checked for Last vote");
+						_logger.LogInformationWithCaller($"Checked for Last vote");
 
 
 						// აქ დაამატეთ თქვენი Messenger-ის ლოგიკა
@@ -144,26 +165,44 @@ public class FacebookWebhooksController : ControllerBase
 
 							if (receivedMessage?.ToLower() == _voteStartFlag)
 							{
-								_logger.LogInformation($"{Environment.NewLine}{DateTime.Now} FbUser: {senderId} Requested enable vote");
+								_logger.LogInformationWithCaller($"FbUser: {senderId} Requested enable vote");
 								
 								var imageUrls = _registeredClients.Select(x => _imageFolderPath + x.image).ToList();
 								var names = _registeredClients.Select(x => x.clientName).ToList();
 								if (canVote)
-									await SendImageGalleryAsyncWithButtons(senderId, imageUrls, names);
-								else
-									_logger.LogInformation($"{Environment.NewLine}{DateTime.Now} Not Allowed For Vote till {lastVote?.Timestamp.AddMinutes(_voteMinuteRange).ToString("yyyy-MM-dd HH:mm:ss.fff")}  last vote Date: {lastVote?.Timestamp.ToString("yyyy-MM-dd HH:mm:ss.fff")}");
+								{
+									 await SendImageGalleryAsyncWithButtons(senderId, imageUrls, names);
+									var timestamp = DateTime.Now;
+									var newVote = new Vote
+									{
+										Timestamp = timestamp,
+										Id = $"{senderId}.{timestamp.ToString("yyyyMMddHHmmssfff")}",
+										UserName = senderName,
+										UserId = senderId,
+										CandidateName = string.Empty,
 
-								//await SendImageGalleryAsync(senderId, imageUrls);
+										Message = receivedMessage ?? postBack ?? string.Empty
+									};
+									await _dbContext.FaceBookVotes.AddAsync(newVote);
+									await _dbContext.SaveChangesAsync();
+								}
+									
+								else
+									_logger.LogInformationWithCaller($"Not Allowed For Vote till {lastVote?.Timestamp.AddMinutes(_voteMinuteRange).ToString("yyyy-MM-dd HH:mm:ss.fff")}  last vote Date: {lastVote?.Timestamp.ToString("yyyy-MM-dd HH:mm:ss.fff")}");
+
+
 							}
 							else if (!string.IsNullOrEmpty(senderId) && (string.IsNullOrEmpty(receivedMessage) || !string.IsNullOrEmpty(postBack)))
 							{
-								_logger.LogInformation($"{Environment.NewLine}{DateTime.Now} FbUser: {senderId} Sent Something");
+								_logger.LogInformationWithCaller($"FbUser: {senderId} Sent Something");
 								var names = _registeredClients.Select(x => x.clientName).ToList();
 								var isValidAnswer = names.FirstOrDefault(c => c == postBack);
 
+								
 								if (isValidAnswer != null)
 								{
-									_logger.LogInformation($"{Environment.NewLine}{DateTime.Now} FbUser: {senderId}'s Message has Valid Answer");
+
+									_logger.LogInformationWithCaller($"FbUser: ({senderId}) {senderName}'s Message has Valid Answer");
 
 
 
@@ -174,6 +213,7 @@ public class FacebookWebhooksController : ControllerBase
 										{
 											Timestamp = timestamp,
 											Id = $"{senderId}.{timestamp.ToString("yyyyMMddHHmmssfff")}",
+											UserName = senderName,
 											UserId = senderId,
 											CandidateName = postBack,
 
@@ -182,25 +222,24 @@ public class FacebookWebhooksController : ControllerBase
 										await _dbContext.FaceBookVotes.AddAsync(newVote);
 										await _dbContext.SaveChangesAsync();
 
-										_logger.LogInformation($"{Environment.NewLine}{DateTime.Now} Answer Accepted, Saved Vote");
+										_logger.LogInformationWithCaller($"Answer Accepted, Saved Vote");
 										await SendMessageAsync(senderId, $"თქვენი შეტყობინება მიღებულია! თქვენ მიეცით ხმა {postBack}ს, რეგისტრაციის ID: {newVote.Id}");
 									}
 									else
 									{
-										await SendMessageAsync(senderId, $"თქვენ არ შეგიძლიათ ხმის მიცემა, მადლობთ რომ ცადეთ");
-										_logger.LogInformation($"{Environment.NewLine}{DateTime.Now} Not Allowed For Vote till {lastVote?.Timestamp.AddMinutes(_voteMinuteRange).ToString("yyyy-MM-dd HH:mm:ss.fff")}  last vote Date: {lastVote?.Timestamp.ToString("yyyy-MM-dd HH:mm:ss.fff")}");
+										await SendMessageAsync(senderId, $"თქვენ არ შეგიძლიათ ხმის მიცემა {lastVote?.Timestamp.AddMinutes(_voteMinuteRange).ToString("yyyy-MM-dd HH:mm")} -მდე, მადლობთ რომ ცადეთ");
+										_logger.LogInformationWithCaller($"Not Allowed For Vote till {lastVote?.Timestamp.AddMinutes(_voteMinuteRange).ToString("yyyy-MM-dd HH:mm:ss.fff")}  last vote Date: {lastVote?.Timestamp.ToString("yyyy-MM-dd HH:mm:ss.fff")}");
 									}
 
-									// მომხმარებელს აქვს უფლება ხმა მისცეს
-									// TO DO Save somewhere sender user, message, date
+
 
 								}
 							}
 								
 
-							// მომხმარებლის სახელის მისაღებად
-							var senderName = await GetUserNameAsync(senderId);
-							_logger.LogInformation($"{Environment.NewLine}{DateTime.Now} Messenger User: {senderName} ({senderId}), Message: {receivedMessage} Date {localTime}");
+							
+							
+							_logger.LogInformationWithCaller($"Messenger User: {senderName} ({senderId}), Message: {receivedMessage} Date {localTime}");
 						}
 					}
 				}

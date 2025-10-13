@@ -55,5 +55,16 @@ namespace GameController.FBService.Services
 			}
 			return false;
 		}
+
+		public async Task<bool> IsRateLimitExceeded(string apiEndpoint)
+		{
+			// 1. Use Redis INCR command to atomically increment a counter (e.g., 'fb:api:calls:minute').
+			// 2. Check the counter against the known Facebook rate limit (e.g., 200 calls/second).
+			// 3. Set the key expiration (EXPIRE) to 60 seconds.
+
+			// If counter > limit, return true; otherwise, return false.
+			// The Worker Service MUST check this *before* making any SendMessageAsync or GetUserNameAsync call.
+			return false; // Placeholder
+		}
 	}
 }
