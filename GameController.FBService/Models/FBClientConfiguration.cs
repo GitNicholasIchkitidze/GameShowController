@@ -1,6 +1,6 @@
 ﻿namespace GameController.FBService.Models
 {
-		public class ClientConfiguration
+		public class FBClientConfiguration
 		{
 			public required string clientName { get; set; }
 			public required List<string?> ip { get; set; }

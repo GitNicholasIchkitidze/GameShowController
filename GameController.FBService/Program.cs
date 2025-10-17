@@ -42,11 +42,24 @@ namespace GameController.FBService
 				options.InstanceName = "GameController:"; // Prefix for keys
 			});
 
+			//builder.Services.AddSingleton<StackExchange.Redis.IConnectionMultiplexer>(sp =>
+			//	StackExchange.Redis.ConnectionMultiplexer.Connect(
+			//		builder.Configuration.GetConnectionString("RedisConnection")
+			//	)
+			//);
+
+			//StackExchange.Redis: Connection Multiplexer-ის რეგისტრაცია
 			builder.Services.AddSingleton<StackExchange.Redis.IConnectionMultiplexer>(sp =>
-				StackExchange.Redis.ConnectionMultiplexer.Connect(
-					builder.Configuration.GetConnectionString("RedisConnection")
-				)
-			);
+			{
+				var configString = builder.Configuration.GetConnectionString("RedisConnection") ?? "localhost:6379,ssl=False,abortConnect=False";
+				var configuration = StackExchange.Redis.ConfigurationOptions.Parse(configString);
+
+				// CRITICAL: AbortOnConnectFail = false საშუალებას გვაძლევს, ხელით შევამოწმოთ კავშირი გაშვებისას.
+				configuration.AbortOnConnectFail = false;
+
+				return StackExchange.Redis.ConnectionMultiplexer.Connect(configuration);
+			});
+
 
 			// 7. NEW: Register a specialized service for handling Redis locks and caching
 			builder.Services.AddSingleton<ICacheService, RedisCacheService>();
@@ -80,6 +93,38 @@ namespace GameController.FBService
 
 
 			var app = builder.Build();
+
+			// ------------------------------------
+			// 🛑 NEW: Redis Connection Health Check
+			// ------------------------------------
+			try
+			{
+				// 1. Dependency-ების მიღება Service Provider-იდან
+				var multiplexer = app.Services.GetRequiredService<StackExchange.Redis.IConnectionMultiplexer>();
+				var logger = app.Services.GetRequiredService<ILogger<Program>>();
+
+				// 2. კავშირის სტატუსის იძულებითი შემოწმება
+				if (!multiplexer.IsConnected)
+				{
+					// ვცდილობთ ნებისმიერ endpoint-თან დაკავშირებას
+					var endpoint = multiplexer.GetEndPoints().FirstOrDefault();
+					if (endpoint == null || !multiplexer.GetServer(endpoint).IsConnected)
+					{
+						throw new Exception("Redis connection is not available. Please check your Redis server and 'RedisConnection' string.");
+					}
+				}
+
+				logger.LogInformation("✅ Redis connection established successfully.");
+			}
+			catch (Exception ex)
+			{
+				// ფატალური შეცდომის დალოგვა და აპლიკაციის გათიშვა
+				app.Logger.LogCritical(ex, "❌ FATAL: Application startup failed due to missing or unhealthy Redis connection. FaceBook Voting will not work.");
+
+				// აპლიკაციის გათიშვა
+				//Environment.Exit(1);
+			}
+
 
 			// Configure the HTTP request pipeline.
 			if (app.Environment.IsDevelopment())

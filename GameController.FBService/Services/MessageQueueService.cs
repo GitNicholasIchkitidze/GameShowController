@@ -1,4 +1,5 @@
 ﻿
+using GameController.FBService.Extensions;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using System.Threading.Channels;
@@ -22,7 +23,7 @@ namespace GameController.FBService.Services
 		public async Task EnqueueMessageAsync(string messagePayload)
 		{
 			await _channel.Writer.WriteAsync(messagePayload);
-			_logger.LogInformation($"[QUEUE] Message Enqueued successfully to internal Channel. Size: {messagePayload.Length} bytes.");
+			_logger.LogInformationWithCaller($"[QUEUE] Message Enqueued successfully to internal Channel. Size: {messagePayload.Length} bytes.");
 
 
 		}

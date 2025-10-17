@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.SignalR;
+﻿using GameController.FBService.Extensions;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Configuration;
@@ -29,18 +30,18 @@ namespace GameController.FBService.Services
 				try
 				{
 					await _connection.StartAsync();
-					_logger.LogInformation($"{Environment.NewLine}{DateTime.Now} Connection to SignalR hub established successfully.");
+					_logger.LogInformationWithCaller($"{Environment.NewLine}{DateTime.Now} Connection to SignalR hub established successfully.");
 					//await PingServerAsync();
 					connected = true;
 				}
 				catch (HttpRequestException ex)
 				{
-					_logger.LogError("Failed to connect to SignalR hub: {message}", ex.Message);
+					_logger.LogErrorWithCaller($"Failed to connect to SignalR hub: {ex}");
 					// Wait for the automatic reconnect to handle it.
 				}
 				catch (Exception ex)
 				{
-					_logger.LogError(ex, "Failed to connect to SignalR hub.");
+					_logger.LogErrorWithCaller( $"Failed to connect to SignalR hub. {ex}");
 					await Task.Delay(5000); // Wait before retrying
 				}
 			}
@@ -59,11 +60,11 @@ namespace GameController.FBService.Services
 
 				// აქ ვგზავნით მონაცემებს "ReceiveVote" მეთოდით SignalR-ის ჰაბზე.
 				await _connection.InvokeAsync("ReceiveVote", candidateName);
-				_logger.LogInformation($"Sent vote for candidate: {candidateName} to hub.");
+				_logger.LogInformationWithCaller($"Sent vote for candidate: {candidateName} to hub.");
 			}
 			catch (System.Exception ex)
 			{
-				_logger.LogError($"Failed to send vote to SignalR hub: {ex.Message}");
+				_logger.LogErrorWithCaller($"Failed to send vote to SignalR hub: {ex.Message}");
 			}
 		}
 	}

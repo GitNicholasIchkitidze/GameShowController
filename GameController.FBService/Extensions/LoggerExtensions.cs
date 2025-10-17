@@ -19,9 +19,16 @@ namespace GameController.FBService.Extensions
 			[CallerLineNumber] int lineNumber = 0)
 		{
 			var eventId = new EventId(lineNumber, memberName);
-			logger.LogError(eventId, ex, "{Timestamp} {Message}", DateTime.Now, message);
+			logger.LogError(eventId, ex, "{Timestamp} {Message}", DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff"), message);
 		}
 
+		public static void LogWarningWithCaller(this ILogger logger, string message, Exception? ex = null,
+			[CallerMemberName] string memberName = "",
+			[CallerLineNumber] int lineNumber = 0)
+		{
+			var eventId = new EventId(lineNumber, memberName);
+			logger.LogWarning(eventId, ex, "{Timestamp} {Message}", DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff"), message);
+		}
 		// მსგავსი LogWarningWithCaller, LogDebugWithCaller...
 	}
 }

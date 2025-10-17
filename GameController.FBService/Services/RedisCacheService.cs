@@ -1,5 +1,6 @@
 ﻿
 
+using GameController.FBService.Extensions;
 using Microsoft.Extensions.Caching.Distributed;
 using StackExchange.Redis;
 using System.Text.Json;
@@ -46,12 +47,82 @@ namespace GameController.FBService.Services
 			catch (Exception ex)
 			{
 				// Log the connection error, but assume lock acquisition failed
-				_logger.LogError(ex, $"Redis connection failure during lock acquisition for key: {key}");
+				_logger.LogErrorWithCaller($"Redis connection failure during lock acquisition for key: {key} {ex}");
 				return false;
 			}
 		}
 
 
+		// ------------------------------------
+		// Rate Limiting / Atomic Increment
+		// ------------------------------------
+		/// <summary>
+		/// Atomically increments the integer value stored at key by one.
+		/// If the key does not exist, it is initialized to 0 before the operation.
+		/// The expiration is set ONLY if the key was just created (i.e., newCount == 1).
+		/// </summary>
+		/// <returns>The value after the increment.</returns>
+		public async Task<long> IncrementWithExpirationAsync(string key, TimeSpan expiry)
+		{
+			try
+			{
+				var db = _connectionMultiplexer.GetDatabase();
+
+				// 1. Atomically increment the value by 1
+				var newCount = await db.StringIncrementAsync(key, 1);
+
+				// 2. Set the expiration only if the key was just created (i.e., newCount == 1)
+				// This ensures the counter starts fresh every time the expiry window passes.
+				if (newCount == 1)
+				{
+					await db.KeyExpireAsync(key, expiry, CommandFlags.FireAndForget);
+				}
+
+				return newCount;
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, $"Redis connection failure during IncrementWithExpirationAsync for key: {key}. Returning MaxValue.");
+				// კავშირის შეფერხების შემთხვევაში ვაბრუნებთ მაქსიმალურ მნიშვნელობას, რომ შევწყვიტოთ API ზარები
+				return long.MaxValue;
+			}
+		}
+
+		public async Task<long> IncrementAsync(string key, TimeSpan expiry)
+		{
+			try
+			{
+				var db = _connectionMultiplexer.GetDatabase();
+
+				// 1. Atomically increment the value by 1
+				var newCount = await db.StringIncrementAsync(key, 1);
+
+				// 2. Set the expiration only if the key was just created (i.e., newCount == 1)
+				// This ensures the counter automatically resets after the expiry duration.
+				if (newCount == 1)
+				{
+					await db.KeyExpireAsync(key, expiry);
+				}
+
+				return newCount;
+			}
+			catch (Exception ex)
+			{
+				_logger.LogError(ex, $"Redis connection failure during IncrementAsync for key: {key}");
+				// Return a maximum value to immediately stop API calls if Redis is down
+				return long.MaxValue;
+			}
+		}
+
+
+		// ------------------------------------
+		// Rate Limiting Increment (NEW)
+		// ------------------------------------
+		/// <summary>
+		/// Atomically increments a key's value by 1 and sets the expiry if it's the first increment.
+		/// </summary>
+		/// <returns>The new value after increment.</returns>
+	
 		public Task ReleaseLockAsync(string key)
 		{
 			// The current implementation is fine, as we rely on expiration, 

@@ -1,4 +1,5 @@
-﻿using GameController.FBService.Services;
+﻿using GameController.FBService.Extensions;
+using GameController.FBService.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -24,7 +25,7 @@ namespace GameController.FBService.Services
 
 		protected override async Task ExecuteAsync(CancellationToken stoppingToken)
 		{
-			_logger.LogInformation("Queue Worker Service is running and listening.");
+			_logger.LogInformationWithCaller("Queue Worker Service is running and listening.");
 
 			// The IMessageQueueService is registered as Singleton, so we can resolve it once
 			using var scope = _serviceProvider.CreateScope();
@@ -36,7 +37,7 @@ namespace GameController.FBService.Services
 				if (stoppingToken.IsCancellationRequested) break;
 
 				// Log showing the message has been successfully retrieved from the channel
-				_logger.LogInformation($"Worker received message payload: {rawPayload.Length} bytes. Starting processing...");
+				_logger.LogInformationWithCaller($"Worker received message payload: {rawPayload.Length} bytes. Starting processing...");
 
 				// 3. Create a scope for the WebhookProcessorService (which uses scoped services like ApplicationDbContext)
 				using (var processingScope = _serviceProvider.CreateScope())
@@ -48,18 +49,18 @@ namespace GameController.FBService.Services
 						var processor = processingScope.ServiceProvider.GetRequiredService<IWebhookProcessorService>();
 						// 4. Pass the payload to the business logic handler
 						await processor.ProcessWebhookMessageAsync(rawPayload);
-						_logger.LogInformation("Message processing completed successfully.");
+						_logger.LogInformationWithCaller("Message processing completed successfully.");
 
 					}
 					catch (Exception ex)
 					{
 						// Handle errors during processing.
-						_logger.LogError(ex, $"Failed to process message from queue. Payload size: {rawPayload.Length}");
+						_logger.LogErrorWithCaller( $"Failed to process message from queue. Payload size: {rawPayload.Length}, {ex}");
 					}
 				}
 			}
 
-			_logger.LogInformation("Queue Worker Service has stopped.");
+			_logger.LogInformationWithCaller("Queue Worker Service has stopped.");
 		}
 
 		private string GetMessageFromQueue()
