@@ -2,6 +2,8 @@
 using GameController.FBService.Extensions;
 using GameController.FBService.Models;
 using GameController.Shared.Models;
+using Melanchall.DryWetMidi.Core;
+using Melanchall.DryWetMidi.Interaction;
 using Melanchall.DryWetMidi.MusicTheory;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
@@ -9,6 +11,8 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Net.WebSockets;
 using System.Text;
+using System.Text.Json.Nodes;
+using System.Threading.Tasks;
 
 namespace GameController.FBService.Services
 {
@@ -20,6 +24,10 @@ namespace GameController.FBService.Services
 		private readonly IRateLimitingService _rateLimitingService; // Existing service, now Redis-backed
 		private readonly HttpClient _httpClient; // HttpClient from the original controller
 												 //ISignalRClient signalRClient,
+
+
+		
+		private readonly IDempotencyService _dempotencyService;
 
 		// Configuration fields moved from the controller
 		private readonly List<FBClientConfiguration> _registeredClients;
@@ -33,13 +41,16 @@ namespace GameController.FBService.Services
 			ICacheService cacheService,
 			IRateLimitingService rateLimitingService,
 			IConfiguration configuration,
-			IHttpClientFactory httpClientFactory
+			IHttpClientFactory httpClientFactory,
+			IDempotencyService dempotencyService
 			)
 		{
 			_logger = logger;
 			_dbContext = dbContext;
 			_cacheService = cacheService;
 			_rateLimitingService = rateLimitingService;
+			_dempotencyService = dempotencyService;
+
 
 			// Initialization of configuration fields (moved from controller)
 			_registeredClients = configuration.GetSection("RegisteredClients").Get<List<FBClientConfiguration>>() ?? new List<FBClientConfiguration>();
@@ -58,8 +69,92 @@ namespace GameController.FBService.Services
 		// ----------------------------------------------------
 
 
-
 		public async Task ProcessWebhookMessageAsync(string rawPayload)
+		{
+			var payload = JsonNode.Parse(rawPayload)?.AsObject();
+			var messageType = ExtractMessageType(payload);
+			var messageId = ExtractMessageId(payload, messageType);
+			
+			var senderId = ExtractMessageSenderId(payload);
+			var userName = await GetUserNameAsync(senderId);
+
+			switch (messageType)
+			{
+				case "message":
+					
+
+					var messageText = ExtractMessageText(payload);
+					if (!string.IsNullOrEmpty(messageText))
+					{
+						await ProcessTextMessageAsync(senderId, messageId, userName, messageText);
+					}
+					break;
+				case "postback":
+					if (senderId == "2225010697525350") break;
+
+					
+
+					if (string.IsNullOrEmpty(senderId)) break;
+					var postbackPayload = ExtractMessagePostbackPayLoad(payload);
+					if (!string.IsNullOrEmpty(postbackPayload))
+					{
+						await ProcessPostbackAsync(senderId, messageId, userName, postbackPayload);
+					}
+
+					break;
+				case "reaction":
+					await HandleReactionEvent(payload);
+					break;
+			}
+
+		}
+
+
+		/// <summary>
+		/// Handles the business logic for a reaction event.
+		/// </summary>
+		private async Task HandleReactionEvent(JsonObject payload)
+		{
+			// 1. Safely extract the reaction details
+			var messagingEvent = payload?["entry"]?.AsArray().FirstOrDefault()?
+										.AsObject()?["messaging"]?.AsArray().FirstOrDefault()?
+										.AsObject();
+
+			var reactionObject = messagingEvent?["reaction"]?.AsObject();
+			if (reactionObject == null)
+			{
+				_logger.LogWarningWithCaller("Could not find reaction object in payload.");
+				return;
+			}
+
+			string? mid = reactionObject["mid"]?.GetValue<string>();
+			string? action = reactionObject["action"]?.GetValue<string>();
+			string? emoji = reactionObject["reaction"]?.GetValue<string>();
+
+			if (string.IsNullOrEmpty(mid) || string.IsNullOrEmpty(action) || string.IsNullOrEmpty(emoji))
+			{
+				_logger.LogWarningWithCaller("Reaction payload was missing required fields (mid, action, or emoji).");
+				return;
+			}
+
+			_logger.LogInformationWithCaller($"Processing reaction: User '{action}' with '{emoji}' on message '{mid}'");
+
+			// 2. Implement your business logic
+			if (action == "react")
+			{
+				// TODO: Find the message in your database using the 'mid'.
+				// TODO: Record that a user added this specific 'emoji'.
+				// Example: await _myDatabase.AddReactionAsync(messageId: mid, reaction: emoji);
+			}
+			else if (action == "unreact")
+			{
+				// TODO: Find the message in your database using the 'mid'.
+				// TODO: Record that a user removed this specific 'emoji'.
+				// Example: await _myDatabase.RemoveReactionAsync(messageId: mid, reaction: emoji);
+			}
+		}
+
+		public async Task ProcessWebhookMessageAsync_Old(string rawPayload)
 		{
 			try
 			{
@@ -88,7 +183,7 @@ namespace GameController.FBService.Services
 							var postbackPayload = messagingEvent["postback"]?["payload"]?.Value<string>();
 							if (!string.IsNullOrEmpty(postbackPayload))
 							{
-								await ProcessPostbackAsync(senderId, userName, postbackPayload);
+								await ProcessPostbackAsync(senderId,"", userName, postbackPayload);
 							}
 						}
 						else if (messagingEvent["message"] != null)
@@ -96,7 +191,7 @@ namespace GameController.FBService.Services
 							var messageText = messagingEvent["message"]?["text"]?.Value<string>();
 							if (!string.IsNullOrEmpty(messageText))
 							{
-								await ProcessTextMessageAsync(senderId, userName, messageText);
+								await ProcessTextMessageAsync(senderId,"", userName, messageText);
 							}
 						}
 					}
@@ -108,32 +203,57 @@ namespace GameController.FBService.Services
 			}
 		}
 
-		private async Task ProcessTextMessageAsync(string senderId, string userName, string text)
+
+
+		private async Task<OperationResult> ProcessTextMessageAsync(string senderId, string messageId, string userName, string text)
 		{
+			var result = new OperationResult(true);
 			if (text.Equals(_voteStartFlag, StringComparison.OrdinalIgnoreCase))
 			{
-				// 1. Get image and name lists
-				var imageUrls = new List<string>(); // Populate this list with actual image URLs
-				var names = new List<string>(); // Populate this list with actual client names
 
-				foreach (var client in _registeredClients)
+
+				var lockKeyForVote = $"vote:{senderId}";
+				var lockKeyForEnableVote = $"NeedForVote:{senderId}";
+				var isLockedKeyForVote = await _cacheService.GetAcquiredLockAsync(lockKeyForVote, TimeSpan.FromMinutes(_voteMinuteRange));
+				var isLockedKeyForEnableVote = await _cacheService.GetAcquiredLockAsync(lockKeyForEnableVote, TimeSpan.FromMinutes(_voteMinuteRange));
+				if (!isLockedKeyForVote && !isLockedKeyForEnableVote)
 				{
-					// NOTE: Assuming your ImageFolderPath is a base URL/path
-					var imageUrl = $"{_imageFolderPath}/{client.image}";
-					imageUrls.Add(imageUrl);
-					names.Add(client.clientName);
-				}
+					// 1. Get image and name lists
+					var imageUrls = new List<string>(); // Populate this list with actual image URLs
+					var names = new List<string>(); // Populate this list with actual client names
 
-				// 2. Send Gallery (Rate-limited)
-				await SendImageGalleryAsyncWithButtons(senderId, userName, imageUrls, names);
+					foreach (var client in _registeredClients)
+					{
+						// NOTE: Assuming your ImageFolderPath is a base URL/path
+						var imageUrl = $"{_imageFolderPath}/{client.image}";
+						imageUrls.Add(imageUrl);
+						names.Add(client.clientName);
+					}
+
+					// 2. Send Gallery (Rate-limited)
+					result = await SendImageGalleryAsyncWithButtons(senderId, messageId, userName, imageUrls, names);
+					return result;
+				}
+				else
+				{
+					_logger.LogWarningWithCaller($"Vote Start Request from {senderId} Not Processed due to rate limit ({_voteMinuteRange} min). ");
+
+					// ❌ მოთხოვნისამებრ: დავაკომენტარეთ უარყოფითი პასუხის გაგზავნა.
+					// await SendMessageAsync(senderId, "თქვენ უკვე მისეცით ხმა ბოლო წუთებში. გთხოვთ, მოიცადოთ.");
+					result.SetError("Vote denied due to rate limit.");
+					return result;
+
+
+				}
 			}
 			else
 			{
-				// DO Nothing
+				result.SetError("UnRecognized Message.");
+				return result;
 			}
 		}
 
-		private async Task<OperationResult> ProcessPostbackAsync(string senderId, string userName, string payload)
+		private async Task<OperationResult> ProcessPostbackAsync(string senderId, string msgId, string userName, string payload)
 		{
 			var result = new OperationResult(true);
 			var voteName = payload.Split('_').Last();
@@ -153,13 +273,16 @@ namespace GameController.FBService.Services
 
 			if (success)
 			{
-				var loggedInDB = await LogVoteRequestAsync(senderId, userName, client.clientName, voteName);
+				var loggedInDB = await LogVoteRequestAsync(senderId, msgId, userName, client.clientName, voteName);
 
-				
+				var nextVoteTime = ((DateTime)loggedInDB.Results.GetType().GetProperty("Timestamp").GetValue(loggedInDB.Results)).AddMinutes(_voteMinuteRange);
 				if (loggedInDB.Result)
 				{
+					
 					// 4. Send Confirmation (Rate-limited, to prevent blocking)
-					result = await SendMessageAsync(senderId, userName, $"შენი ხმა {client.clientName}-ს მიღებულია! მადლობა.");
+					//var backMsg = $"თქვენი ხმა {client.clientName}-სთვის მიღებულია! მადლობა. ჩვენ კვლავ მივიღებთ თქვენს ხმას {_voteMinuteRange} წუთის მერე, {nextVoteTime} -დან";
+					var backMsg = $"Thank you! you voted for {client.clientName}! You can vote again in {_voteMinuteRange} minutes from now! After {nextVoteTime}";
+					result = await SendMessageAsync(senderId, userName, backMsg);
 					if (result.Result)
 					{
 						// Log API Call
@@ -187,7 +310,7 @@ namespace GameController.FBService.Services
 			}
 			else
 			{
-				_logger.LogWarningWithCaller($"Vote from {senderId} for {voteName} failed due to rate limit ({_voteMinuteRange} min). Confirmation skipped as per request.");
+				_logger.LogWarningWithCaller($"Vote from {senderId} for {voteName} NOT registered due to rate limit ({_voteMinuteRange} min). Confirmation skipped as per request.");
 
 				// ❌ მოთხოვნისამებრ: დავაკომენტარეთ უარყოფითი პასუხის გაგზავნა.
 				// await SendMessageAsync(senderId, "თქვენ უკვე მისეცით ხმა ბოლო წუთებში. გთხოვთ, მოიცადოთ.");
@@ -199,17 +322,26 @@ namespace GameController.FBService.Services
 		}
 
 
+		private string getCandidateName(string VoteName)
+		{
+			var result = _registeredClients.Where(x=> x.clientName == VoteName).FirstOrDefault().phone;
+			return result;
+		}
 
-		private async Task<OperationResult> LogVoteRequestAsync(string userId, string userName, string voteName, string message)
+
+		private async Task<OperationResult> LogVoteRequestAsync(string userId, string MSGId, string userName, string voteName, string message)
 		{
 			var result = new OperationResult(false);
+
 			var newVote = new Vote
 			{
 				Timestamp = DateTime.Now,
 				Id = $"{userId}.{DateTime.Now.ToString("yyyyMMddHHmmssfff")}",
+				MSGId = MSGId,
 				UserName = userName,
 				UserId = userId,
 				CandidateName = voteName,
+				CandidatePhone = string.IsNullOrEmpty(voteName) ? "" : getCandidateName(voteName),
 				Message = message
 			};
 
@@ -218,7 +350,7 @@ namespace GameController.FBService.Services
 				await _dbContext.FaceBookVotes.AddAsync(newVote);
 				await _dbContext.SaveChangesAsync();
 				result.SetSuccess();
-				result.Results = newVote.Id;
+				result.Results = new { newVote.Id, newVote.Timestamp};
 			}
 			catch (Exception ex)
 			{
@@ -354,7 +486,7 @@ namespace GameController.FBService.Services
 		/// <param name="recipientId">The Facebook PSID (Page-Scoped User ID) of the recipient.</param>
 		/// <param name="imageUrls">List of image URLs for each gallery element.</param>
 		/// <param name="names">List of candidate names (used for postback payload and button title).</param>
-		private async Task<OperationResult> SendImageGalleryAsyncWithButtons(string recipientId, string userName, List<string> imageUrls, List<string> names)
+		private async Task<OperationResult> SendImageGalleryAsyncWithButtons(string recipientId, string messageId, string userName, List<string> imageUrls, List<string> names)
 		{
 			var result = new OperationResult(true);
 
@@ -365,8 +497,19 @@ namespace GameController.FBService.Services
 			//	result.SetError($"RATE LIMIT EXCEEDED. Skipping sending gallery to {recipientId}.");
 			//	return result;
 			//}
-			
+
+			var lockKeyForEnableVote = $"NeedForVote:{recipientId}";
+			var success = await _cacheService.AcquireLockAsync(lockKeyForEnableVote, TimeSpan.FromMinutes(_voteMinuteRange));
+
 			// [RATE LIMIT CHECK] Check Rate Limit BEFORE making the API call (POST request)
+			if (!success )
+			{
+				_logger.LogWarningWithCaller($"[TIME LIMIT BLOCKED] Cannot send gallery to {recipientId}. TIME Limit exceeded.");
+				result.SetError($"[TIME LIMIT BLOCKED] Cannot send gallery to {recipientId}. TIME Limit exceeded.");
+				return result;
+			}
+
+
 			if (await _rateLimitingService.IsRateLimitExceeded("SendAPI:Gallery"))
 			{
 				_logger.LogWarningWithCaller($"[RATE LIMIT BLOCKED] Cannot send gallery to {recipientId}. Limit exceeded.");
@@ -392,14 +535,14 @@ namespace GameController.FBService.Services
 				elements.Add(new
 				{
 					// Note: Title is optional in the Generic Template, but recommended for clarity.
-					title = "ჩემი ხმა", //name,
+					title = "I Vote for", //name,
 					image_url = imageUrl,
 					buttons = new[]
 					{
 					new
 					{
 						type = "postback",
-						title = $"{name}-ს", // Georgian: Your vote for {name}
+						title = $"{name}", // Georgian: Your vote for {name}
                         payload = $"{name}" // Payload is the candidate name, used by the worker
                     }
 				}
@@ -424,7 +567,7 @@ namespace GameController.FBService.Services
 				}
 			};
 
-			var loggedInDB = await LogVoteRequestAsync(recipientId, userName, "", _voteStartFlag); 
+			var loggedInDB = await LogVoteRequestAsync(recipientId, messageId, userName, "", _voteStartFlag); 
 
 			if (loggedInDB.Result)
 			{
@@ -451,7 +594,113 @@ namespace GameController.FBService.Services
 
 			return result;
 
+		}
 
+		public string? ExtractMessagePostbackPayLoad(JsonObject payload)
+		{ 		
+			try
+
+			{
+				var entry = payload["entry"]?.AsArray()?.FirstOrDefault()?.AsObject();
+				var messaging = entry?["messaging"]?.AsArray()?.FirstOrDefault()?.AsObject();
+				var postback = messaging?["postback"]?.AsObject();
+				return postback?["payload"]?.GetValue<string>();
+
+			}
+			catch
+			{
+				return null;
+			}
+		}
+
+		public string? ExtractMessageText(JsonObject payload)
+		{
+			try
+
+			{
+				var entry = payload["entry"]?.AsArray()?.FirstOrDefault()?.AsObject();
+				var messaging = entry?["messaging"]?.AsArray()?.FirstOrDefault()?.AsObject();
+				var text = messaging?["message"]?.AsObject();
+				return text?["text"]?.GetValue<string>();
+
+			}
+			catch
+			{
+				return null;
+			}
+		}
+
+		public string? ExtractMessageSenderId(JsonObject payload)
+		{
+			try
+			{
+				var entry = payload["entry"]?.AsArray()?.FirstOrDefault()?.AsObject();
+				var messaging = entry?["messaging"]?.AsArray()?.FirstOrDefault()?.AsObject();
+				var sender = messaging?["sender"]?.AsObject();
+				return sender?["id"]?.GetValue<string>();
+			}
+			catch
+			{
+				return null;
+			}
+		}
+		public string? ExtractMessageId(JsonObject payload, string? messageType = null)
+		{
+			try
+			{
+				var entry = payload["entry"]?.AsArray()?.FirstOrDefault()?.AsObject();
+				var messaging = entry?["messaging"]?.AsArray()?.FirstOrDefault()?.AsObject();
+				if (messageType != null && messageType == "postback")
+				{
+					var postback = messaging?["postback"]?.AsObject();
+					return postback?["mid"]?.GetValue<string>();
+				}
+				else
+				{
+					var message = messaging?["message"]?.AsObject();
+					return message?["mid"]?.GetValue<string>();
+				}
+			}
+			catch
+			{
+				return null;
+			}
+		}
+		public string? ExtractMessageType(JsonObject payload)
+		{
+			// Navigate to the core messaging event object
+			var messagingEvent = payload?["entry"]?.AsArray().FirstOrDefault()?
+										.AsObject()?["messaging"]?.AsArray().FirstOrDefault()?
+										.AsObject();
+
+			if (messagingEvent == null)
+			{
+				return null;
+			}
+
+			// Check for the presence of known event type keys
+			if (messagingEvent.ContainsKey("postback"))
+			{
+				return "postback";
+			}
+
+			if (messagingEvent.ContainsKey("message"))
+			{
+				return "message";
+			}
+
+			if (messagingEvent.ContainsKey("reaction"))
+			{
+				return "reaction";
+			}
+
+			if (messagingEvent.ContainsKey("read"))
+			{
+				return "read";
+			}
+
+			// Return null or "unknown" if no known type is found
+			return null;
 		}
 
 		/// <summary>

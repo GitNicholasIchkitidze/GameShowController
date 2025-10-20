@@ -24,6 +24,7 @@
   <ItemGroup>
     <PackageReference Include="ArtNetSharp" Version="0.0.38" />
     <PackageReference Include="CasparCg.AmcpClient" Version="2.0.4" />
+    <PackageReference Include="jQuery" Version="3.7.1" />
     <PackageReference Include="Melanchall.DryWetMidi" Version="8.0.2" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR" Version="1.2.0" />
   </ItemGroup>

@@ -63,6 +63,8 @@ namespace GameController.FBService
 
 			// 7. NEW: Register a specialized service for handling Redis locks and caching
 			builder.Services.AddSingleton<ICacheService, RedisCacheService>();
+			builder.Services.AddSingleton<IDempotencyService, DempotencyService>();
+
 
 
 
@@ -90,9 +92,12 @@ namespace GameController.FBService
 			});
 
 			builder.Services.AddSingleton<ISignalRClient, SignalRClient>();
+			builder.Services.AddRazorPages();
 
 
 			var app = builder.Build();
+			app.MapRazorPages();
+
 
 			// ------------------------------------
 			// 🛑 NEW: Redis Connection Health Check

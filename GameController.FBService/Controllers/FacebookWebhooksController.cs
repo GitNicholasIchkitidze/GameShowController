@@ -1,6 +1,8 @@
-﻿using GameController.FBService.Extensions;
+﻿using AspNetCoreGeneratedDocument;
+using GameController.FBService.Extensions;
 using GameController.FBService.Models;
 using GameController.FBService.Services;
+using Humanizer;
 using Humanizer.Configuration;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -19,18 +21,28 @@ public class FacebookWebhooksController : ControllerBase
 	private List<FBClientConfiguration> _registeredClients;
 	private readonly string _verifyToken;
 	private readonly IMessageQueueService _messageQueueService;
+	private readonly IDempotencyService _dempotencyService;
+	private readonly ApplicationDbContext _dbContext;
+	private readonly string _voteStartFlag;
 
-
+	private readonly IWebhookProcessorService _webhookProcessorService;
 
 
 	public FacebookWebhooksController(
 		ILogger<FacebookWebhooksController> logger,
+		ApplicationDbContext dbContext,
 		IConfiguration configuration,
-		IMessageQueueService messageQueueService)
+		IMessageQueueService messageQueueService,
+		IDempotencyService dempotencyService,
+		IWebhookProcessorService webhookProcessorService)
 	{
 		_logger = logger;
 		_messageQueueService = messageQueueService;
+		_dbContext = dbContext;
+		_dempotencyService = dempotencyService;
+		_webhookProcessorService = webhookProcessorService;
 		_verifyToken = configuration.GetValue<string>("verifyToken") ?? "myFbToken";
+		_voteStartFlag = configuration.GetValue<string>("voteStartFlag") ?? "";
 	}
 
 	[HttpGet]
@@ -57,6 +69,26 @@ public class FacebookWebhooksController : ControllerBase
 	{
 		_logger.LogInformationWithCaller($"PayLoad Received: {payload}");
 
+		var messageType = _webhookProcessorService.ExtractMessageType(payload);
+		var messageId = _webhookProcessorService.ExtractMessageId(payload, messageType);
+		
+
+		
+
+		if (string.IsNullOrEmpty(messageId))
+		{
+			_logger.LogWarningWithCaller("Message ID not found in payload, skipping idempotency check. Exit to FB");
+			return Ok();
+		}
+
+
+		if (await _dempotencyService.IsDuplicateAsync(messageId))
+		{
+			_logger.LogInformationWithCaller($"Duplicate Facebook message ignored: {messageId}");
+			return Ok(); 
+		}
+	
+	
 		try
 		{
 			// CRITICAL STEP: Offload the raw payload string to the worker queue
@@ -68,9 +100,81 @@ public class FacebookWebhooksController : ControllerBase
 			_logger.LogErrorWithCaller($"Failed to enqueue message: {ex.Message}");
 		}
 
+
 		// MUST return 200 OK immediately to satisfy Facebook's 20-second timeout.
 		return Ok();
 	}
+
+
+	
+	[HttpGet("GetFBVotes")]
+
+	public async Task<IActionResult> GetVotesAsync(DateTime? fromDate, DateTime? toDate)
+	{
+		fromDate ??= DateTime.UtcNow.Date;
+		toDate ??= DateTime.UtcNow.AddDays(1); ;
+
+		 
+
+		var allVotes = await _dbContext.FaceBookVotes
+			.Where(v => v.Timestamp >= fromDate && v.Timestamp <= toDate && !string.IsNullOrEmpty(v.CandidateName))
+			.OrderByDescending(v => v.Timestamp)
+			//.Take(200)
+			.ToListAsync();
+
+		var analytics = AnalyzeVotes(allVotes);
+
+		return new JsonResult(new
+		{
+			votes = analytics
+
+		});
+	}
+
+
+	private object AnalyzeVotes(List<Vote> votes)
+	{
+		var totalVotes = votes.Count;
+		var totalUniqueUsers = votes.Select(v => v.UserName).Distinct().Count();
+
+		var groupedVotes = votes
+			.GroupBy(v => v.Message?.Trim().ToUpperInvariant() + "\t" + v.CandidatePhone?.Trim().ToUpperInvariant())
+			.Select(g => new
+			{
+				Option = g.Key,
+				VoteCount = g.Count(), // 3) ხმის რაოდენობა
+				UniqueUsers = g.Select(v => v.UserName).Distinct().Count(), // 4) უნიკალური მომხმარებელი თითოეულ ვარიანტზე
+
+				// 5) ტოპ 3 მომხმარებელი თითოეულ ვარიანტზე
+				TopUsers = g
+					.GroupBy(v => v.UserName)
+					.Select(u => new
+					{
+						UserName = u.Key,
+						UserVoteCount = u.Count()
+					})
+					.OrderByDescending(u => u.UserVoteCount)
+					.Take(3)
+			})
+			.OrderByDescending(a => a.VoteCount)
+			.ToList();
+
+		return new
+		{
+			TotalVotes = totalVotes, // 1) საერთო ხმების რაოდენობა
+			TotalUniqueUsers = totalUniqueUsers, // 2) საერთო უნიკალური მომხმარებლის რაოდენობა
+			Options = groupedVotes.Select(g => new
+			{
+				g.Option,
+				g.VoteCount,
+				Percentage = totalVotes > 0 ? (double)g.VoteCount / totalVotes * 100 : 0, // 3) პროცენტულობა
+				g.UniqueUsers,
+				g.TopUsers
+			}).ToList()
+		};
+	}
+
+
 }
 
 

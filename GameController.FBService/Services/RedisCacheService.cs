@@ -53,6 +53,42 @@ namespace GameController.FBService.Services
 		}
 
 
+		public async Task<bool> GetAcquiredLockAsync(string key, TimeSpan expiry)
+		{
+			try
+			{
+				
+				var db = _connectionMultiplexer.GetDatabase();
+				var value = DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString();
+
+				var result = await db.KeyExistsAsync(key);
+				return result;
+			}
+			catch (Exception ex)
+			{
+				
+				_logger.LogErrorWithCaller($"Redis connection failure during lock acquisition for key: {key} {ex}");
+				return false;
+			}
+		}
+
+		public async Task<(bool exists, string? owner)> GetAcquiredLockAsync(string key)
+		{
+			try
+			{
+				var db = _connectionMultiplexer.GetDatabase();
+				var value = await db.StringGetAsync(key);
+
+				return (value.HasValue, value.HasValue ? value.ToString() : null);
+			}
+			catch (Exception ex)
+			{
+				_logger.LogErrorWithCaller($"Redis connection failure while checking lock for key: {key}. {ex}");
+				return (false, null);
+			}
+		}
+
+
 		// ------------------------------------
 		// Rate Limiting / Atomic Increment
 		// ------------------------------------

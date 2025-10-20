@@ -4,6 +4,8 @@
 	{
 		// For atomic vote check/lock
 		Task<bool> AcquireLockAsync(string key, TimeSpan expiry);
+		Task<bool> GetAcquiredLockAsync(string key, TimeSpan expiry);
+		Task<(bool exists, string? owner)> GetAcquiredLockAsync(string key);
 		Task ReleaseLockAsync(string key);
 
 		// For general data caching (e.g., User Name)
