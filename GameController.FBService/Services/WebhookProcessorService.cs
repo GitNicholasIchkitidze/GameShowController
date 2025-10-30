@@ -1,5 +1,6 @@
 ﻿using Azure;
 using GameController.FBService.Extensions;
+using GameController.FBService.Heplers;
 using GameController.FBService.Models;
 using GameController.Shared.Models;
 using Melanchall.DryWetMidi.Core;
@@ -35,6 +36,7 @@ namespace GameController.FBService.Services
 		private readonly string _pageAccessToken;
 		private readonly string _imageFolderPath;
 		private readonly int _voteMinuteRange;
+		private readonly IGlobalVarsKeeper _varsKeeper;
 
 		public WebhookProcessorService(ILogger<WebhookProcessorService> logger,
 			ApplicationDbContext dbContext,
@@ -42,7 +44,8 @@ namespace GameController.FBService.Services
 			IRateLimitingService rateLimitingService,
 			IConfiguration configuration,
 			IHttpClientFactory httpClientFactory,
-			IDempotencyService dempotencyService
+			IDempotencyService dempotencyService,
+			IGlobalVarsKeeper varsKeeper
 			)
 		{
 			_logger = logger;
@@ -50,7 +53,7 @@ namespace GameController.FBService.Services
 			_cacheService = cacheService;
 			_rateLimitingService = rateLimitingService;
 			_dempotencyService = dempotencyService;
-
+			_varsKeeper = varsKeeper;
 
 			// Initialization of configuration fields (moved from controller)
 			_registeredClients = configuration.GetSection("RegisteredClients").Get<List<FBClientConfiguration>>() ?? new List<FBClientConfiguration>();
@@ -154,54 +157,7 @@ namespace GameController.FBService.Services
 			}
 		}
 
-		public async Task ProcessWebhookMessageAsync_Old(string rawPayload)
-		{
-			try
-			{
-				var payload = JObject.Parse(rawPayload);
-
-				if (payload["object"]?.Value<string>() != "page")
-				{
-					_logger.LogErrorWithCaller($"Received unknown object type: {payload["object"]}");
-					return;
-				}
-
-				foreach (var entry in payload["entry"] as JArray)
-				{
-					foreach (var messagingEvent in entry["messaging"] as JArray)
-					{
-						var senderId = messagingEvent["sender"]?["id"]?.Value<string>();
-						// Facebook's own ID that should be ignored
-						if (senderId == "2225010697525350") continue;
-
-						var userName = await GetUserNameAsync(senderId);
-
-						if (string.IsNullOrEmpty(senderId)) continue;
-
-						if (messagingEvent["postback"] != null)
-						{
-							var postbackPayload = messagingEvent["postback"]?["payload"]?.Value<string>();
-							if (!string.IsNullOrEmpty(postbackPayload))
-							{
-								await ProcessPostbackAsync(senderId,"", userName, postbackPayload);
-							}
-						}
-						else if (messagingEvent["message"] != null)
-						{
-							var messageText = messagingEvent["message"]?["text"]?.Value<string>();
-							if (!string.IsNullOrEmpty(messageText))
-							{
-								await ProcessTextMessageAsync(senderId,"", userName, messageText);
-							}
-						}
-					}
-				}
-			}
-			catch (Exception ex)
-			{
-				_logger.LogErrorWithCaller($"Error processing webhook message: {ex.Message} {ex}");
-			}
-		}
+		
 
 
 
@@ -313,7 +269,12 @@ namespace GameController.FBService.Services
 				_logger.LogWarningWithCaller($"Vote from {senderId} for {voteName} NOT registered due to rate limit ({_voteMinuteRange} min). Confirmation skipped as per request.");
 
 				// ❌ მოთხოვნისამებრ: დავაკომენტარეთ უარყოფითი პასუხის გაგზავნა.
-				// await SendMessageAsync(senderId, "თქვენ უკვე მისეცით ხმა ბოლო წუთებში. გთხოვთ, მოიცადოთ.");
+				
+				bool sendNotAcceptedVoteBackInfo = await _varsKeeper.GetValueAsync<bool>("fb_NotAcceptedVoteBackInfo");
+				if (sendNotAcceptedVoteBackInfo)
+					//await SendMessageAsync(senderId, userName, "თქვენ უკვე მისეცით ხმა ბოლო წუთებში. გთხოვთ, მოიცადოთ.");
+				await SendMessageAsync(senderId, userName, $"It's been less than {_voteMinuteRange} minutes since your last vote. Please try again later.");
+
 				result.SetError("Vote denied due to rate limit.");
 				return result;
 			}

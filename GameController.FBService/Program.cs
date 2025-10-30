@@ -1,8 +1,12 @@
 ﻿
+using GameController.FBService.Heplers;
 using GameController.FBService.Services;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using Microsoft.Extensions.Logging;
 using Microsoft.Identity.Client;
+using StackExchange.Redis;
 
 namespace GameController.FBService
 {
@@ -22,7 +26,7 @@ namespace GameController.FBService
 			builder.Services.AddHttpClient();
 			builder.Services.AddMemoryCache();
 
-			
+
 
 
 			builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -63,6 +67,28 @@ namespace GameController.FBService
 
 			// 7. NEW: Register a specialized service for handling Redis locks and caching
 			builder.Services.AddSingleton<ICacheService, RedisCacheService>();
+
+			builder.Services.AddSingleton<IGlobalVarsKeeper>(sp =>
+			{
+				var logger = sp.GetRequiredService<ILogger<RedisGlobalVarsKeeper>>();
+				var redis = sp.GetRequiredService<IConnectionMultiplexer>();
+				var keeper = new RedisGlobalVarsKeeper(
+					redis,
+					logger,
+					prefix: "GameController:Vars",
+					defaultTtl: null // null ნიშნავს: არ იწურება
+				);
+
+				keeper.OnChanged += async (key, value) =>
+				{
+
+					logger.LogInformation("🔔 Redis variable changed: {Key} => {Value}", key, value);
+				};
+
+				return keeper;
+			});
+
+
 			builder.Services.AddSingleton<IDempotencyService, DempotencyService>();
 
 
@@ -100,7 +126,7 @@ namespace GameController.FBService
 
 
 			// ------------------------------------
-			// 🛑 NEW: Redis Connection Health Check
+			// 🛑  Redis Connection Health Check
 			// ------------------------------------
 			try
 			{
@@ -130,6 +156,12 @@ namespace GameController.FBService
 				//Environment.Exit(1);
 			}
 
+			// -----------------------------------------------------------------
+			// ✨ NEW: Initialize global variables on startup if they don't exist
+			// -----------------------------------------------------------------
+			// This ensures predictable behavior on the very first run of the application.
+			SeedGlobalVariables(app.Services).GetAwaiter().GetResult();
+
 
 			// Configure the HTTP request pipeline.
 			if (app.Environment.IsDevelopment())
@@ -150,6 +182,50 @@ namespace GameController.FBService
 			clientService.ConnectWithRetryAsync();
 
 			app.Run();
+		}
+
+		static async Task SeedGlobalVariables(IServiceProvider services)
+		{
+			using var scope = services.CreateScope();
+			var keeper = scope.ServiceProvider.GetRequiredService<IGlobalVarsKeeper>();
+			var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+
+			// --- Variable 1: The main switch for the bot ---
+			const string listeningKey = "fb_listening_active";
+			await CheckKey(keeper, logger, listeningKey);
+
+			// --- Variable 2: Controls feedback for rejected votes ---
+			const string notAcceptedVoteKey = "fb_NotAcceptedVoteBackInfo";
+			await CheckKey(keeper, logger, notAcceptedVoteKey);
+		}
+
+		static async Task CheckKey(IGlobalVarsKeeper keeper, ILogger logger, string key)
+		{
+			{
+				if (!await keeper.ExistsAsync(key))
+				{
+					// Default to 'true' so the bot is active immediately after deployment.
+					await keeper.SetValueAsync(key, true);
+					logger.LogInformation($"INITIALIZED Redis variable {key} with default value: true");
+				}
+				else
+				{
+					var value = await keeper.GetValueAsync<bool>(key);
+					logger.LogInformation($"Redis variable {key} already exists with value: {value}");
+				}
+			}
+			static async Task<bool> IsRedisConnectedAsync(IConnectionMultiplexer redis)
+			{
+				try
+				{
+					var db = redis.GetDatabase();
+					return await db.PingAsync() != TimeSpan.Zero;
+				}
+				catch
+				{
+					return false;
+				}
+			}
 		}
 	}
 }

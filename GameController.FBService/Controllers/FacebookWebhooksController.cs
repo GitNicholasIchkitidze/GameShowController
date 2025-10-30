@@ -1,5 +1,6 @@
-﻿using AspNetCoreGeneratedDocument;
+﻿
 using GameController.FBService.Extensions;
+using GameController.FBService.Heplers;
 using GameController.FBService.Models;
 using GameController.FBService.Services;
 using Humanizer;
@@ -23,9 +24,15 @@ public class FacebookWebhooksController : ControllerBase
 	private readonly IMessageQueueService _messageQueueService;
 	private readonly IDempotencyService _dempotencyService;
 	private readonly ApplicationDbContext _dbContext;
-	private readonly string _voteStartFlag;
+	//private readonly string _voteStartFlag;
+	
 
 	private readonly IWebhookProcessorService _webhookProcessorService;
+
+	private readonly IGlobalVarsKeeper _varsKeeper;
+	private const string ListeningKey = "fb_listening_active";
+	private const string NotAcceptedVoteBackInfo = "fb_NotAcceptedVoteBackInfo";
+
 
 
 	public FacebookWebhooksController(
@@ -34,15 +41,18 @@ public class FacebookWebhooksController : ControllerBase
 		IConfiguration configuration,
 		IMessageQueueService messageQueueService,
 		IDempotencyService dempotencyService,
+		IGlobalVarsKeeper varsKeeper,
 		IWebhookProcessorService webhookProcessorService)
 	{
 		_logger = logger;
 		_messageQueueService = messageQueueService;
 		_dbContext = dbContext;
+		_varsKeeper = varsKeeper;
+
 		_dempotencyService = dempotencyService;
 		_webhookProcessorService = webhookProcessorService;
 		_verifyToken = configuration.GetValue<string>("verifyToken") ?? "myFbToken";
-		_voteStartFlag = configuration.GetValue<string>("voteStartFlag") ?? "";
+		//_voteStartFlag = configuration.GetValue<string>("voteStartFlag") ?? "";
 	}
 
 	[HttpGet]
@@ -67,6 +77,16 @@ public class FacebookWebhooksController : ControllerBase
 	[HttpPost]
 	public async Task<IActionResult> HandleWebhook([FromBody] JsonObject payload)
 	{
+
+		bool isListening = await _varsKeeper.GetValueAsync<bool>("fb_listening_active");
+
+		if (!isListening)
+		{
+			_logger.LogWarningWithCaller("WebHook Handled,  but not Listening To FaceBook now");
+			return Ok();
+
+		}
+
 		_logger.LogInformationWithCaller($"PayLoad Received: {payload}");
 
 		var messageType = _webhookProcessorService.ExtractMessageType(payload);
@@ -174,6 +194,36 @@ public class FacebookWebhooksController : ControllerBase
 		};
 	}
 
+	[HttpGet("CheckVotingModeStatus")]
+	public async Task<bool> IsListeningAsync()
+	{
+		return await _varsKeeper.GetValueAsync<bool>(ListeningKey);
+	}
+
+	[HttpPost("SetVotingModeStatus")]
+	public async Task SetListeningAsync(bool active)
+	{
+		await _varsKeeper.SetValueAsync(ListeningKey, active);
+	}
+
+	[HttpPost("SetBooleanKeyValue")]
+	public async Task SetKeyBooleanValue(string key, bool active)
+	{
+		await _varsKeeper.SetValueAsync(key, active);
+	}
+
+	[HttpGet("AllSetVotingModeStatus")]
+	public async Task<IActionResult> GetAllKeysAsync(string? pattern = null)
+	{
+		return new JsonResult(new
+		{
+			//Keys = await _varsKeeper.GetAllKeysAsync(pattern)
+				Keys_Vals = await _varsKeeper.GetAllKeysAndValuesAsync(pattern)
+
+		});
+
+		
+	}
 
 }
 

@@ -30,8 +30,9 @@ namespace GameController.FBService.Services
 			_cacheService = cacheService;
 			DefaultMaxApiCallsPerUser = configuration.GetValue<int>("DefaultMaxApiCallsPerUser", 200);
 			DefaultHourWindow = configuration.GetValue<int>("DefaultHourWindow", 1);
-			GlobalApiRateLimitKey = configuration.GetValue<string>("GlobalApiRateLimitKey", "rate:limit:facebook:global:hourly");
+		
 
+			GlobalApiRateLimitKey = configuration["GlobarVars:GlobalApiRateLimitKey"];
 		}
 
 
