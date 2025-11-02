@@ -172,7 +172,7 @@ async function loadVotes() {
             // ტოპ 3 მომხმარებლის ფორმატირება
             const topUsersList = option.topUsers.map(u =>
                 // 4. მეორე ჰორიზონტალური ხაზი
-                `<span><strong>${u.userName}</strong> (${u.userVoteCount} ballot)</span>`
+                `<span><strong>${u.userName}</strong> (${u.userVoteCount} ხმა)</span>`
             ).join(' | ');
 
             return `
