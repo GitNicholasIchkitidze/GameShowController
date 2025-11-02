@@ -109,7 +109,7 @@ namespace GameController.FBService.Pages.Admin
 			return new JsonResult(new
 			{
 				// დავაბრუნოთ მხოლოდ საჭირო ველები ცხრილისთვის
-				votes = allVotes.Select(v => new { userName = v.UserName, message = v.Message, candidatePhone= v.CandidatePhone, timestamp = v.Timestamp }),
+				votes = allVotes.Select(v => new { userName = v.UserId + "_" + v.UserName, message = v.Message, candidatePhone= v.CandidatePhone, timestamp = v.Timestamp }),
 				analytics = analytics // დავაბრუნოთ ანალიტიკა JS-ისთვის
 			});
 		}
@@ -117,7 +117,7 @@ namespace GameController.FBService.Pages.Admin
 		private object AnalyzeVotes(List<Vote> votes)
 		{
 			var totalVotes = votes.Count;
-			var totalUniqueUsers = votes.Select(v => v.UserName).Distinct().Count();
+			var totalUniqueUsers = votes.Select(v => v.UserId + "_" + v.UserName).Distinct().Count();
 
 			var groupedVotes = votes
 				.GroupBy(v => v.Message?.Trim().ToUpperInvariant() + "\t" + v.CandidatePhone?.Trim().ToUpperInvariant())
@@ -125,11 +125,11 @@ namespace GameController.FBService.Pages.Admin
 				{
 					Option = g.Key,
 					VoteCount = g.Count(), // 3) ხმის რაოდენობა
-					UniqueUsers = g.Select(v => v.UserName).Distinct().Count(), // 4) უნიკალური მომხმარებელი თითოეულ ვარიანტზე
+					UniqueUsers = g.Select(v =>  v.UserId + "_" + v.UserName).Distinct().Count(), // 4) უნიკალური მომხმარებელი თითოეულ ვარიანტზე
 
 					// 5) ტოპ 3 მომხმარებელი თითოეულ ვარიანტზე
 					TopUsers = g
-						.GroupBy(v => v.UserName)
+						.GroupBy(v => v.UserId + "_" + v.UserName)
 						.Select(u => new
 						{
 							UserName = u.Key,

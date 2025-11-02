@@ -42,6 +42,92 @@ document.addEventListener('DOMContentLoaded', () => {
             
         }
     });
+
+
+    // ახალი: Listening Toggle ლოგიკა
+    const toggleListeningBtn = document.getElementById('toggleListening');
+    const statusDiv = document.getElementById('status');
+    let currentListening = false; // საწყისი მნიშვნელობა
+
+    // ფუნქცია სტატუსის განახლებისთვის
+    function updateButtonText() {
+        toggleListeningBtn.textContent = `Listening: ${currentListening ? 'ON' : 'OFF'}`;
+        toggleListeningBtn.classList.toggle('btn-primary', currentListening);
+        toggleListeningBtn.classList.toggle('btn-danger', !currentListening);
+    }
+
+    // მიმდინარე სტატუსის მიღება
+    async function loadListeningStatus() {
+        try {
+            const response = await fetch('/api/FacebookWebhooks/CheckVotingModeStatus');
+            if (!response.ok) throw new Error('Failed to fetch status');
+            currentListening = await response.json();
+            updateButtonText();
+            statusDiv.textContent = `Listening mode loaded: ${currentListening ? 'Active' : 'Inactive'}`;
+        } catch (error) {
+            console.error(error);
+            statusDiv.textContent = 'Error loading listening status';
+            statusDiv.classList.add('text-danger');
+        }
+    }
+
+    // Toggle ფუნქცია
+    async function toggleListening_() {
+        const newStatus = !currentListening;
+        try {
+            const response = await fetch('/api/FacebookWebhooks/SetBooleanKeyValue', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ key: 'fb_listening_active', active: newStatus })
+            });
+            if (!response.ok) throw new Error('Failed to toggle status');
+            currentListening = newStatus;
+            updateButtonText();
+            statusDiv.textContent = `Listening mode changed to: ${currentListening ? 'Active' : 'Inactive'}`;
+            statusDiv.classList.remove('text-danger');
+        } catch (error) {
+            console.error(error);
+            statusDiv.textContent = 'Error toggling listening mode';
+            statusDiv.classList.add('text-danger');
+        }
+    }
+
+    async function toggleListening() {
+        const newStatus = !currentListening;
+        try {
+            // გააგზავნე query string-ად: ?key=...&active=...
+            const url = `/api/FacebookWebhooks/SetBooleanKeyValue?key=fb_listening_active&active=${newStatus}`;
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json' // შეგიძლია დატოვო, მაგრამ body არაა საჭირო
+                }
+                // body არ გამოიყენო, რადგან query string-ია
+            });
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Failed to toggle status: ${response.status} - ${errorText}`);
+            }
+            currentListening = newStatus;
+            updateButtonText();
+            statusDiv.textContent = `Listening mode changed to: ${currentListening ? 'Active' : 'Inactive'}`;
+            statusDiv.classList.remove('text-danger');
+        } catch (error) {
+            console.error(error);
+            statusDiv.textContent = 'Error toggling listening mode: ' + error.message;
+            statusDiv.classList.add('text-danger');
+        }
+    }
+
+
+    // ჩატვირთვისას იძახე
+    loadListeningStatus();
+
+    // ღილაკის event
+    toggleListeningBtn.addEventListener('click', toggleListening);
+
 });
 
 function startLiveUpdates() {

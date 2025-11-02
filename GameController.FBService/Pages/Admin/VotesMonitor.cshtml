@@ -9,29 +9,46 @@
 
     <form id="filterForm" class="row g-3 mb-4">
 
-        <div class="col-md-3 align-self-end">
-            <button type="button" id="toggleLive" class="btn btn-success">▶ Live MODE</button>
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="col-md-3 align-self-end">
+                    <!-- ახალი ღილაკი -->
+                    <button type="button" id="toggleListening" class="btn btn-primary">Listening: Loading...</button>
+                </div>
+
+                <div class="col-md-3 align-self-end">
+                    <button type="button" id="toggleLive" class="btn btn-success">▶ Live MODE</button>
+                </div>
+
+            </div>
+            
+            <div class="col-md-8">
+                <div class="col-md-2">
+                    <label for="updateInterval" class="form-label">Refresh every</label>
+                    <select id="updateInterval" class="form-select">
+                        <option value="5000">5 sec</option>
+                        <option value="10000" selected>10 sec (Default)</option>
+                        <option value="20000">20 sec</option>
+                        <option value="30000">30 sec</option>
+                        <option value="60000">60 sec</option>
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <label for="FromDate" class="form-label">Date From</label>
+                    <input type="datetime-local" id="FromDate" name="FromDate" class="form-control" value="@Model.FromDate?.ToString("yyyy-MM-dd HH:mm")" />
+                </div>
+                <div class="col-md-3">
+                    <label for="ToDate" class="form-label">Date To </label>
+                    <input type="datetime-local" id="ToDate" name="ToDate" class="form-control" value="@Model.ToDate?.ToString("yyyy-MM-dd HH:mm")" />
+                </div>
+
+            </div>
         </div>
 
-        <div class="col-md-3">
-            <label for="updateInterval" class="form-label">Refresh every</label>
-            <select id="updateInterval" class="form-select">
-                <option value="5000">5 sec</option>
-                <option value="10000" selected>10 sec (Default)</option>
-                <option value="20000">20 sec</option>
-                <option value="30000">30 sec</option>
-                <option value="60000">60 sec</option>
-            </select>
-        </div>
 
-        <div class="col-md-3">
-            <label for="FromDate" class="form-label">Date From</label>
-            <input type="datetime-local" id="FromDate" name="FromDate" class="form-control" value="@Model.FromDate?.ToString("yyyy-MM-dd HH:mm")" />
-        </div>
-        <div class="col-md-3">
-            <label for="ToDate" class="form-label">Date To </label>
-            <input type="datetime-local" id="ToDate" name="ToDate" class="form-control" value="@Model.ToDate?.ToString("yyyy-MM-dd HH:mm")" />
-        </div>
+
+
         
 
         

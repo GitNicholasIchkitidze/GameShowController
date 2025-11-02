@@ -716,9 +716,12 @@ namespace GameController.FBService.Services
 
 					return userName;
 				}
-
-				_logger.LogErrorWithCaller($"Failed to fetch user name for {userId}. Status: {response.StatusCode}");
-				return "უცნობი მომხმარებელი";
+				else
+				{
+					_logger.LogErrorWithCaller($"Failed to fetch user name for {userId}. Status: {response.StatusCode}, ResquestUri {response.RequestMessage?.RequestUri?.AbsoluteUri}");
+					return "უცნობი მომხმარებელი";
+					
+				}
 			}
 			catch (Exception ex)
 			{
