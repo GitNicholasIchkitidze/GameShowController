@@ -33,7 +33,7 @@ builder.Services.AddSignalR();
 builder.Services.AddHttpClient<IYouTubeChatService, YouTubeChatService>();
 
 
-builder.Services.AddSingleton<IMidiLightingService, MidiLightingService>();
+
 
 //builder.Services.AddSingleton<MidiLightingService>();
 //builder.Services.AddSingleton<IMidiLightingService, MidiLightingService>(x => x.GetRequiredService<MidiLightingService>());
@@ -90,11 +90,18 @@ builder.Services.AddSingleton<ICasparService>(provider =>
 
 builder.Services.AddScoped<ICasparManager, CasparManager>();
 
-builder.Services.Configure<MidiSettingsModels>(
-    builder.Configuration.GetSection("MidiSettings"));
 
-var midiDeviceName = builder.Configuration.GetSection("MidiSettings:DeviceName").Value;
-Console.WriteLine($"MIDI Device Name from Config: {midiDeviceName}");
+
+var UseMidi = builder.Configuration.GetValue<bool>("MidiSettings:UseMidi", false);
+if (UseMidi)
+{
+    
+    builder.Services.Configure<MidiSettingsModels>(builder.Configuration.GetSection("MidiSettings"));
+
+    var midiDeviceName = builder.Configuration.GetSection("MidiSettings:DeviceName").Value;
+    builder.Services.AddSingleton<IMidiLightingService, MidiLightingService>();
+    Console.WriteLine($"MIDI Device Name from Config: {midiDeviceName}");
+}
 
 
 

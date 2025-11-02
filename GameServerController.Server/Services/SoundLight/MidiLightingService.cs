@@ -50,7 +50,14 @@ namespace GameController.Server.Services
                 _midiOutputDevice = OutputDevice.GetAll().FirstOrDefault(d => d.Name.Contains("USB MIDI"));
 
                 //_midiOutputDevice = OutputDevice.GetByName(deviceName);
+                if (_midiOutputDevice != null)
                 _midiOutputDevice.EventSent += OnEventSent;
+                else
+                {
+                    _logger.LogError($"NO ANY MIDI device found.");
+                    ConnectionStatusChanged?.Invoke(this, false);
+                    return;
+                }
 
                 Connect();
                 _logger.LogInformation($"{Environment.NewLine}{DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff")} Successfully connected to MIDI device: {deviceName}");
