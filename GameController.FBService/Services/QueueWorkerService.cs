@@ -51,8 +51,8 @@ namespace GameController.FBService.Services
 						var res =await processor.ProcessWebhookMessageAsync(rawPayload);
 						if (res.Result)
 							_logger.LogInformationWithCaller("Message processing completed successfully.");
-						else
-							_logger.LogErrorWithCaller($"Message processing failed. Error: {res.Message}");
+						//else
+						//	_logger.LogErrorWithCaller($"Message processing failed. Error: {res.Message}");
 
 					}
 					catch (Exception ex)
