@@ -48,8 +48,11 @@ namespace GameController.FBService.Services
 					{
 						var processor = processingScope.ServiceProvider.GetRequiredService<IWebhookProcessorService>();
 						// 4. Pass the payload to the business logic handler
-						await processor.ProcessWebhookMessageAsync(rawPayload);
-						_logger.LogInformationWithCaller("Message processing completed successfully.");
+						var res =await processor.ProcessWebhookMessageAsync(rawPayload);
+						if (res.Result)
+							_logger.LogInformationWithCaller("Message processing completed successfully.");
+						else
+							_logger.LogErrorWithCaller($"Message processing failed. Error: {res.Message}");
 
 					}
 					catch (Exception ex)

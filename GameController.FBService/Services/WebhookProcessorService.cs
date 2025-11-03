@@ -72,43 +72,50 @@ namespace GameController.FBService.Services
 		// ----------------------------------------------------
 
 
-		public async Task ProcessWebhookMessageAsync(string rawPayload)
+		public async Task<OperationResult> ProcessWebhookMessageAsync(string rawPayload)
 		{
+			var res = new OperationResult(true);
 			var payload = JsonNode.Parse(rawPayload)?.AsObject();
 			var messageType = ExtractMessageType(payload);
 			var messageId = ExtractMessageId(payload, messageType);
 			
-			var senderId = ExtractMessageSenderId(payload);
-			var userName = await GetUserNameAsync(senderId);
+			var senderId = ExtractMessageSenderOrRecipientId(payload, "sender");
+			var recipientId = ExtractMessageSenderOrRecipientId(payload, "recipient");
+			var userName = await GetUserNameAsync(senderId, recipientId);
+
+			if (senderId == recipientId)
+			{
+				_logger.LogWarningWithCaller("Sender ID is the same as Recipient ID. Ignoring self-sent message.");
+				res.Message = "Ignored self-sent message.";
+				return res;
+			}
+				
 
 			switch (messageType)
 			{
 				case "message":
-					
-
+					if (string.IsNullOrEmpty(senderId)) break;
 					var messageText = ExtractMessageText(payload);
 					if (!string.IsNullOrEmpty(messageText))
 					{
-						await ProcessTextMessageAsync(senderId, messageId, userName, messageText);
+						res = await ProcessTextMessageAsync(senderId, recipientId, messageId, userName, messageText);
 					}
 					break;
-				case "postback":
-					if (senderId == "2225010697525350") break;
-
-					
+				case "postback":							
 
 					if (string.IsNullOrEmpty(senderId)) break;
 					var postbackPayload = ExtractMessagePostbackPayLoad(payload);
 					if (!string.IsNullOrEmpty(postbackPayload))
 					{
-						await ProcessPostbackAsync(senderId, messageId, userName, postbackPayload);
+						res = await ProcessPostbackAsync(senderId, recipientId, messageId, userName, postbackPayload);
 					}
 
 					break;
 				case "reaction":
-					await HandleReactionEvent(payload);
+					res = await HandleReactionEvent(payload);
 					break;
 			}
+			return res;
 
 		}
 
@@ -116,9 +123,10 @@ namespace GameController.FBService.Services
 		/// <summary>
 		/// Handles the business logic for a reaction event.
 		/// </summary>
-		private async Task HandleReactionEvent(JsonObject payload)
+		private async Task<OperationResult> HandleReactionEvent(JsonObject payload)
 		{
 			// 1. Safely extract the reaction details
+			var res = new OperationResult(true);
 			var messagingEvent = payload?["entry"]?.AsArray().FirstOrDefault()?
 										.AsObject()?["messaging"]?.AsArray().FirstOrDefault()?
 										.AsObject();
@@ -127,7 +135,8 @@ namespace GameController.FBService.Services
 			if (reactionObject == null)
 			{
 				_logger.LogWarningWithCaller("Could not find reaction object in payload.");
-				return;
+				res.Result = false;
+				return res;
 			}
 
 			string? mid = reactionObject["mid"]?.GetValue<string>();
@@ -137,7 +146,8 @@ namespace GameController.FBService.Services
 			if (string.IsNullOrEmpty(mid) || string.IsNullOrEmpty(action) || string.IsNullOrEmpty(emoji))
 			{
 				_logger.LogWarningWithCaller("Reaction payload was missing required fields (mid, action, or emoji).");
-				return;
+				res.Result = false;
+				return res;
 			}
 
 			_logger.LogInformationWithCaller($"Processing reaction: User '{action}' with '{emoji}' on message '{mid}'");
@@ -155,21 +165,22 @@ namespace GameController.FBService.Services
 				// TODO: Record that a user removed this specific 'emoji'.
 				// Example: await _myDatabase.RemoveReactionAsync(messageId: mid, reaction: emoji);
 			}
+			return res;
 		}
 
 		
 
 
 
-		private async Task<OperationResult> ProcessTextMessageAsync(string senderId, string messageId, string userName, string text)
+		private async Task<OperationResult> ProcessTextMessageAsync(string senderId, string recipientId, string messageId, string userName, string text)
 		{
 			var result = new OperationResult(true);
 			if (text.Equals(_voteStartFlag, StringComparison.OrdinalIgnoreCase))
 			{
 
 
-				var lockKeyForVote = $"vote:{senderId}";
-				var lockKeyForEnableVote = $"NeedForVote:{senderId}";
+				var lockKeyForVote = $"vote:{senderId}:{recipientId}";
+				var lockKeyForEnableVote = $"NeedForVote:{senderId}:{recipientId}";
 				var isLockedKeyForVote = await _cacheService.GetAcquiredLockAsync(lockKeyForVote, TimeSpan.FromMinutes(_voteMinuteRange));
 				var isLockedKeyForEnableVote = await _cacheService.GetAcquiredLockAsync(lockKeyForEnableVote, TimeSpan.FromMinutes(_voteMinuteRange));
 				if (!isLockedKeyForVote && !isLockedKeyForEnableVote)
@@ -187,7 +198,7 @@ namespace GameController.FBService.Services
 					}
 
 					// 2. Send Gallery (Rate-limited)
-					result = await SendImageGalleryAsyncWithButtons(senderId, messageId, userName, imageUrls, names);
+					result = await SendImageGalleryAsyncWithButtons(senderId, recipientId, messageId, userName, imageUrls, names);
 					return result;
 				}
 				else
@@ -209,7 +220,7 @@ namespace GameController.FBService.Services
 			}
 		}
 
-		private async Task<OperationResult> ProcessPostbackAsync(string senderId, string msgId, string userName, string payload)
+		private async Task<OperationResult> ProcessPostbackAsync(string senderId, string recipientId, string msgId, string userName, string payload)
 		{
 			var result = new OperationResult(true);
 			var voteName = payload.Split('_').Last();
@@ -229,7 +240,7 @@ namespace GameController.FBService.Services
 
 			if (success)
 			{
-				var loggedInDB = await LogVoteRequestAsync(senderId, msgId, userName, client.clientName, voteName);
+				var loggedInDB = await LogVoteRequestAsync(senderId, recipientId, msgId, userName, client.clientName, voteName);
 
 				var nextVoteTime = ((DateTime)loggedInDB.Results.GetType().GetProperty("Timestamp").GetValue(loggedInDB.Results)).AddMinutes(_voteMinuteRange);
 				if (loggedInDB.Result)
@@ -290,17 +301,18 @@ namespace GameController.FBService.Services
 		}
 
 
-		private async Task<OperationResult> LogVoteRequestAsync(string userId, string MSGId, string userName, string voteName, string message)
+		private async Task<OperationResult> LogVoteRequestAsync(string senderId, string recipientId, string MSGId, string userName, string voteName, string message)
 		{
 			var result = new OperationResult(false);
 
 			var newVote = new Vote
 			{
 				Timestamp = DateTime.Now,
-				Id = $"{userId}.{DateTime.Now.ToString("yyyyMMddHHmmssfff")}",
+				Id = $"{senderId}.{DateTime.Now.ToString("yyyyMMddHHmmssfff")}",
 				MSGId = MSGId,
+				MSGRecipient = recipientId,
 				UserName = userName,
-				UserId = userId,
+				UserId = senderId,
 				CandidateName = voteName,
 				CandidatePhone = string.IsNullOrEmpty(voteName) ? "" : getCandidateName(voteName),
 				Message = message
@@ -447,7 +459,7 @@ namespace GameController.FBService.Services
 		/// <param name="recipientId">The Facebook PSID (Page-Scoped User ID) of the recipient.</param>
 		/// <param name="imageUrls">List of image URLs for each gallery element.</param>
 		/// <param name="names">List of candidate names (used for postback payload and button title).</param>
-		private async Task<OperationResult> SendImageGalleryAsyncWithButtons(string recipientId, string messageId, string userName, List<string> imageUrls, List<string> names)
+		private async Task<OperationResult> SendImageGalleryAsyncWithButtons(string senderId, string recipientId, string messageId, string userName, List<string> imageUrls, List<string> names)
 		{
 			var result = new OperationResult(true);
 
@@ -459,22 +471,22 @@ namespace GameController.FBService.Services
 			//	return result;
 			//}
 
-			var lockKeyForEnableVote = $"NeedForVote:{recipientId}";
+			var lockKeyForEnableVote = $"NeedForVote:{senderId}";
 			var success = await _cacheService.AcquireLockAsync(lockKeyForEnableVote, TimeSpan.FromMinutes(_voteMinuteRange));
 
 			// [RATE LIMIT CHECK] Check Rate Limit BEFORE making the API call (POST request)
 			if (!success )
 			{
-				_logger.LogWarningWithCaller($"[TIME LIMIT BLOCKED] Cannot send gallery to {recipientId}. TIME Limit exceeded.");
-				result.SetError($"[TIME LIMIT BLOCKED] Cannot send gallery to {recipientId}. TIME Limit exceeded.");
+				_logger.LogWarningWithCaller($"[TIME LIMIT BLOCKED] Cannot send gallery to {senderId}. TIME Limit exceeded.");
+				result.SetError($"[TIME LIMIT BLOCKED] Cannot send gallery to {senderId}. TIME Limit exceeded.");
 				return result;
 			}
 
 
 			if (await _rateLimitingService.IsRateLimitExceeded("SendAPI:Gallery"))
 			{
-				_logger.LogWarningWithCaller($"[RATE LIMIT BLOCKED] Cannot send gallery to {recipientId}. Limit exceeded.");
-				result.SetError($"[RATE LIMIT BLOCKED] Cannot send gallery to {recipientId}. Limit exceeded.");
+				_logger.LogWarningWithCaller($"[RATE LIMIT BLOCKED] Cannot send gallery to {senderId}. Limit exceeded.");
+				result.SetError($"[RATE LIMIT BLOCKED] Cannot send gallery to {senderId}. Limit exceeded.");
 				return result;
 
 			}
@@ -528,7 +540,7 @@ namespace GameController.FBService.Services
 				}
 			};
 
-			var loggedInDB = await LogVoteRequestAsync(recipientId, messageId, userName, "", _voteStartFlag); 
+			var loggedInDB = await LogVoteRequestAsync(senderId, recipientId, messageId, userName, "", _voteStartFlag); 
 
 			if (loggedInDB.Result)
 			{
@@ -591,13 +603,13 @@ namespace GameController.FBService.Services
 			}
 		}
 
-		public string? ExtractMessageSenderId(JsonObject payload)
+		public string? ExtractMessageSenderOrRecipientId(JsonObject payload, string type ="sender")
 		{
 			try
 			{
 				var entry = payload["entry"]?.AsArray()?.FirstOrDefault()?.AsObject();
 				var messaging = entry?["messaging"]?.AsArray()?.FirstOrDefault()?.AsObject();
-				var sender = messaging?["sender"]?.AsObject();
+				var sender = messaging?[type]?.AsObject();
 				return sender?["id"]?.GetValue<string>();
 			}
 			catch
@@ -667,12 +679,12 @@ namespace GameController.FBService.Services
 		/// <summary>
 		/// Retrieves the user's name, prioritizing the Redis cache to minimize Facebook Graph API calls.
 		/// </summary>
-		private async Task<string> GetUserNameAsync(string? userId)
+		private async Task<string> GetUserNameAsync(string? userId, string? recipientId)
 		{
 			if (string.IsNullOrEmpty(userId)) return "უცნობი მომხმარებელი"; // Georgian for "Unknown User"
 
 			//var cacheKey = $"userName:{userId}";
-			var cacheKey = $"FB:User:{userId}:Name";
+			var cacheKey = $"FB:Recipient:{recipientId}:User:{userId}:Name";
 
 
 			// 1. Check Cache

@@ -4,6 +4,7 @@
 	{
 		public required string Id { get; set; }
 		public required string? MSGId { get; set; }
+		public required string? MSGRecipient { get; set; }
 		public required string UserId { get; set; }
 		
 		public required string CandidateName { get; set; }
