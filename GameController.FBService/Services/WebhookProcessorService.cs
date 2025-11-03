@@ -525,7 +525,7 @@ namespace GameController.FBService.Services
 			// 3. Build the full JSON Payload (Generic Template)
 			var jsonPayload = new
 			{
-				recipient = new { id = recipientId },
+				recipient = new { id = senderId },
 				message = new
 				{
 					attachment = new
@@ -544,7 +544,7 @@ namespace GameController.FBService.Services
 
 			if (loggedInDB.Result)
 			{
-				result = await SendMessagePayLoadSafeAsync(recipientId, jsonPayload);
+				result = await SendMessagePayLoadSafeAsync(senderId, jsonPayload);
 
 				if (result.Result)
 				{
