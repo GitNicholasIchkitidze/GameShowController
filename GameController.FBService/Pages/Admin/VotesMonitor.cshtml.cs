@@ -132,7 +132,7 @@ namespace GameController.FBService.Pages.Admin
 						.GroupBy(v => v.UserId + "_" + v.UserName)
 						.Select(u => new
 						{
-							UserName = u.Key,
+							UserName = FormatReadableIdentifier(u.Key),
 							UserVoteCount = u.Count()
 						})
 						.OrderByDescending(u => u.UserVoteCount)
@@ -156,7 +156,57 @@ namespace GameController.FBService.Pages.Admin
 			};
 		}
 
-		public async Task<IActionResult> OnGetJsonVotesAsync_(DateTime? from, DateTime? to)
+
+        public string FormatReadableIdentifier(string fullIdentifier)
+        {
+            if (string.IsNullOrEmpty(fullIdentifier))
+            {
+                return fullIdentifier;
+            }
+
+            string numberPart;
+            string namePart = null;
+
+            // ვპოულობთ პირველ ქვედა ტირეს, რომ სწორად დავყოთ
+            // იმ შემთხვევაშიც, თუ სახელიც შეიცავს ქვედა ტირეს.
+            int underscoreIndex = fullIdentifier.IndexOf('_');
+
+            if (underscoreIndex != -1)
+            {
+                // დავყავით ორ ნაწილად: რიცხვი და სახელი
+                numberPart = fullIdentifier.Substring(0, underscoreIndex);
+                namePart = fullIdentifier.Substring(underscoreIndex + 1); // ვიღებთ ყველაფერს _-ის შემდეგ
+            }
+            else
+            {
+                // თუ ქვედა ტირე არ არის, მთლიან სტრიქონს ვთვლით რიცხვად
+                numberPart = fullIdentifier;
+            }
+
+            string truncatedNumber;
+            int firstChars = 2; // რამდენი სიმბოლო დავტოვოთ თავში
+            int lastChars = 4;  // რამდენი სიმბოლო დავტოვოთ ბოლოში
+
+            // ვამოწმებთ, რომ რიცხვი საკმარისად გრძელია შესამოკლებლად
+            // (2 + 4 = 6). თუ 6-ზე ნაკლებია, შემოკლებას აზრი არ აქვს.
+            if (numberPart.Length > firstChars + lastChars)
+            {
+                string first = numberPart.Substring(0, firstChars);
+                string last = numberPart.Substring(numberPart.Length - lastChars);
+                truncatedNumber = $"{first}....{last}";
+            }
+            else
+            {
+                // რიცხვი ძალიან მოკლეა, ვტოვებთ როგორც არის
+                truncatedNumber = numberPart;
+            }
+
+            // ვაბრუნებთ შედეგს. თუ სახელი არ გვქონდა, დაბრუნდება მხოლოდ შემოკლებული რიცხვი.
+            return (namePart != null)
+                ? $"{truncatedNumber}_{namePart}"
+                : truncatedNumber;
+        }
+        public async Task<IActionResult> OnGetJsonVotesAsync_(DateTime? from, DateTime? to)
 		{
 			from ??= DateTime.UtcNow.Date;
 			to ??= DateTime.UtcNow.AddDays(1);

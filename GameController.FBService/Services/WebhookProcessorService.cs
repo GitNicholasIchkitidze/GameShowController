@@ -247,8 +247,8 @@ namespace GameController.FBService.Services
 				{
 					
 					// 4. Send Confirmation (Rate-limited, to prevent blocking)
-					//var backMsg = $"თქვენი ხმა {client.clientName}-სთვის მიღებულია! მადლობა. ჩვენ კვლავ მივიღებთ თქვენს ხმას {_voteMinuteRange} წუთის მერე, {nextVoteTime} -დან";
-					var backMsg = $"Thank you! you voted for {client.clientName}! You can vote again in {_voteMinuteRange} minutes from now! After {nextVoteTime}";
+					var backMsg = $"თქვენი ხმა {client.clientName}-სთვის მიღებულია! მადლობა. ჩვენ კვლავ მივიღებთ თქვენს ხმას {_voteMinuteRange} წუთის მერე, {nextVoteTime} -დან";
+					//var backMsg = $"Thank you! you voted for {client.clientName}! You can vote again in {_voteMinuteRange} minutes from now! After {nextVoteTime}";
 					result = await SendMessageAsync(senderId, userName, backMsg);
 					if (result.Result)
 					{
@@ -283,8 +283,8 @@ namespace GameController.FBService.Services
 				
 				bool sendNotAcceptedVoteBackInfo = await _varsKeeper.GetValueAsync<bool>("fb_NotAcceptedVoteBackInfo");
 				if (sendNotAcceptedVoteBackInfo)
-					//await SendMessageAsync(senderId, userName, "თქვენ უკვე მისეცით ხმა ბოლო წუთებში. გთხოვთ, მოიცადოთ.");
-				await SendMessageAsync(senderId, userName, $"It's been less than {_voteMinuteRange} minutes since your last vote. Please try again later.");
+					await SendMessageAsync(senderId, userName, $"თქვენი ბოლო ხმიდ მიცემიდან არ გასულა {_voteMinuteRange} წუთი.");
+				//await SendMessageAsync(senderId, userName, $"It's been less than {_voteMinuteRange} minutes since your last vote. Please try again later.");
 
 				result.SetError("Vote denied due to rate limit.");
 				return result;
