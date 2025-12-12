@@ -67,7 +67,7 @@ namespace GameController.FBService.Pages.Admin
 				Votes = await _db.FaceBookVotes
 					.Where(v => v.Timestamp >= from && v.Timestamp <= to)
 					.OrderByDescending(v => v.Timestamp)
-					.Take(200)
+					.Take(50)
 					.ToListAsync();
 			}
 			else if (_redis != null)

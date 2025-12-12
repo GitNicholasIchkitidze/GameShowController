@@ -132,7 +132,7 @@ public class FacebookWebhooksController : ControllerBase
 	public async Task<IActionResult> GetVotesAsync(DateTime? fromDate, DateTime? toDate)
 	{
 		fromDate ??= DateTime.UtcNow.Date;
-		toDate ??= DateTime.UtcNow.AddDays(1); ;
+		toDate ??= DateTime.UtcNow.AddDays(1); 
 
 		 
 
