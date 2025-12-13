@@ -1,5 +1,6 @@
 ﻿
 using GameController.FBService.Heplers;
+using GameController.FBService.MiddleWares;
 using GameController.FBService.Services;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.EntityFrameworkCore;
@@ -46,11 +47,7 @@ namespace GameController.FBService
 				options.InstanceName = "GameController:"; // Prefix for keys
 			});
 
-			//builder.Services.AddSingleton<StackExchange.Redis.IConnectionMultiplexer>(sp =>
-			//	StackExchange.Redis.ConnectionMultiplexer.Connect(
-			//		builder.Configuration.GetConnectionString("RedisConnection")
-			//	)
-			//);
+
 
 			//StackExchange.Redis: Connection Multiplexer-ის რეგისტრაცია
 			builder.Services.AddSingleton<StackExchange.Redis.IConnectionMultiplexer>(sp =>
@@ -94,13 +91,20 @@ namespace GameController.FBService
 
 
 
+			//builder.Services.AddSingleton<IFacebookSignatureValidator>(sp =>
+			//new FacebookSignatureValidator(sp.GetRequiredService<IConfiguration>().GetSection("Facebook:AppSecret").Value));
+            
+			
+
+
+
+            builder.Services.AddControllers();
 
 
 
 
-
-			// SignalR-ის HubConnectionBuilder-ის კონფიგურაცია და რეგისტრაცია Singleton-ად
-			builder.Services.AddSingleton(sp =>
+            // SignalR-ის HubConnectionBuilder-ის კონფიგურაცია და რეგისტრაცია Singleton-ად
+            builder.Services.AddSingleton(sp =>
 			{
 				var hubUrl = sp.GetRequiredService<IConfiguration>().GetSection("ServerSettings:BaseUrl").Value;
 				var serviceName = sp.GetRequiredService<IConfiguration>().GetSection("ServerSettings:ServiceName").Value;
@@ -181,7 +185,10 @@ namespace GameController.FBService
 			var clientService = app.Services.GetRequiredService<ISignalRClient>();
 			clientService.ConnectWithRetryAsync();
 
-			app.Run();
+
+            //app.UseMiddleware<FacebookSignatureMiddleware>();
+
+            app.Run();
 		}
 
 		static async Task SeedGlobalVariables(IServiceProvider services)
