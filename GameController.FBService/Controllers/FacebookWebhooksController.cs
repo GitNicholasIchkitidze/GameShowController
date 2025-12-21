@@ -90,6 +90,11 @@ public class FacebookWebhooksController : ControllerBase
 		_logger.LogInformationWithCaller($"PayLoad Received: {payload}");
 
 		var messageType = _webhookProcessorService.ExtractMessageType(payload);
+		if (string.IsNullOrEmpty(messageType))
+		{
+			_logger.LogWarningWithCaller("Message type not found in payload, skipping idempotency check. Exit to FB");
+			return Ok();
+		}
 		var messageId = _webhookProcessorService.ExtractMessageId(payload, messageType);
 		
 
@@ -226,6 +231,10 @@ public class FacebookWebhooksController : ControllerBase
 	}
 
 }
+
+
+
+
 
 
 
