@@ -6,6 +6,9 @@ namespace GameController.FBService.Tests.Fakes;
 public class InMemoryGlobalVarsKeeper : IGlobalVarsKeeper
 {
     private readonly Dictionary<string, string> _store = new();
+
+
+
     private readonly JsonSerializerOptions _opt = new(JsonSerializerDefaults.Web);
 
     public event Func<string, string?, Task>? OnChanged;
@@ -18,6 +21,8 @@ public class InMemoryGlobalVarsKeeper : IGlobalVarsKeeper
         return Task.FromResult(JsonSerializer.Deserialize<T>(json, _opt));
     }
 
+
+
     public async Task SetValueAsync<T>(string key, T value)
     {
         var json = JsonSerializer.Serialize(value, _opt);
@@ -26,6 +31,8 @@ public class InMemoryGlobalVarsKeeper : IGlobalVarsKeeper
         if (OnChanged != null)
             await OnChanged.Invoke(key, json);
     }
+
+
 
     public Task<bool> DeleteKeyAsync(string key)
         => Task.FromResult(_store.Remove(key));

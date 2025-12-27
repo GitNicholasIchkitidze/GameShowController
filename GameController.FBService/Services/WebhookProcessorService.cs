@@ -35,7 +35,8 @@ namespace GameController.FBService.Services
 		private readonly string _voteStartFlag;
 		private readonly string _pageAccessToken;
 		private readonly string _imageFolderPath;
-		private readonly int _voteMinuteRange;
+        private readonly string _defaultCandidateImageUrl;
+        private readonly int _voteMinuteRange;
 		private readonly IGlobalVarsKeeper _varsKeeper;
 
 		public WebhookProcessorService(ILogger<WebhookProcessorService> logger,
@@ -61,8 +62,9 @@ namespace GameController.FBService.Services
 			_imageFolderPath = configuration.GetValue<string>("imageFolderPath") ?? "";
 			_pageAccessToken = configuration.GetValue<string>("pageAccessToken") ?? "";
 			_voteMinuteRange = configuration.GetValue<int>("voteMinuteRange", 5);
+            _defaultCandidateImageUrl = configuration.GetValue<string>("defaultCandidateImageUrl","");
 
-			_httpClient = httpClientFactory.CreateClient();
+            _httpClient = httpClientFactory.CreateClient();
 
 
 		}
@@ -463,19 +465,15 @@ namespace GameController.FBService.Services
 		{
 			var result = new OperationResult(true);
 
-			// 🛑 ლიმიტის შემოწმება - კრიტიკული ნაბიჯი!
-			//if (await _rateLimitingService.IsRateLimitExceeded())
-			//{
-			//	_logger.LogErrorWithCaller($"RATE LIMIT EXCEEDED. Skipping sending gallery to {recipientId}.");
-			//	result.SetError($"RATE LIMIT EXCEEDED. Skipping sending gallery to {recipientId}.");
-			//	return result;
-			//}
+
+
 
 			var lockKeyForEnableVote = $"NeedForVote:{senderId}";
 			var success = await _cacheService.AcquireLockAsync(lockKeyForEnableVote, TimeSpan.FromMinutes(_voteMinuteRange));
 
-			// [RATE LIMIT CHECK] Check Rate Limit BEFORE making the API call (POST request)
-			if (!success )
+            // 🛑 ლიმიტის შემოწმება - კრიტიკული ნაბიჯი!
+            // [RATE LIMIT CHECK] Check Rate Limit BEFORE making the API call (POST request)
+            if (!success )
 			{
 				_logger.LogWarningWithCaller($"[TIME LIMIT BLOCKED] Cannot send gallery to {senderId}. TIME Limit exceeded.");
 				result.SetError($"[TIME LIMIT BLOCKED] Cannot send gallery to {senderId}. TIME Limit exceeded.");
@@ -492,7 +490,7 @@ namespace GameController.FBService.Services
 			}
 
 			// 1. Construct the API Endpoint URL
-			var requestUrl = $"https://graph.facebook.com/v18.0/me/messages?access_token={_pageAccessToken}";
+			//var requestUrl = $"https://graph.facebook.com/v18.0/me/messages?access_token={_pageAccessToken}";
 
 			// 2. Build the Carousel Elements
 			var elements = new List<object>();
@@ -504,8 +502,14 @@ namespace GameController.FBService.Services
 			{
 				var name = names[i];
 				var imageUrl = imageUrls[i];
+                
+				if (!await IsImageUrlValidAsync(imageUrl))
+                {
+                    _logger.LogWarningWithCaller($"Invalid image URL detected, fallback applied: {imageUrl}");
+                    imageUrl = _defaultCandidateImageUrl;
+                }
 
-				elements.Add(new
+                elements.Add(new
 				{
 					// Note: Title is optional in the Generic Template, but recommended for clarity.
 					title = "I Vote for", //name,
@@ -743,6 +747,30 @@ namespace GameController.FBService.Services
 		}
 
 
-	}
+        private async Task<bool> IsImageUrlValidAsync(string url)
+        {
+            try
+            {
+                using var request = new HttpRequestMessage(HttpMethod.Head, url);
+                using var response = await _httpClient.SendAsync(request);
+
+                if (!response.IsSuccessStatusCode)
+                    return false;
+
+                if (!response.Content.Headers.ContentType?.MediaType?.StartsWith("image") ?? true)
+                    return false;
+
+                if (response.Content.Headers.ContentLength > 8_000_000)
+                    return false;
+
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+    }
 
 }

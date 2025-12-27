@@ -1,6 +1,7 @@
 ﻿using FluentAssertions;
 using GameController.FBService.Heplers;
 using GameController.FBService.Tests.Fakes;
+using GameServerController.Server.Tests.Fakes;
 using Microsoft.Extensions.DependencyInjection;
 using System.Net;
 using System.Text;
@@ -51,11 +52,14 @@ public class WebhookEndToEndTests : IClassFixture<FbServiceFactory>
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         // -------- Assert (async background processing) --------
-        var handler = _factory.Services.GetRequiredService<CapturingHttpMessageHandler>();
+        //var handler = _factory.Services.GetRequiredService<CapturingHttpMessageHandler>();
+
+        var capturer = _factory.Services.GetRequiredService<CapturingDelegatingHandler>();
+
 
         await EventuallyAsync(() =>
         {
-            handler.Requests.Should().NotBeEmpty();
+            capturer.Requests.Should().NotBeEmpty();
             return Task.CompletedTask;
         });
 
@@ -65,9 +69,9 @@ public class WebhookEndToEndTests : IClassFixture<FbServiceFactory>
         //fbCall.Method.Should().Be(HttpMethod.Post);
         //fbCall.Body.Should().Contain("USER_PSID_1");
 
-        handler.Requests.Should().NotBeEmpty("No outbound requests were captured");
+        capturer.Requests.Should().NotBeEmpty("No outbound requests were captured");
 
-        var allUrls = string.Join("\n", handler.Requests.Select(r => r.Uri.AbsoluteUri));
+        var allUrls = string.Join("\n", capturer.Requests.Select(r => r.Uri.AbsoluteUri));
         allUrls.Should().Contain("/me/messages", $"Captured URLs:\n{allUrls}");
 
 

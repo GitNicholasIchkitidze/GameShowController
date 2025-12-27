@@ -6,10 +6,13 @@ public class FakeHttpClientFactory : IHttpClientFactory
 {
     private readonly HttpClient _client;
 
-    public FakeHttpClientFactory(HttpClient client)
+    public FakeHttpClientFactory(CapturingHttpMessageHandler handler)
     {
-        _client = client;
+        _client = new HttpClient(handler)
+        {
+            BaseAddress = new Uri("https://graph.facebook.com/")
+        };
     }
 
-    public HttpClient CreateClient(string name) => _client;
+    public HttpClient CreateClient(string name = "") => _client;
 }

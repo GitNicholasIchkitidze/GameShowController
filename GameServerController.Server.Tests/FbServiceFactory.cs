@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Http;
 
 namespace GameController.FBService.Tests;
 
@@ -17,29 +18,34 @@ public class FbServiceFactory : WebApplicationFactory<Program>
         {
 
             // 1) Capturing handler როგორც Singleton, რომ ტესტიდან წავიკითხოთ
-            services.AddSingleton<CapturingHttpMessageHandler>();
-
-            // 2) HttpClient, რომელიც ამ handler-ს იყენებს
-            services.AddSingleton(sp =>
-            {
-                var handler = sp.GetRequiredService<CapturingHttpMessageHandler>();
-                return new HttpClient(handler)
-                {
-                    BaseAddress = new Uri("https://graph.facebook.com/")
-                };
-            });
-
-            // 3) IHttpClientFactory ჩანაცვლება
-            services.RemoveAll<IHttpClientFactory>();
-            services.AddSingleton<IHttpClientFactory>(sp =>
-            {
-                var httpClient = sp.GetRequiredService<HttpClient>();
-                return new FakeHttpClientFactory(httpClient);
-            });
-            // აქ DI-ში ჩავანაცვლებთ რეალურ “გარე” დამოკიდებულებებს Fake-ებით.
+            //--            services.AddSingleton<CapturingHttpMessageHandler>();
+            //--
+            //--            // 2) HttpClient, რომელიც ამ handler-ს იყენებს
+            //--            services.AddSingleton(sp =>
+            //--            {
+            //--                var handler = sp.GetRequiredService<CapturingHttpMessageHandler>();
+            //--                return new HttpClient(handler)
+            //--                {
+            //--                    BaseAddress = new Uri("https://graph.facebook.com/")
+            //--                };
+            //--            });
+            //--
+            //--            // 3) IHttpClientFactory ჩანაცვლება
+            //--            services.RemoveAll<IHttpClientFactory>();
+            //--            services.AddSingleton<IHttpClientFactory>(sp =>
+            //--            {
+            //--                var httpClient = sp.GetRequiredService<HttpClient>();
+            //--                return new FakeHttpClientFactory(httpClient);
+            //--            });
+            //--            // აქ DI-ში ჩავანაცვლებთ რეალურ “გარე” დამოკიდებულებებს Fake-ებით.
             // TODO: ქვემოთ ზუსტად შენს ინტერფეისებს მოვარგებთ.
 
-            // მაგალითი:
+            services.AddSingleton<CapturingDelegatingHandler>();
+            services.RemoveAll<IHttpMessageHandlerBuilderFilter>();
+            services.AddSingleton<IHttpMessageHandlerBuilderFilter, CapturingHttpClientFilter>();
+
+
+
             services.RemoveAll<IFacebookSignatureValidator>();
             services.AddSingleton<IFacebookSignatureValidator, AllowAllSignatureValidator>();
             services.RemoveAll<IGlobalVarsKeeper>();
