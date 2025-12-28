@@ -104,12 +104,14 @@ namespace GameController.FBService.Pages.Admin
 				//.Take(200)
 				.ToListAsync();
 
-			var analytics = AnalyzeVotes(allVotes);
+			//var analytics = AnalyzeVotes(allVotes);
+			var analytics = AnalyzeVotesWithYesAndNo(allVotes);
 
-			return new JsonResult(new
+
+            return new JsonResult(new
 			{
 				// დავაბრუნოთ მხოლოდ საჭირო ველები ცხრილისთვის
-				votes = allVotes.Select(v => new { userName = v.UserId + "_" + v.UserName, message = v.Message, candidatePhone= v.CandidatePhone, timestamp = v.Timestamp }),
+				votes = allVotes.Take(100).Select(v => new { userName = v.UserId + "_" + v.UserName, message = v.Message, candidatePhone= v.CandidatePhone, timestamp = v.Timestamp }),
 				analytics = analytics // დავაბრუნოთ ანალიტიკა JS-ისთვის
 			});
 		}
@@ -119,7 +121,7 @@ namespace GameController.FBService.Pages.Admin
 			var totalVotes = votes.Count;
 			var totalUniqueUsers = votes.Select(v => v.UserId + "_" + v.UserName).Distinct().Count();
 
-			var groupedVotes = votes
+			var groupedVotes =  votes
 				.GroupBy(v => v.Message?.Trim().ToUpperInvariant() + "\t" + v.CandidatePhone?.Trim().ToUpperInvariant())
 				.Select(g => new
 				{
@@ -156,6 +158,97 @@ namespace GameController.FBService.Pages.Admin
 			};
 		}
 
+
+        private object AnalyzeVotesWithYesAndNo(List<Vote> votes)
+        {
+            var totalVotes = votes.Count;
+
+            var totalUniqueUsers = votes
+                .Select(v => v.UserId + "_" + v.UserName)
+                .Distinct()
+                .Count();
+
+            var groupedVotes = votes
+                .GroupBy(v =>
+                    (v.Message?.Split(':')[0].Trim().ToUpperInvariant() ?? "") +
+                    "\t" +
+                    (v.CandidatePhone?.Trim().ToUpperInvariant() ?? "")
+                )
+                .Select(g =>
+                {
+                    var yesCount = g.Count(v => ExtractChoice(v.Message) == "YES");
+                    var noCount = g.Count(v => ExtractChoice(v.Message) == "NO");
+
+                    return new
+                    {
+                        Option = g.Key,
+                        VoteCount = g.Count(),                  // როგორც ადრე
+                        VoteCountYes = yesCount,               // ➕ ახალი
+                        VoteCountNo = noCount,                 // ➕ ახალი
+                        UniqueUsers = g
+                            .Select(v => v.UserId + "_" + v.UserName)
+                            .Distinct()
+                            .Count(),
+                        TopUsers = g
+                            .GroupBy(v => v.UserId + "_" + v.UserName)
+                            .Select(u => new
+                            {
+                                UserName = FormatReadableIdentifier(u.Key),
+                                UserVoteCount = u.Count()
+                            })
+                            .OrderByDescending(u => u.UserVoteCount)
+                            .Take(3)
+                    };
+                })
+                .OrderByDescending(a => a.VoteCount)
+                .ToList();
+
+            return new
+            {
+                TotalVotes = totalVotes,
+                TotalUniqueUsers = totalUniqueUsers,
+                Options = groupedVotes.Select(g => new
+                {
+                    g.Option,
+                    g.VoteCount,
+                    g.VoteCountYes, // ➕
+                    g.VoteCountNo,  // ➕
+                    Percentage = totalVotes > 0
+                        ? (double)g.VoteCount / totalVotes * 100
+                        : 0,
+                    g.UniqueUsers,
+                    g.TopUsers
+                }).ToList()
+            };
+        }
+
+
+        private static string ExtractChoice(string message)
+        {
+            if (string.IsNullOrWhiteSpace(message))
+                return null;
+
+            var parts = message.Split(':', StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length != 2)
+                return null;
+
+            return parts[1].Trim().ToUpperInvariant(); // YES / NO
+        }
+
+        private static (string Candidate, string Choice) ParseVote(string message)
+        {
+            if (string.IsNullOrWhiteSpace(message))
+                return (null, null);
+
+            var parts = message.Split(':', StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length != 2)
+                return (null, null);
+
+            return (
+                parts[0].Trim(),
+                parts[1].Trim().ToUpperInvariant() // YES / NO
+            );
+        }
 
         public string FormatReadableIdentifier(string fullIdentifier)
         {

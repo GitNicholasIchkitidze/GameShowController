@@ -184,7 +184,7 @@ async function loadVotes() {
                             <tbody>
                                 <tr>
                                     <td class="fw-bold" style="width: 40%">${option.option}</td>
-                                    <td class="text-center" style="width: 30%">Votes: ${option.voteCount} (${option.percentage.toFixed(2)}%)</td>
+                                    <td class="text-center" style="width: 30%">Votes: <span class="fw-bold">${option.voteCount}</span> (${option.percentage.toFixed(2)}%) 🟢 👍 ${option.voteCountYes} - 🔴 👎 ${option.voteCountNo}</td>
                                     <td class="text-end" style="width: 30%">Unique Voter: ${option.uniqueUsers}</td>
                                 </tr>
                             </tbody>

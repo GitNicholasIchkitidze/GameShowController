@@ -226,9 +226,10 @@ namespace GameController.FBService.Services
 		{
 			var result = new OperationResult(true);
 			var voteName = payload.Split('_').Last();
+			voteName = payload.Split(':').First();
 
-			// 1. Check if the vote name corresponds to a registered client
-			var client = _registeredClients.FirstOrDefault(c => c.clientName.Equals(voteName, StringComparison.OrdinalIgnoreCase));
+            // 1. Check if the vote name corresponds to a registered client
+            var client = _registeredClients.FirstOrDefault(c => c.clientName.Equals(voteName, StringComparison.OrdinalIgnoreCase));
 			if (client == null)
 			{
 				_logger.LogWarningWithCaller($"Postback received for unknown client: {voteName}");
@@ -242,7 +243,7 @@ namespace GameController.FBService.Services
 
 			if (success)
 			{
-				var loggedInDB = await LogVoteRequestAsync(senderId, recipientId, msgId, userName, client.clientName, voteName);
+				var loggedInDB = await LogVoteRequestAsync(senderId, recipientId, msgId, userName, client.clientName, payload);
 
 				
 				if (loggedInDB.Result)
@@ -519,10 +520,17 @@ namespace GameController.FBService.Services
 					new
 					{
 						type = "postback",
-						title = $"{name}", // Georgian: Your vote for {name}
-                        payload = $"{name}" // Payload is the candidate name, used by the worker
+						title = $"{name} 🟢 👍", // Georgian: Your vote for {name}
+                        payload = $"{name}:YES" // Payload is the candidate name, used by the worker
                     }
-				}
+//					,
+//                    new
+//                    {
+//                        type = "postback",
+//                        title = $"{name} 🔴 👎", // Georgian: Your vote for {name}
+//                        payload = $"{name}:NO" // Payload is the candidate name, used by the worker
+//                    }
+                }
 				});
 			}
 

@@ -3,7 +3,6 @@ using GameController.FBService.MiddleWares;
 using GameController.FBService.Tests.Fakes;
 using GameServerController.Server.Tests.Fakes;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Http;
