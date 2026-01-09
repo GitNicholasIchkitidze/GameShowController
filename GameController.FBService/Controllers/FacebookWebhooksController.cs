@@ -8,7 +8,9 @@ using Humanizer.Configuration;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Identity.Client;
 using System.Net.Http;
+using System.Text;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 
@@ -25,13 +27,16 @@ public class FacebookWebhooksController : ControllerBase
 	private readonly IDempotencyService _dempotencyService;
 	private readonly ApplicationDbContext _dbContext;
 	//private readonly string _voteStartFlag;
-	
+	private readonly IAppMetrics _metrics;
+
 
 	private readonly IWebhookProcessorService _webhookProcessorService;
 
 	private readonly IGlobalVarsKeeper _varsKeeper;
 	private const string ListeningKey = "fb_listening_active";
 	private const string NotAcceptedVoteBackInfo = "fb_NotAcceptedVoteBackInfo";
+	private readonly string _voteStartFlag;
+	
 
 
 
@@ -42,17 +47,19 @@ public class FacebookWebhooksController : ControllerBase
 		IMessageQueueService messageQueueService,
 		IDempotencyService dempotencyService,
 		IGlobalVarsKeeper varsKeeper,
+		IAppMetrics metrics,                 // ADDED
 		IWebhookProcessorService webhookProcessorService)
 	{
 		_logger = logger;
 		_messageQueueService = messageQueueService;
 		_dbContext = dbContext;
 		_varsKeeper = varsKeeper;
+		_metrics = metrics; // ADDED
 
 		_dempotencyService = dempotencyService;
 		_webhookProcessorService = webhookProcessorService;
 		_verifyToken = configuration.GetValue<string>("verifyToken") ?? "myFbToken";
-		//_voteStartFlag = configuration.GetValue<string>("voteStartFlag") ?? "";
+		_voteStartFlag = configuration.GetValue<string>("voteStartFlag") ?? "";
 	}
 
 	[HttpGet]
@@ -74,64 +81,48 @@ public class FacebookWebhooksController : ControllerBase
 		return BadRequest("Verification failed.");
 	}
 
+	
+
+
 	[HttpPost]
-	public async Task<IActionResult> HandleWebhook([FromBody] JsonObject payload)
+	public async Task<IActionResult> HandleWebhook()
 	{
-
-		bool isListening = await _varsKeeper.GetValueAsync<bool>("fb_listening_active");
-
-		if (!isListening)
-		{
-			_logger.LogWarningWithCaller("WebHook Handled,  but not Listening To FaceBook now");
-			return Ok();
-
-		}
-
-		_logger.LogInformationWithCaller($"PayLoad Received: {payload}");
-
-		var messageType = _webhookProcessorService.ExtractMessageType(payload);
-		if (string.IsNullOrEmpty(messageType))
-		{
-			_logger.LogWarningWithCaller("Message type not found in payload, skipping idempotency check. Exit to FB");
-			return Ok();
-		}
-		var messageId = _webhookProcessorService.ExtractMessageId(payload, messageType);
-		
-
-		
-
-		if (string.IsNullOrEmpty(messageId))
-		{
-			_logger.LogWarningWithCaller("Message ID not found in payload, skipping idempotency check. Exit to FB");
-			return Ok();
-		}
-
-
-		if (await _dempotencyService.IsDuplicateAsync(messageId))
-		{
-			_logger.LogInformationWithCaller($"Duplicate Facebook message ignored: {messageId}");
-			return Ok(); 
-		}
-	
-	
+		// Goal: return 200 OK as fast as possible under heavy load (300-1000 msg/sec),
+		// and offload ALL parsing/idempotency/listening checks to the worker pipeline.
 		try
 		{
-			// CRITICAL STEP: Offload the raw payload string to the worker queue
-			await _messageQueueService.EnqueueMessageAsync(payload.ToString());
+
+			_metrics.IncIngress();
+			bool isListening = await _varsKeeper.GetValueAsync<bool>("fb_listening_active");
+			if (!isListening)
+			{
+				//await Request.Body.CopyToAsync(Stream.Null);
+				return Ok();
+			}
+
+			if (_messageQueueService.IsNearFull)
+				return Ok(); // ✅ drop early, no body read
+
+			// Read raw request body (no model-binding / JsonObject allocation).
+			using var reader = new StreamReader(Request.Body, Encoding.UTF8, detectEncodingFromByteOrderMarks: false, bufferSize: 32 * 1024, leaveOpen: true);
+			var rawPayload = await reader.ReadToEndAsync();
+
+			if (string.IsNullOrWhiteSpace(rawPayload))
+			{
+				// Nothing to process; still ACK to Facebook.
+				return Ok();
+			}
+			_messageQueueService.TryEnqueueMessage(rawPayload);
 		}
 		catch (Exception ex)
 		{
-			// Log the queuing failure but still return 200 OK to Facebook
-			_logger.LogErrorWithCaller($"Failed to enqueue message: {ex.Message}");
+			// Never fail the webhook endpoint. Always ACK to avoid FB retries/storms.
+			//_logger.LogErrorWithCaller($"Webhook ingress failed (still ACK). {ex.Message}");
 		}
 
-
-		// MUST return 200 OK immediately to satisfy Facebook's 20-second timeout.
 		return Ok();
 	}
 
-
-	
 	[HttpGet("GetFBVotes")]
 
 	public async Task<IActionResult> GetVotesAsync(DateTime? fromDate, DateTime? toDate)
@@ -148,6 +139,7 @@ public class FacebookWebhooksController : ControllerBase
 			.ToListAsync();
 
 		var analytics = AnalyzeVotes(allVotes);
+		//var analytics = AnalyzeVotesWithYesAndNo(votes);
 
 		return new JsonResult(new
 		{
@@ -196,6 +188,39 @@ public class FacebookWebhooksController : ControllerBase
 				g.UniqueUsers,
 				g.TopUsers
 			}).ToList()
+		};
+	}
+
+
+	private object AnalyzeVotesWithYesAndNo(List<Vote> votes)
+	{
+		var totalVotes = votes.Count;
+		var totalUniqueUsers = votes.Select(v => v.UserName).Distinct().Count();
+
+		var groupedVotes = votes
+			.GroupBy(v => v.Message?.Trim().ToUpperInvariant() + "\t" + v.CandidatePhone?.Trim().ToUpperInvariant())
+			.Select(g => new
+			{
+				Option = g.Key,
+				VoteCount = g.Count(),
+				VoteCountYes = g.Count(v => v.Message != null && v.Message.Trim().EndsWith(":YES", StringComparison.OrdinalIgnoreCase)),
+				VoteCountNo = g.Count(v => v.Message != null && v.Message.Trim().EndsWith(":NO", StringComparison.OrdinalIgnoreCase)),
+				Percentage = totalVotes > 0 ? (double)g.Count() / totalVotes * 100 : 0,
+				UniqueUsers = g.Select(v => v.UserName).Distinct().Count(),
+				TopUsers = g.GroupBy(v => v.UserName)
+							.Select(ug => new { User = ug.Key, Count = ug.Count() })
+							.OrderByDescending(x => x.Count)
+							.Take(5)
+							.ToList()
+			})
+			.OrderByDescending(x => x.VoteCount)
+			.ToList();
+
+		return new
+		{
+			TotalVotes = totalVotes,
+			TotalUniqueUsers = totalUniqueUsers,
+			Options = groupedVotes
 		};
 	}
 

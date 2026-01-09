@@ -2,6 +2,7 @@
 using GameController.FBService.Heplers;
 using GameController.FBService.Services;
 using StackExchange.Redis;
+using System.Collections.Concurrent;
 using System.Text.Json;
 
 public class RedisGlobalVarsKeeper : IGlobalVarsKeeper
@@ -43,6 +44,8 @@ public class RedisGlobalVarsKeeper : IGlobalVarsKeeper
 			try
 			{
 				var msg = JsonSerializer.Deserialize<RedisChangeMessage>(message);
+
+
 				if (msg != null && OnChanged != null)
 					await OnChanged.Invoke(msg.Key, msg.Value);
 			}
@@ -62,6 +65,8 @@ public class RedisGlobalVarsKeeper : IGlobalVarsKeeper
 		var json = JsonSerializer.Serialize(value, _jsonOptions);
 		var redisKey = GetKey(key);
 		await _redis.StringSetAsync(redisKey, json, _defaultTtl);
+		
+
 
 		// Publish change notification
 		var change = new RedisChangeMessage { Key = key, Value = json };
@@ -77,12 +82,16 @@ public class RedisGlobalVarsKeeper : IGlobalVarsKeeper
 	{
 
 
+
 		var val = await _redis.StringGetAsync(GetKey(key));
 		if (val.IsNullOrEmpty)
 			return default;
 
 		return JsonSerializer.Deserialize<T>(val!, _jsonOptions);
 	}
+
+	
+
 
 	public async Task<bool> ExistsAsync(string key)
 	{

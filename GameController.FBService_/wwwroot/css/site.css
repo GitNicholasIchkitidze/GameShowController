@@ -1,0 +1,28 @@
+﻿body {
+}
+
+
+@keyframes pulse-update {
+    0% {
+        background-color: transparent; /* საწყისი ფონი */
+        color: #6c757d; /* საწყისი ტექსტის ფერი (muted) */
+    }
+
+    50% {
+        background-color: #ffc107; /* მკვეთრი ფონი (მაგ., ყვითელი) */
+        color: #212529; /* მუქი ტექსტი */
+        box-shadow: 0 0 10px rgba(255, 193, 7, 0.7); /* მცირე ჩრდილი */
+    }
+
+    100% {
+        background-color: transparent; /* საწყის მდგომარეობაში დაბრუნება */
+        color: #6c757d;
+    }
+}
+
+.pulsate-effect {
+    /* ანიმაციის პარამეტრები */
+    animation: pulse-update 0.5s ease-in-out;
+    padding: 2px 5px; /* პატარა padding, რომ ფონი გამოჩნდეს */
+    border-radius: 4px;
+}

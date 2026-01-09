@@ -7,6 +7,7 @@ using Melanchall.DryWetMidi.Core;
 using Melanchall.DryWetMidi.Interaction;
 using Melanchall.DryWetMidi.MusicTheory;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Identity.Client;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -14,6 +15,7 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
+using static StackExchange.Redis.Role;
 
 namespace GameController.FBService.Services
 {
@@ -27,7 +29,7 @@ namespace GameController.FBService.Services
 												 //ISignalRClient signalRClient,
 
 
-		
+		private readonly IAppMetrics _metrics;
 		private readonly IDempotencyService _dempotencyService;
 
 		// Configuration fields moved from the controller
@@ -44,6 +46,7 @@ namespace GameController.FBService.Services
 			ICacheService cacheService,
 			IRateLimitingService rateLimitingService,
 			IConfiguration configuration,
+			IAppMetrics metrics,
 			IHttpClientFactory httpClientFactory,
 			IDempotencyService dempotencyService,
 			IGlobalVarsKeeper varsKeeper
@@ -55,6 +58,7 @@ namespace GameController.FBService.Services
 			_rateLimitingService = rateLimitingService;
 			_dempotencyService = dempotencyService;
 			_varsKeeper = varsKeeper;
+			_metrics = metrics;
 
 			// Initialization of configuration fields (moved from controller)
 			_registeredClients = configuration.GetSection("RegisteredClients").Get<List<FBClientConfiguration>>() ?? new List<FBClientConfiguration>();
@@ -74,7 +78,7 @@ namespace GameController.FBService.Services
 		// ----------------------------------------------------
 
 
-		public async Task<OperationResult> ProcessWebhookMessageAsync(string rawPayload)
+		public async Task<OperationResult> ProcessWebhookMessageAsync_OLD(string rawPayload) // RENAMED (2025-12):
 		{
 			var res = new OperationResult(true);
 			var payload = JsonNode.Parse(rawPayload)?.AsObject();
@@ -83,7 +87,10 @@ namespace GameController.FBService.Services
 			
 			var senderId = ExtractMessageSenderOrRecipientId(payload, "sender");
 			var recipientId = ExtractMessageSenderOrRecipientId(payload, "recipient");
-			var userName = await GetUserNameAsync(senderId, recipientId);
+			//var userName = await GetUserNameAsync(senderId, recipientId);
+			var gotName = await GetUserNameAsync(senderId, recipientId);
+			var userName = gotName.Result ? gotName.Message : "UNKNOWN";
+
 
 			if (senderId == recipientId)
 			{
@@ -120,6 +127,148 @@ namespace GameController.FBService.Services
 			return res;
 
 		}
+
+
+
+		public async Task<OperationResult> ProcessWebhookMessageAsync(string rawPayload)    // ADDED (2025-12):
+		{
+			// CHANGED (2025-12-29): All parsing/filtering/idempotency moved here from the controller.
+			// Controller is "ingress-only" and returns 200 ASAP.
+			var res = new OperationResult(true);
+
+			if (string.IsNullOrWhiteSpace(rawPayload))
+			{
+				res.Message = "Empty payload ignored.";
+				return res;
+			}
+
+			JsonObject? payload;
+			try
+			{
+				payload = JsonNode.Parse(rawPayload)?.AsObject();
+			}
+			catch (Exception ex)
+			{
+				// Malformed JSON - treat as a processing failure (rare, but important to see in logs).
+				res.SetError($"Invalid JSON payload: {ex.Message}");
+				return res;
+			}
+
+
+
+			// 1) Fast global "listening" gate (Redis-backed). Kept here to keep webhook ACK fast.
+			// NOTE: This is still a Redis read per message. If you need more throughput later,
+			// we can cache this value in-memory for 250-1000ms.
+			bool isListening = await _varsKeeper.GetValueAsync<bool>("fb_listening_active");
+			if (!isListening)
+			{
+				res.SetError("Listening disabled. Ignored.");
+				return res;
+			}
+
+			// 2) Determine type and apply cheap filters BEFORE any heavy work (DB/Graph/Send).
+			var messageType = ExtractMessageType(payload);
+			if (string.IsNullOrEmpty(messageType))
+			{
+				res.SetError("Message type missing. Ignored.");
+				return res;
+			}
+
+			// Only allow: voteStart text message OR postback OR reaction (optional)
+			if (messageType.Equals("message", StringComparison.OrdinalIgnoreCase))
+			{
+				var text = ExtractMessageText(payload);
+				if (!string.Equals(text, _voteStartFlag, StringComparison.OrdinalIgnoreCase))
+				{
+					// Not a voteStart request -> ignore silently (not an error)
+					res.SetError("Non-voteStart message ignored.");
+					return res;
+				}
+			}
+			else if (!messageType.Equals("postback", StringComparison.OrdinalIgnoreCase) &&
+					 !messageType.Equals("reaction", StringComparison.OrdinalIgnoreCase))
+			{
+				res.SetError($"Unsupported messageType '{messageType}' ignored.");
+				return res;
+			}
+
+			// 3) Idempotency check (moved from controller).
+			var messageId = ExtractMessageId(payload, messageType);
+			if (string.IsNullOrEmpty(messageId))
+			{
+				res.SetError("MessageId missing. Ignored.");
+				return res;
+			}
+
+			if (await _dempotencyService.IsDuplicateAsync(messageId))
+			{
+				res.SetError($"Duplicate message ignored: {messageId}");
+				return res;
+			}
+
+			// 4) Extract sender/recipient and basic validation
+			var senderId = ExtractMessageSenderOrRecipientId(payload, "sender");
+			var recipientId = ExtractMessageSenderOrRecipientId(payload, "recipient");
+
+			if (senderId=="7176465872405704")
+			{
+				var s = 1;
+			}
+
+
+            if (string.IsNullOrEmpty(senderId) || string.IsNullOrEmpty(recipientId))
+			{
+				res.SetError("Sender/Recipient missing. Ignored.");
+				return res;
+			}
+
+			if (senderId == recipientId)
+			{
+				res.SetError("Self-sent message ignored.");
+				return res;
+			}
+
+			// 5) Fetch userName ONLY when we actually process (can be expensive - GraphAPI).
+			var gotName = await GetUserNameAsync(senderId, recipientId);
+			var userName= gotName.Result ? gotName.Message : "UNKNOWN";
+
+			
+			// 6) Route to business logic
+			switch (messageType.ToLowerInvariant())
+			{
+				case "message":
+					{
+						var messageText = ExtractMessageText(payload);
+						if (!string.IsNullOrEmpty(messageText))
+						{
+							return await ProcessTextMessageAsync(senderId, recipientId, messageId, userName, messageText);
+						}
+
+						res.SetError("Empty text message ignored.");
+						return res;
+					}
+
+				case "postback":
+					{
+						var postbackPayload = ExtractMessagePostbackPayLoad(payload);
+						if (!string.IsNullOrEmpty(postbackPayload))
+						{
+							return await ProcessPostbackAsync(senderId, recipientId, messageId, userName, postbackPayload);
+						}
+
+						res.SetError("Empty postback payload ignored.");
+						return res;
+					}
+
+				case "reaction":
+					return await HandleReactionEvent(payload);
+
+				default:
+					res.SetError($"Unhandled messageType '{messageType}' ignored.");
+					return res;
+			}
+		}
+
 
 
 		/// <summary>
@@ -248,7 +397,8 @@ namespace GameController.FBService.Services
 				
 				if (loggedInDB.Result)
 				{
-                    var nextVoteTime = ((DateTime)loggedInDB.Results.GetType().GetProperty("Timestamp").GetValue(loggedInDB.Results)).AddMinutes(_voteMinuteRange);
+					_metrics.IncRecsSavedInDB();
+					var nextVoteTime = ((DateTime)loggedInDB.Results.GetType().GetProperty("Timestamp").GetValue(loggedInDB.Results)).AddMinutes(_voteMinuteRange);
                     // 4. Send Confirmation (Rate-limited, to prevent blocking)
                     var backMsg = $"თქვენი ხმა {client.clientName}-სთვის მიღებულია! მადლობა. ჩვენ კვლავ მივიღებთ თქვენს ხმას {_voteMinuteRange} წუთის მერე, {nextVoteTime} -დან";
 					//var backMsg = $"Thank you! you voted for {client.clientName}! You can vote again in {_voteMinuteRange} minutes from now! After {nextVoteTime}";
@@ -259,13 +409,13 @@ namespace GameController.FBService.Services
 						//_rateLimitingService.LogApiCall();
 						// 5. Signal the server (If SignalRClient dependency is available and needed)
 						// await _signalRClient.SendVoteUpdateAsync(client.Name, userName); 
-						_logger.LogInformationWithCaller($"Vote from {senderId} for {client.clientName} recorded. Confirmation sent (if limit allows).");
+						//_logger.LogInformationWithCaller($"Vote from {senderId} for {client.clientName} recorded. Confirmation sent (if limit allows).");
 						return result;
 					}
 					else
 					{
 						// TODO Delete from DataBase
-						result.SetError("Failed to send confirmation message.");
+						//result.SetError("Failed to send confirmation message.");
 						return result;
 						
 					}
@@ -297,7 +447,7 @@ namespace GameController.FBService.Services
 		}
 
 
-		private string getCandidateName(string VoteName)
+		private string getCandidatePhone(string VoteName)
 		{
 			var result = _registeredClients.Where(x=> x.clientName == VoteName).FirstOrDefault().phone;
 			return result;
@@ -317,8 +467,8 @@ namespace GameController.FBService.Services
 				UserName = userName,
 				UserId = senderId,
 				CandidateName = voteName,
-				CandidatePhone = string.IsNullOrEmpty(voteName) ? "" : getCandidateName(voteName),
-				Message = message
+				CandidatePhone = string.IsNullOrEmpty(voteName) ? "" : getCandidatePhone(voteName),
+				Message = message == _voteStartFlag ? message : message.IndexOf(':') > -1 ? message : message + ":YES"
 			};
 
 			try
@@ -346,6 +496,17 @@ namespace GameController.FBService.Services
 		private async Task<OperationResult> SendMessageAsync(string recipientId, string senderName, string messageText)
 		{
 			var res = new OperationResult(true);
+			if (recipientId.StartsWith("TESTUSER"))
+			{
+				return res;
+			}
+
+			if (string.IsNullOrWhiteSpace(recipientId) || recipientId.Any(ch => !char.IsDigit(ch)))
+			{
+				res.SetError($"HTTP Request error while sending message to {recipientId}.");
+				return res;
+			}
+
 
 			// [RATE LIMIT CHECK] Check Rate Limit BEFORE making the API call (POST request)
 			if (await _rateLimitingService.IsRateLimitExceeded("SendAPI:Text"))
@@ -379,7 +540,7 @@ namespace GameController.FBService.Services
 				// BEFORE this method is called (e.g., in SendRateLimitedMessageAsync).
 
 				// Log for visibility
-				_logger.LogInformationWithCaller($"Attempting to send message to {recipientId}.");
+				//_logger.LogInformationWithCaller($"Attempting to send message to {recipientId}.");
 
 				// 4. Send the HTTP Request
 				var response = await _httpClient.PostAsync(requestUrl, content);
@@ -387,7 +548,7 @@ namespace GameController.FBService.Services
 				// 5. Handle the Response
 				if (response.IsSuccessStatusCode)
 				{
-					_logger.LogInformationWithCaller($"Message successfully sent to {recipientId}.");
+					//_logger.LogInformationWithCaller($"Message successfully sent to {recipientId}.");
 					res.SetSuccess();
 				}
 				else
@@ -421,6 +582,12 @@ namespace GameController.FBService.Services
 		private async Task<OperationResult> SendMessagePayLoadSafeAsync(string recipientId, object jsonPayload)
 		{
 			var res = new OperationResult(true);
+
+			if (recipientId.StartsWith("TESTUSER"))
+			{
+				return res;
+			}
+
 			try
 			{
 				var content = new StringContent(
@@ -504,32 +671,33 @@ namespace GameController.FBService.Services
 				var name = names[i];
 				var imageUrl = imageUrls[i];
                 
-				if (!await IsImageUrlValidAsync(imageUrl))
-                {
-                    _logger.LogWarningWithCaller($"Invalid image URL detected, fallback applied: {imageUrl}");
-                    imageUrl = _defaultCandidateImageUrl;
-                }
+				//if (!await IsImageUrlValidAsync(imageUrl))
+                //{
+                //    _logger.LogWarningWithCaller($"Invalid image URL detected, fallback applied: {imageUrl}");
+                //    imageUrl = _defaultCandidateImageUrl;
+                //}
 
                 elements.Add(new
 				{
 					// Note: Title is optional in the Generic Template, but recommended for clarity.
-					title = "I Vote for", //name,
+					title = "ჩემი არჩევანია", //name,
 					image_url = imageUrl,
 					buttons = new[]
 					{
 					new
 					{
 						type = "postback",
-						title = $"{name} 🟢 👍", // Georgian: Your vote for {name}
+						title = $"{name} 👍", // Georgian: Your vote for {name}
+						//title = $"{name} 🟢 👍", // Georgian: Your vote for {name}
                         payload = $"{name}:YES" // Payload is the candidate name, used by the worker
                     }
-//					,
-//                    new
-//                    {
-//                        type = "postback",
-//                        title = $"{name} 🔴 👎", // Georgian: Your vote for {name}
-//                        payload = $"{name}:NO" // Payload is the candidate name, used by the worker
-//                    }
+					//,
+                    //new
+                    //{
+                    //    type = "postback",
+                    //    title = $"{name} 🔴 👎", // Georgian: Your vote for {name}
+                    //    payload = $"{name}:NO" // Payload is the candidate name, used by the worker
+                    //}
                 }
 				});
 			}
@@ -556,13 +724,16 @@ namespace GameController.FBService.Services
 
 			if (loggedInDB.Result)
 			{
+				_metrics.IncRecsSavedInDB();
+
+
 				result = await SendMessagePayLoadSafeAsync(senderId, jsonPayload);
 
 				if (result.Result)
 				{
 					// 5. Signal the server (If SignalRClient dependency is available and needed)
 					// await _signalRClient.SendVoteUpdateAsync(client.Name, userName); 
-					_logger.LogInformationWithCaller($"Request for Candidats from {recipientId} for {userName} recorded. Candidates Gallery sent (if limit allows).");
+					//_logger.LogInformationWithCaller($"Request for Candidats from {recipientId} for {userName} recorded. Candidates Gallery sent (if limit allows).");
 					// 📈 API ზარის დაფიქსირება
 					//_rateLimitingService.LogApiCall();
 				}
@@ -691,22 +862,57 @@ namespace GameController.FBService.Services
 		/// <summary>
 		/// Retrieves the user's name, prioritizing the Redis cache to minimize Facebook Graph API calls.
 		/// </summary>
-		private async Task<string> GetUserNameAsync(string? userId, string? recipientId)
+		private async Task<OperationResult> GetUserNameAsync(string? userId, string? recipientId)
 		{
-			if (string.IsNullOrEmpty(userId)) return "უცნობი მომხმარებელი"; // Georgian for "Unknown User"
+			var result = new OperationResult(false);
+			//if (string.IsNullOrEmpty(userId)) return "უცნობი მომხმარებელი"; // Georgian for "Unknown User"
+
+			if (string.IsNullOrWhiteSpace(userId))
+			{
+				result.SetError("UNKNOWN");
+				return result;
+				//return userId ?? "UNKNOWN";
+			}
+
+
 
 			//var cacheKey = $"userName:{userId}";
 			var cacheKey = $"FB:Recipient:{recipientId}:User:{userId}:Name";
 
 
+			if (userId.StartsWith("TESTUSER"))
+			{
+				var cacheTestKey = $"FB:Recipient:{recipientId}:User:{userId}:Name";
+				var userTestName = await _cacheService.GetAsync<string>(cacheTestKey);
+				await _cacheService.SetAsync(cacheTestKey, userTestName, TimeSpan.FromDays(7));
+				if (!string.IsNullOrEmpty(userTestName))
+				{
+					// Cache Hit! Skip the slow external API call.
+					result.SetSuccess(userTestName);
+					return result;
+					//return userTestName;
+				}
+				result.SetError("UNKNOWN");
+				return result;
+				//return userId ?? "UNKNOWN";
+			}
+
 			// 1. Check Cache
 			var userName = await _cacheService.GetAsync<string>(cacheKey);
+
+
 
 			if (!string.IsNullOrEmpty(userName))
 			{
 				// Cache Hit! Skip the slow external API call.
-				return userName;
+				result.SetSuccess(userName);
+				return result;
+
+				//return userName;
 			}
+
+
+
 
 			try
 			{
@@ -715,7 +921,9 @@ namespace GameController.FBService.Services
 				if (await _rateLimitingService.IsRateLimitExceeded("GraphAPI:GetUserName"))
 				{
 					_logger.LogWarningWithCaller($"[RATE LIMIT BLOCKED] Cannot fetch user name for {userId}. Limit exceeded.");
-					return "უცნობი მომხმარებელი"; // Fail safe: return unknown name
+					result.SetError($"უცნობი მომხმარებელი, {userId}. Limit exceeded.");
+					return result;
+					//return $"უცნობი მომხმარებელი, {userId}. Limit exceeded."; // Fail safe: return unknown name
 				}
 
 				// 2. Cache Miss: Perform the slow Facebook Graph API call
@@ -738,19 +946,25 @@ namespace GameController.FBService.Services
 					// 3. Store result in Redis for future requests (Cache for 7 days)
 					await _cacheService.SetAsync(cacheKey, userName, TimeSpan.FromDays(7));
 
-					return userName;
+					result.SetSuccess(userName);
+					return result;
+					//return userName;
 				}
 				else
 				{
 					_logger.LogErrorWithCaller($"Failed to fetch user name for {userId}. Status: {response.StatusCode}, ResquestUri {response.RequestMessage?.RequestUri?.AbsoluteUri}");
-					return "უცნობი მომხმარებელი";
+					result.SetError("უცნობი მომხმარებელი");
+					return result;
+					//return "უცნობი მომხმარებელი";
 					
 				}
 			}
 			catch (Exception ex)
 			{
 				_logger.LogErrorWithCaller($"Error calling Graph API for user {userId}. {ex}");
-				return "უცნობი მომხმარებელი"; // Fallback name
+				result.SetError("უცნობი მომხმარებელი");
+				return result;
+				//return "უცნობი მომხმარებელი"; // Fallback name
 			}
 		}
 

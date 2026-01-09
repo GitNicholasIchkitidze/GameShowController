@@ -4,46 +4,64 @@
     ViewData["Title"] = "POLL MONITOR";
 }
 
-<div class="container mt-4">
+<div class="container-xxl mt-4">
     <h2 class="mb-3">POLL MONITOR</h2>
 
     <form id="filterForm" class="row g-3 mb-4">
 
         <div class="row mb-4">
+
             <div class="col-md-4">
-                <div class="col-md-3 align-self-end">
-                    <!-- ახალი ღილაკი -->
+                <div class="col-md-6 align-self-end">
+                    <label class="form-label d-block">&nbsp;</label>
                     <button type="button" id="toggleListening" class="btn btn-primary">Listening: Loading...</button>
                 </div>
 
-                <div class="col-md-3 align-self-end">
+                <div class="col-md-6 align-self-end">
+                    <label class="form-label d-block">&nbsp;</label>
                     <button type="button" id="toggleLive" class="btn btn-success">▶ Live MODE</button>
                 </div>
 
             </div>
             
-            <div class="col-md-8">
-                <div class="col-md-2">
+            <div class="col-md-4">
+                <div class="col-md-4">
                     <label for="updateInterval" class="form-label">Refresh every</label>
                     <select id="updateInterval" class="form-select">
                         <option value="5000">5 sec</option>
-                        <option value="10000" selected>10 sec (Default)</option>
+                        <option value="10000">10 sec (Default)</option>
                         <option value="20000">20 sec</option>
                         <option value="30000">30 sec</option>
                         <option value="60000">60 sec</option>
+                        <option value="120000" selected>120 sec</option>
                     </select>
                 </div>
 
-                <div class="col-md-3">
+                <div class="col-md-8">
                     <label for="FromDate" class="form-label">Date From</label>
                     <input type="datetime-local" id="FromDate" name="FromDate" class="form-control" value="@Model.FromDate?.ToString("yyyy-MM-dd HH:mm")" />
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-8">
                     <label for="ToDate" class="form-label">Date To </label>
                     <input type="datetime-local" id="ToDate" name="ToDate" class="form-control" value="@Model.ToDate?.ToString("yyyy-MM-dd HH:mm")" />
                 </div>
 
+
             </div>
+
+            <div class="col-md-4">
+                <div class="col-md-6 align-self-end">
+                    <label class="form-label d-block">&nbsp;</label>
+                    <button type="button" id="manualRefresh" class="btn btn-outline-primary w-100">⟳ Manual Refresh</button>
+                </div>
+
+                <div class="col-md-6 align-self-end">
+                    <label class="form-label d-block">&nbsp;</label>
+                    <button type="button" id="resetMetrics" class="btn btn-outline-primary w-100">⟳ განულება </button>
+                </div>
+            </div>
+
+
         </div>
 
 
@@ -95,9 +113,135 @@
     </div>
 
 
+    <!-- ADDED (2025-12): Metrics row -->
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-dark text-white">
+                    <table class="table table-borderless mb-0">
+                        <tbody>
+                            <tr>
+                                <td class="fw-bold" style="width: 70%"><span>Queue Metrics</span></td>
+                                <td class="text-end" style="width: 30%"><span><strong>-</strong></span></></td>
+                            </tr>
+                        </tbody>
+                    </table>                    
+                </div>
+                <div class="card-body">
+                    <div>Capacity: <strong id="m_queue_capacity">-</strong></div>
+                    <div>CurrentDepth: <strong id="m_queue_depth">-</strong></div>
+                    <div>PeakDepth (since last refresh): <strong id="m_queue_peak">-</strong></div>
+                    <div>DroppedCount: <strong id="m_queue_dropped">-</strong></div>
+                    <hr />
+                    <small class="text-muted" id="m_metrics_time">Metrics: -</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-info text-white">
+                    <table class="table table-borderless mb-0">
+                        <tbody>
+                            <tr>
+                                <td class="fw-bold" style="width: 30%"><span>📈 მეტრიკები</span></td>
+                                <td class="text-end" style="width: 70%"><span><small class="text-muted" id="m_metrics_last_reset">Since: </small></span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+
+
+
+                </div>
+                <div class="card-body">
+
+                    
+
+                    <div class="table-responsive">
+                        <table class="table table-borderless mb-0">
+                            <tbody>
+                                <tr>
+                                    <td class="fw-bold" style="width: 70%">Ingress:</td>
+                                    <td class="text-end" style="width: 30%"><span><strong id="m_ingress">-</strong></span></></td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold" style="width: 70%">EnqueueOk:</td>
+                                    <td class="text-end" style="width: 30%"><span><strong id="m_enq_ok">-</strong></span></></td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold" style="width: 70%">EnqueueDropped:</td>
+                                    <td class="text-end" style="width: 30%"><span><strong id="m_enq_drop">-</strong></span></></td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold" style="width: 70%">Dequeued:</td>
+                                    <td class="text-end" style="width: 30%"><span><strong id="m_dequeued">-</strong></span></></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <hr />
+                        <table class="table table-borderless mb-0">
+                            <tbody>
+                                <tr>
+                                    <td class="fw-bold" style="width: 70%">InFlight (processing now):</td>
+                                    <td class="text-end" style="width: 30%"><span><strong id="m_inflight">-</strong></span></td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold" style="width: 70%">ProcessedOk:</td>
+                                    <td class="text-end" style="width: 30%"><span><strong id="m_proc_ok">-</strong></span></></td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold" style="width: 70%">ProcessedFailed (emojes, invalid Payloadს or Msgs):</td>
+                                    <td class="text-end" style="width: 30%"><span><strong id="m_proc_fail">-</strong></span></></td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold" style="width: 70%">GarbageMessages:</td>
+                                    <td class="text-end" style="width: 30%"><span><strong id="m_garb_msg">-</strong></span></></td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold" style="width: 70%">DB Saves:</td>
+                                    <td class="text-end" style="width: 30%"><span><strong id="m_db_save_msg">-</strong></span></></td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold" style="width: 70%">Within Time Range Messages:</td>
+                                    <td class="text-end" style="width: 30%"><span><strong id="m_not_in_time_user_msg">-</strong></span></></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
     <div class="card-header bg-primary text-white">
         <h5>📊 Last Voters</h5>
+
+        <!-- ADDED (2025-12): Paging controls for Last Voters table -->
+        <div class="d-flex align-items-center gap-2">
+            <span class="small">Rows:</span>
+            <select id="lastVotersPageSize" class="form-select form-select-sm" style="width: 90px;">
+                <option value="10">10</option>
+                <option value="25" selected>25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+            </select>
+
+            <button id="lastVotersPrev" type="button" class="btn btn-sm btn-outline-light">Prev</button>
+            <span id="lastVotersPageInfo" class="small">Page 1 / 1</span>
+            <button id="lastVotersNext" type="button" class="btn btn-sm btn-outline-light">Next</button>
+        </div>
+
     </div>
+
+    <div class="card-body">
+        <!-- ADDED (2025-12): Total rows indicator -->
+        <div id="lastVotersTotals" class="small text-muted mb-2">Total rows: -</div>
+
 
     <table class="table table-striped table-bordered">
         <thead>
@@ -120,6 +264,7 @@
             }
         </tbody>
     </table>
+    </div>
 </div>
 
 @section Scripts {

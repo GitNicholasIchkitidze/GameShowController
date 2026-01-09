@@ -1,37 +1,68 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using GameController.FBService.Services;
 using Microsoft.AspNetCore.Mvc;
-using System.Threading.Channels;
 
 namespace GameController.FBService.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class HealthController : ControllerBase
-    {
+	[Route("api/[controller]")]
+	[ApiController]
+	public class HealthController : ControllerBase
+	{
+		private readonly IMessageQueueService _queue;
+		private readonly IAppMetrics _metrics; // ADDED
 
-        private static readonly Channel<string> _ch = Channel.CreateUnbounded<string>();
 
-        [HttpGet("health")]
-        public IActionResult Health()
-        {
-            return Ok(new
-            {
-                status = "ok",
-                serverTime = DateTime.UtcNow,
-                machine = Environment.MachineName
-            });
-        }
+		public HealthController(IMessageQueueService queue, IAppMetrics metrics)
+		{
+			_queue = queue;
+			_metrics = metrics;
+		}
 
-        [HttpPost("_loadtest")]
-        public IActionResult Post([FromBody] object payload)
-        {
-            // Fast ACK – აქ არანაირი DB/ლოგიკა
-            _ = _ch.Writer.TryWrite("1");
-            return Ok();
-        }
+		[HttpGet("health")]
+		public IActionResult Health()
+		{
+			return Ok(new
+			{
+				status = "ok",
+				serverTime = DateTime.UtcNow,
+				machine = Environment.MachineName
+			});
+		}
 
-        [HttpGet("ishealth")]
-        public IActionResult IsHealth() => Ok("ok");
+		[HttpPost("loadtest")]
+		public IActionResult LoadTest()
+		{
+			_queue.TryEnqueueMessage("1");
+			return Ok();
+		}
 
-    }
+		[HttpGet("queue")]
+		public IActionResult Queue()
+		{
+			return Ok(new
+			{
+				_queue.Capacity,
+				_queue.CurrentDepth,
+				_queue.DroppedCount
+			});
+		}
+
+		[HttpGet("metrics")]
+		public IActionResult Metrics()
+		{
+			return Ok(new
+			{
+				serverTime = DateTime.UtcNow,
+				queue = new
+				{
+					_queue.Capacity,
+					_queue.CurrentDepth,
+					_queue.DroppedCount
+				},
+				counters = _metrics.Snapshot()
+			});
+		}
+
+		[HttpGet("ishealth")]
+		public IActionResult IsHealth() => Ok("ok");
+	}
 }

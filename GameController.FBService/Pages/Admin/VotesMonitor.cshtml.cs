@@ -1,44 +1,41 @@
-﻿using GameController.FBService.Models;
+﻿using Azure;
+using GameController.FBService.Extensions;
+using GameController.FBService.Models;
+using GameController.FBService.Services; // ADDED
 using GameController.Shared.Models.FaceBook;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using StackExchange.Redis;
+using System.Diagnostics;
 using System.Text.Json;
 
 namespace GameController.FBService.Pages.Admin
 {
-	public class VotesMonitorModel : PageModel
+
+	//[DetailedLog("JsonVotes")]
+	public class VotesMonitorModel(ILogger<VotesMonitorModel> logger,
+		IConfiguration configuration,
+		IMessageQueueService queue,          // ADDED
+		IAppMetrics metrics,                 // ADDED
+		IConnectionMultiplexer? connectionMultiplexer = null,
+		ApplicationDbContext? db = null) : PageModel
 	{
-		private readonly ILogger<VotesMonitorModel> _logger;
-		private readonly IDatabase? _redis;
-		private readonly ApplicationDbContext? _db; // если используешь EF Core
-		private readonly string _voteStartFlag;
+		private readonly ILogger<VotesMonitorModel> _logger = logger;
+		private readonly IDatabase? _redis = connectionMultiplexer?.GetDatabase();
+		private readonly ApplicationDbContext? _db = db; // если используешь EF Core
+		private readonly string _voteStartFlag = configuration.GetValue<string>("voteStartFlag") ?? "";
 		private readonly IConfiguration _configuration;
-
-		public VotesMonitorModel(ILogger<VotesMonitorModel> logger,
-			IConfiguration configuration,
-			IConnectionMultiplexer?	connectionMultiplexer = null,			
-			ApplicationDbContext? db = null)
-		{
-			_logger = logger;
-			_db = db;
-			_redis = connectionMultiplexer?.GetDatabase();
-			_voteStartFlag = configuration.GetValue<string>("voteStartFlag") ?? "";
-
-		}
+		private readonly IMessageQueueService _queue = queue;
+		private readonly IAppMetrics _metrics = metrics;
 
 		[BindProperty(SupportsGet = true)]
 		public DateTime? FromDate { get; set; }
-
 		[BindProperty(SupportsGet = true)]
 		public DateTime? ToDate { get; set; }
-
 		public List<Vote> Votes { get; set; } = new();
-
 		public Dictionary<string, int> Summary { get; set; } = new();
-
 		public async Task<IActionResult> OnGetAsync()
 		{
 			await LoadVotesAsync();
@@ -67,7 +64,7 @@ namespace GameController.FBService.Pages.Admin
 				Votes = await _db.FaceBookVotes
 					.Where(v => v.Timestamp >= from && v.Timestamp <= to)
 					.OrderByDescending(v => v.Timestamp)
-					.Take(50)
+					//.Take(50)
 					.ToListAsync();
 			}
 			else if (_redis != null)
@@ -85,7 +82,7 @@ namespace GameController.FBService.Pages.Admin
 						Votes.Add(vote);
 				}
 
-				Votes = Votes.OrderByDescending(v => v.Timestamp).Take(200).ToList();
+				Votes = Votes.OrderByDescending(v => v.Timestamp).ToList();
 			}
 
 			Summary = Votes
@@ -93,26 +90,99 @@ namespace GameController.FBService.Pages.Admin
 				.ToDictionary(g => g.Key, g => g.Count());
 		}
 
-		public async Task<IActionResult> OnGetJsonVotesAsync(DateTime? from, DateTime? to)
+		
+		public async Task<IActionResult> OnGetJsonVotesAsync(DateTime? from, DateTime? to, int page = 1, int pageSize = 25)
 		{
+			//Console.WriteLine($"{DateTime.Now} + OnGetJsonVotesAsync - Line: {new System.Diagnostics.StackTrace(true).GetFrame(0).GetFileLineNumber()}");
+
+			
+
 			from ??= DateTime.UtcNow.Date;
 			to ??= DateTime.UtcNow.AddDays(1);
 
-			var allVotes = await _db.FaceBookVotes
-				.Where(v => v.Timestamp >= from && v.Timestamp <= to && v.Message != _voteStartFlag)
+			// ADDED (2025-12): sanitize paging inputs
+			if (page < 1) page = 1;
+			if (pageSize < 5) pageSize = 5;
+			if (pageSize > 200) pageSize = 200;
+
+
+
+			// ADDED: base query
+			var baseQuery = _db.FaceBookVotes
+				.AsNoTracking()
+				.Where(v => v.Timestamp >= from && v.Timestamp <= to && v.Message != _voteStartFlag).OrderByDescending(v => v.Timestamp);
+			// ADDED: total count for pager
+			var totalCount = await baseQuery.CountAsync();
+			var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+			if (totalPages < 1) totalPages = 1;
+
+			if (page > totalPages) page = totalPages;
+
+			// ADDED: fetch only the requested page for Last Voters table
+			var pageVotes = await baseQuery
 				.OrderByDescending(v => v.Timestamp)
-				//.Take(200)
+				.Skip((page - 1) * pageSize)
+				.Take(pageSize)
+				.Select(v => new
+				{
+					userName = v.UserId + "_" + v.UserName,
+					message = v.Message,
+					candidatePhone = v.CandidatePhone,
+					timestamp = v.Timestamp
+				})
+				.ToListAsync();
+
+			var allVotesForAnalytics = await baseQuery
+				.OrderByDescending(v => v.Timestamp)
 				.ToListAsync();
 
 			//var analytics = AnalyzeVotes(allVotes);
-			var analytics = AnalyzeVotesWithYesAndNo(allVotes);
+			var analytics = AnalyzeVotesWithYesAndNo(allVotesForAnalytics);
 
 
-            return new JsonResult(new
+
+
+
+
+			//votes = allVotes.Take(100).Select(v => new { userName = v.UserId + "_" + v.UserName, message = v.Message, candidatePhone = v.CandidatePhone, timestamp = v.Timestamp }),
+			return new JsonResult(new
 			{
-				// დავაბრუნოთ მხოლოდ საჭირო ველები ცხრილისთვის
-				votes = allVotes.Take(100).Select(v => new { userName = v.UserId + "_" + v.UserName, message = v.Message, candidatePhone= v.CandidatePhone, timestamp = v.Timestamp }),
-				analytics = analytics // დავაბრუნოთ ანალიტიკა JS-ისთვის
+				votes = pageVotes,
+				pageVotes,
+				analytics,
+				pagination = new
+				{
+					page,
+					pageSize,
+					totalCount,
+					totalPages,
+					hasPrev = page > 1,
+					hasNext = page < totalPages
+				}
+
+			});
+		}
+
+		// ADDED (2025-12): UI metrics endpoint for the same page
+		public IActionResult OnGetJsonMetrics(bool reset = false)
+		{
+			if (reset)
+			{
+				_metrics.Reset();
+				_queue.ConsumePeakDepth(); 
+			}
+
+			return new JsonResult(new
+			{
+				serverTime = DateTime.UtcNow,
+				queue = new
+				{
+					capacity = _queue.Capacity,
+					currentDepth = _queue.CurrentDepth,
+					peakDepthSinceLastPoll = _queue.ConsumePeakDepth(),
+					droppedCount = _queue.DroppedCount
+				},
+				counters = _metrics.Snapshot()
 			});
 		}
 

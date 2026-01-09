@@ -36,6 +36,8 @@ namespace GameController.FBService
 
 			builder.Services.AddScoped<IRateLimitingService, RateLimitingService>();
 
+			builder.Services.AddSingleton<IAppMetrics, AppMetrics>();
+
 			builder.Services.AddSingleton<IMessageQueueService, MessageQueueService>(); // Singleton is often appropriate for queue clients
 			builder.Services.AddScoped<IWebhookProcessorService, WebhookProcessorService>();
 			builder.Services.AddHostedService<QueueWorkerService>();
@@ -122,6 +124,9 @@ namespace GameController.FBService
 			});
 
 			builder.Services.AddSingleton<ISignalRClient, SignalRClient>();
+
+
+
 			builder.Services.AddRazorPages();
 
 
@@ -172,9 +177,11 @@ namespace GameController.FBService
 			{
 				app.UseSwagger();
 				app.UseSwaggerUI();
+				
 			}
 
-			app.UseHttpsRedirection();
+			var enableHttps = builder.Configuration.GetValue("Features:EnableHttpsRedirection", false);
+			if (enableHttps) app.UseHttpsRedirection();
 
 			app.UseAuthorization();
 			app.UseStaticFiles();

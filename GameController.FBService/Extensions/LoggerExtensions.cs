@@ -26,6 +26,7 @@ namespace GameController.FBService.Extensions
 			[CallerMemberName] string memberName = "",
 			[CallerLineNumber] int lineNumber = 0)
 		{
+			return;
 			var eventId = new EventId(lineNumber, memberName);
 			logger.LogWarning(eventId, ex, "{Timestamp} {Message}", DateTime.Now.ToString("yyyy-MM-dd hh.mm.ss:ffffff"), message);
 		}
