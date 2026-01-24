@@ -12,12 +12,16 @@ let lastVotersTotalPages = 1;
 
 
 document.addEventListener('DOMContentLoaded', () => {
+
+    //დამატებილია 13_01 ედიტი2 - ensure bootstrap bundle is available for tooltips
+    ensureBootstrapTooltipsReady();
+
     const liveButton = document.getElementById('toggleLive');
     const intervalSelect = document.getElementById('updateInterval'); // ახალი
     const manualRefreshBtn = document.getElementById('manualRefresh'); // ADDED (2026-01)
     const resetMetricsBtn = document.getElementById('resetMetrics'); // ADDED (2026-01)
 
-    
+
 
     // ADDED (2025-12): init paging controls (Prev/Next/PageSize)
     initLastVotersPaging();
@@ -33,16 +37,16 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-    
+
     liveButton.addEventListener('click', () => {
-        
+
         liveMode = !liveMode;
         if (liveMode) {
             // Live ON
             liveButton.classList.remove('btn-success');
             liveButton.classList.add('btn-danger');
             liveButton.textContent = '■ STOP';
-            if (statusDiv) statusDiv.textContent = 'Live ON...';    
+            if (statusDiv) statusDiv.textContent = 'Live ON...';
             startLiveUpdates();
         } else {
             // Live OFF
@@ -52,10 +56,10 @@ document.addEventListener('DOMContentLoaded', () => {
             liveButton.textContent = '▶ Live MODE'; // ან 'Live MODE OFF'
             if (statusDiv) statusDiv.textContent = 'Refresh Stopped.';
             stopLiveUpdates();
-            
+
         }
     });
-        
+
     if (manualRefreshBtn) {
         manualRefreshBtn.addEventListener('click', async () => {
             await refreshOnce('manual');
@@ -66,6 +70,8 @@ document.addEventListener('DOMContentLoaded', () => {
         resetMetricsBtn.addEventListener('click', async () => {
             await loadMetrics(true);
             setText('m_metrics_last_reset', `Since: ${new Date().toLocaleString()}`);
+            setText('m_clicker_metrics_last_reset', ` Since: ${new Date().toLocaleString()}`);
+
         });
     }
 
@@ -92,29 +98,6 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error(error);
             statusDiv.textContent = 'Error loading listening status';
-            statusDiv.classList.add('text-danger');
-        }
-    }
-
-    // Toggle ფუნქცია
-    async function toggleListening_() {
-        const newStatus = !currentListening;
-        try {
-            const response = await fetch('/api/FacebookWebhooks/SetBooleanKeyValue', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ key: 'fb_listening_active', active: newStatus })
-            });
-            if (!response.ok) throw new Error('Failed to toggle status');
-            currentListening = newStatus;
-            updateButtonText();
-            statusDiv.textContent = `Listening mode changed to: ${currentListening ? 'Active' : 'Inactive'}`;
-            statusDiv.classList.remove('text-danger');
-        } catch (error) {
-            console.error(error);
-            statusDiv.textContent = 'Error toggling listening mode';
             statusDiv.classList.add('text-danger');
         }
     }
@@ -146,7 +129,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-
     // ჩატვირთვისას იძახე
     loadListeningStatus();
 
@@ -157,7 +139,11 @@ document.addEventListener('DOMContentLoaded', () => {
     loadMetrics();
     loadVotes();
 
+    //დამატებილია 13_01 ედიტი2
+    refreshTooltipsSafe();
+
 });
+
 
 // ADDED (2025-12): wire up paging controls
 function initLastVotersPaging() {
@@ -193,16 +179,6 @@ function initLastVotersPaging() {
     }
 }
 
-function startLiveUpdates_() {
-    loadVotes();
-    loadMetrics(); 
-    // ტაიმერი იღებს intervalDuration-ს
-    timer = setInterval(() => {
-        loadVotes();
-        loadMetrics(); // ✅ important
-    }, intervalDuration);
-}
-
 function stopLiveUpdates() {
     clearInterval(timer);
 }
@@ -212,84 +188,6 @@ function startLiveUpdates() {
     timer = setInterval(() => {
         refreshOnce('live-tick');
     }, intervalDuration);
-}
-
-
-async function loadVotes_OLD() {
-    try {
-        // ... (არსებული fetch ლოგიკა)
-        const from = document.getElementById('FromDate').value;
-        const to = document.getElementById('ToDate').value;
-        const response = await fetch(`/Admin/VotesMonitor?handler=JsonVotes&from=${from}&to=${to}`);
-        if (!response.ok) return;
-
-        const { votes, analytics } = await response.json();
-
-        const lastUpdatedElement = document.getElementById('lastUpdated')
-        lastUpdatedElement.classList.remove('pulsate-effect');
-        // 4. ბოლო განახლების დროის ჩვენება
-        lastUpdatedElement.textContent = `Last refresh: ${new Date().toLocaleString()}`;
-
-        lastUpdatedElement.classList.add('pulsate-effect');
-        setTimeout(() => {
-            lastUpdatedElement.classList.remove('pulsate-effect');
-        }, 500);
-
-
-        // 1. საერთო სტატისტიკის განახლება
-        document.getElementById('totalVotesCount').textContent = analytics.totalVotes;
-        document.getElementById('totalUniqueUsersCount').textContent = analytics.totalUniqueUsers;
-
-        // 2. ვარიანტების ანალიზის განახლება
-        const optionsSummary = document.getElementById('optionsSummary');
-        optionsSummary.innerHTML = analytics.options.map(option => {
-
-            // ტოპ 3 მომხმარებლის ფორმატირება
-            const topUsersList = option.topUsers.map(u =>
-                // 4. მეორე ჰორიზონტალური ხაზი
-                `<span><strong>${u.userName}</strong> (${u.userVoteCount} ხმა)</span>`
-            ).join(' | ');
-
-            return `
-                <div class="mb-3 p-2 border-bottom">
-
-
-                    <div class="table-responsive">
-                        <table class="table table-borderless mb-0">
-                            <tbody>
-                                <tr>
-                                    <td class="fw-bold" style="width: 40%">${option.option}</td>
-                                    <td class="text-center" style="width: 30%">Votes: <span class="fw-bold">${option.voteCount}</span> (${option.percentage.toFixed(2)}%) 🟢 👍 ${option.voteCountYes} - 🔴 👎 ${option.voteCountNo}</td>
-                                    <td class="text-end" style="width: 30%">Unique Voter: ${option.uniqueUsers}</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-
-
-
-                    
-                    <div class="small text-muted">
-                        Top 3 fans: ${topUsersList}
-                    </div>
-                </div>
-            `;
-        }).join('');
-
-        // 3. ცხრილის განახლება
-        const table = document.getElementById('votesTable');
-        table.innerHTML = votes.map(v => `
-            <tr>
-                <td>${v.userName}</td>
-                <td>${v.message}</td>
-                <td>${v.candidatePhone}</td>
-                <td>${new Date(v.timestamp).toLocaleString()}</td>
-            </tr>
-        `).join('');
-
-    } catch (err) {
-        console.error(err);
-    }
 }
 
 async function loadVotes() {
@@ -341,7 +239,6 @@ async function loadVotes() {
                                     <span class="text-nowrap">🔴 👎&nbsp;<strong>${option.voteCountNo}</strong></span>
                                     </td>
 
-
                                     <td class="text-end" style="width: 15%">Unique: ${option.uniqueUsers}</td>
                                 </tr>
                             </tbody>
@@ -364,6 +261,9 @@ async function loadVotes() {
                 <td>${new Date(v.timestamp).toLocaleString()}</td>
             </tr>
         `).join('');
+
+        //დამატებილია 13_01 ედიტი2 - tooltips for dynamically rendered DOM
+        refreshTooltipsSafe();
 
     } catch (err) {
         console.error(err);
@@ -393,7 +293,7 @@ function updateMetricsUI(data) {
     const q = data.queue || {};
     setText('m_queue_capacity', q.capacity);
     setText('m_queue_depth', q.currentDepth);
-    setText('m_queue_peak', q.peakDepthSinceLastPoll); 
+    setText('m_queue_peak', q.peakDepthSinceLastPoll);
     setText('m_queue_dropped', q.droppedCount);
 
     // counters (camelCase from System.Text.Json)
@@ -407,16 +307,119 @@ function updateMetricsUI(data) {
     setText('m_garb_msg', c.garbageMessages);
     setText('m_not_in_time_user_msg', c.notInTimeUserMessages);
     setText('m_db_save_msg', c.recsSavedInDB);
-    setText('m_inflight', c.inFlight); 
-    
+    setText('m_db_err_while_save', c.errorDBWhileSave);
+    setText('m_inflight', c.inFlight);
+
+    // ✅ NEW (2026-01): Clicker per-candidate / per-flag metrics
+    renderClickerMetrics(c);
 
     if (data.serverTime) {
         // show local time
         setText('m_metrics_time', `Metrics: ${new Date(data.serverTime).toLocaleString()}`);
     }
-    if (data.metricsResetDate) {
-        //setText('m_metrics_last_reset', `Since: ${new Date(data.metricsResetDate).toLocaleString()}`);
+
+    //დამატებილია 13_01 ედიტი2
+    refreshTooltipsSafe();
+}
+
+function renderClickerMetrics(counters) {
+    const tbody = document.getElementById('m_clicker_candidates_tbody');
+    const flagsBox = document.getElementById('m_clicker_flags_box');
+
+    if (!tbody || !flagsBox) return;
+
+    const saved = counters?.savedInDBByCandidate || {};
+    const bands = counters?.candidateRiskBands || {}; // ახალი დამატებული
+    const flags = counters?.candidateFlagMetrics || {};
+
+    // candidates union (saved + bands)
+    const candidatesSet = new Set([
+        ...Object.keys(saved),
+        ...Object.keys(bands)
+    ]);
+
+    const candidates = Array.from(candidatesSet);
+    if (candidates.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="text-muted">No data yet…</td></tr>`;
+        flagsBox.innerHTML = `<div class="text-muted">No data yet…</div>`;
+        return;
     }
+
+    // Sort by total (prefer SavedInDBByCandidate, fallback to sum of bands)
+    candidates.sort((a, b) => {
+        const ta = Number(saved[a] ?? sumBands(bands[a]));
+        const tb = Number(saved[b] ?? sumBands(bands[b]));
+        return tb - ta;
+    });
+
+    // Build RiskBand table: Candidate | Normal | Suspicious(30–59) | Very(60–99) | Blocked(100+)
+    tbody.innerHTML = candidates.map(candidate => {
+        const b = bands[candidate] || {};
+        const normal = b.NORMAL ?? 0;
+        const suspicious = b.SUSPICIOUS_30_59 ?? 0;
+        const verySuspicious = b.VERY_SUSPICIOUS_60_99 ?? 0;
+        const blocked = b.BLOCKED_100_PLUS ?? 0; // RiskScore >= 100  // ახალი დამატებული
+
+        return `
+            <tr>
+                <td class="fw-bold">${escapeHtml(candidate)}</td>
+                <td class="text-end">${formatInt(normal)}</td>
+                <td class="text-end">${formatInt(suspicious)}</td>
+                <td class="text-end">${formatInt(verySuspicious)}</td>
+                <td class="text-end" style="color:red">${formatInt(blocked)}</td>
+            </tr>
+        `;
+    }).join('');
+
+    // Build per-candidate top flags list (unchanged behavior)
+    flagsBox.innerHTML = candidates.map(candidate => {
+        const f = flags[candidate] || {};
+
+        // Exclude helper flags from “top list”
+        const entries = Object.entries(f)
+            .filter(([k, v]) => v > 0 && k !== 'SUSPICIOUS' && k !== 'BLOCKED')
+            .sort((a, b) => (b[1] || 0) - (a[1] || 0))
+            .slice(0, 6);
+
+        const badges = entries.length === 0
+            ? `<span class="text-muted">No flags</span>`
+            : entries.map(([k, v]) => {
+                return `<span class="badge bg-secondary me-1 mb-1">${escapeHtml(k)}: ${formatInt(v)}</span>`;
+            }).join('');
+
+        return `
+            <div class="p-2 border rounded">
+                <div class="fw-bold mb-1">${escapeHtml(candidate)}</div>
+                <div class="d-flex flex-wrap">${badges}</div>
+            </div>
+        `;
+    }).join('');
+}
+
+function sumBands(b) { // ახალი დამატებული
+    if (!b) return 0;
+    return Number(b.NORMAL ?? 0)
+        + Number(b.SUSPICIOUS_30_59 ?? 0)
+        + Number(b.VERY_SUSPICIOUS_60_99 ?? 0)
+        + Number(b.BLOCKED_100_PLUS ?? 0);
+}
+
+
+
+function formatInt(v) {
+    const n = Number(v);
+    return Number.isFinite(n) ? n.toLocaleString() : '-';
+}
+
+// Basic HTML escaping for UI safety
+function escapeHtml(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
 }
 
 // ADDED (2025-12): update paging UI text/buttons
@@ -477,4 +480,76 @@ async function refreshOnce(reason) {
             manualRefreshBtn.disabled = false;
         }
     }
+}
+
+
+//დამატებილია 13_01 ედიტი2 - robust tooltip init (dispose + init)
+// Works even if DOM is re-rendered by JS.
+function refreshTooltipsSafe() {
+    try {
+        if (!window.bootstrap || !bootstrap.Tooltip) return;
+
+        // Dispose existing instances to avoid duplicates
+        document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
+            const inst = bootstrap.Tooltip.getInstance(el);
+            if (inst) inst.dispose();
+        });
+
+        // Init new instances
+        document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
+            new bootstrap.Tooltip(el, { trigger: 'hover', html: false });
+        });
+    } catch (e) {
+        console.warn('refreshTooltipsSafe failed', e);
+    }
+}
+
+//დამატებილია 13_01 ედიტი2
+function ensureBootstrapTooltipsReady() {
+    // Already present?
+    if (window.bootstrap && bootstrap.Tooltip) return true;
+
+    // Try to load bootstrap bundle dynamically:
+    // 1) local lib path (typical for ASP.NET templates)
+    // 2) CDN fallback
+    const candidates = [
+        '/lib/bootstrap/dist/js/bootstrap.bundle.min.js',
+        '/lib/bootstrap/dist/js/bootstrap.bundle.js',
+        'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js'
+    ];
+
+    for (const src of candidates) {
+        try {
+            const ok = loadScriptOnce(src);
+            if (ok && window.bootstrap && bootstrap.Tooltip) return true;
+        } catch (e) {
+            // continue to next
+        }
+    }
+
+    console.warn('Bootstrap Tooltip is not available. Make sure Bootstrap bundle is loaded.');
+    return false;
+}
+
+//დამატებილია 13_01 ედიტი2
+function loadScriptOnce(src) {
+    return new Promise((resolve) => {
+        // If already loaded
+        const existing = Array.from(document.getElementsByTagName('script'))
+            .find(s => (s.src || '').toLowerCase() === src.toLowerCase());
+        if (existing) {
+            // give it a tick
+            setTimeout(() => resolve(true), 0);
+            return;
+        }
+
+        const s = document.createElement('script');
+        s.src = src;
+        s.async = true;
+
+        s.onload = () => resolve(true);
+        s.onerror = () => resolve(false);
+
+        document.head.appendChild(s);
+    });
 }

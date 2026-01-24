@@ -1,6 +1,7 @@
 ﻿
 
 using GameController.FBService.Extensions;
+using GameController.FBService.Heplers;
 using Microsoft.Extensions.Caching.Distributed;
 using StackExchange.Redis;
 using System.Text.Json;
@@ -20,7 +21,18 @@ namespace GameController.FBService.Services
 			_connectionMultiplexer = connectionMultiplexer;
 			_logger = logger;
 		}
-				
+
+
+		private static string EnsureRootPrefix(string key)
+		{
+			if (string.IsNullOrWhiteSpace(key)) return key;
+
+			// already rooted
+			if (key.StartsWith(RedisKeys.Root, StringComparison.OrdinalIgnoreCase))
+				return key;
+
+			return RedisKeys.Root + key;
+		}
 
 		// ------------------------------------
 		// Locking (CRITICALLY FIXED FOR ATOMICITY)
@@ -37,6 +49,7 @@ namespace GameController.FBService.Services
 
 				// THIS IS THE ATOMIC OPERATION: SET NX EX
 				// It returns TRUE ONLY if the key did not already exist.
+				key = EnsureRootPrefix(key);
 				return await db.StringSetAsync(
 					key,
 					value,
@@ -59,8 +72,8 @@ namespace GameController.FBService.Services
 			{
 				
 				var db = _connectionMultiplexer.GetDatabase();
-				var value = DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString();
-
+				//var value = DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString();
+				key = EnsureRootPrefix(key);
 				var result = await db.KeyExistsAsync(key);
 				return result;
 			}
@@ -77,6 +90,7 @@ namespace GameController.FBService.Services
 			try
 			{
 				var db = _connectionMultiplexer.GetDatabase();
+				key = EnsureRootPrefix(key);
 				var value = await db.StringGetAsync(key);
 
 				return (value.HasValue, value.HasValue ? value.ToString() : null);
@@ -105,6 +119,7 @@ namespace GameController.FBService.Services
 				var db = _connectionMultiplexer.GetDatabase();
 
 				// 1. Atomically increment the value by 1
+				key = EnsureRootPrefix(key);
 				var newCount = await db.StringIncrementAsync(key, 1);
 
 				// 2. Set the expiration only if the key was just created (i.e., newCount == 1)
@@ -131,6 +146,7 @@ namespace GameController.FBService.Services
 				var db = _connectionMultiplexer.GetDatabase();
 
 				// 1. Atomically increment the value by 1
+				key = EnsureRootPrefix(key);
 				var newCount = await db.StringIncrementAsync(key, 1);
 
 				// 2. Set the expiration only if the key was just created (i.e., newCount == 1)
@@ -159,18 +175,40 @@ namespace GameController.FBService.Services
 		/// </summary>
 		/// <returns>The new value after increment.</returns>
 	
-		public Task ReleaseLockAsync(string key)
-		{
-			// The current implementation is fine, as we rely on expiration, 
-			// but we can still remove the key if needed.
-			return _cache.RemoveAsync(key);
-		}
+		//public Task ReleaseLockAsync(string key)
+		//{
+		//	// The current implementation is fine, as we rely on expiration, 
+		//	// but we can still remove the key if needed.
+		//	key = EnsureRootPrefix(key);
+		//
+		//
+		//
+		//	return _cache.RemoveAsync(key);
+		//}
 
-		// ------------------------------------
-		// Caching (Crucial for Facebook API optimization)
-		// ------------------------------------
-		public async Task<T> GetAsync<T>(string key)
+
+        public async Task ReleaseLockAsync(string key)
+        {
+            try
+            {
+                var db = _connectionMultiplexer.GetDatabase();
+                key = EnsureRootPrefix(key);
+
+                await db.KeyDeleteAsync(key);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogErrorWithCaller($"Redis connection failure during ReleaseLockAsync for key: {key}. {ex}");
+            }
+        }
+
+
+        // ------------------------------------
+        // Caching (Crucial for Facebook API optimization)
+        // ------------------------------------
+        public async Task<T> GetAsync<T>(string key)
 		{
+			key = EnsureRootPrefix(key);
 			var value = await _cache.GetStringAsync(key);
 			if (value == null) return default;
 			return JsonSerializer.Deserialize<T>(value);
@@ -179,6 +217,7 @@ namespace GameController.FBService.Services
 		public Task SetAsync<T>(string key, T value, TimeSpan absoluteExpiration)
 		{
 			var json = JsonSerializer.Serialize(value);
+			key = EnsureRootPrefix(key);
 			return _cache.SetStringAsync(key, json, new DistributedCacheEntryOptions
 			{
 				AbsoluteExpirationRelativeToNow = absoluteExpiration

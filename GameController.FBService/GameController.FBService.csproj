@@ -7,6 +7,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="GateServices\**" />
+    <Content Remove="GateServices\**" />
+    <EmbeddedResource Remove="GateServices\**" />
+    <None Remove="GateServices\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Remove="Controllers\WeatherForecastController.cs" />
     <Compile Remove="WeatherForecast.cs" />
   </ItemGroup>

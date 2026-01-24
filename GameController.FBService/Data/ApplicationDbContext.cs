@@ -8,4 +8,5 @@ public class ApplicationDbContext : DbContext
 	}
 
 	public DbSet<Vote> FaceBookVotes { get; set; }
+    public DbSet<BanAccount> BannedAcount { get; set; }
 }

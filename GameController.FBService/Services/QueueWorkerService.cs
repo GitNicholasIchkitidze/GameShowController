@@ -37,59 +37,18 @@ namespace GameController.FBService.Services
 			_metrics = metrics;
 
 
-			_queueService = queueService;                                           // ADDED (2025-12): 
-			_scopeFactory = scopeFactory;                                           // ADDED (2025-12): 
+			_queueService = queueService;                                           
+			_scopeFactory = scopeFactory;                                           
 
 			// CHANGED: Configure worker count (default 8).
-			_workerCount = configuration.GetValue<int>("Queue:Workers", 8);         // ADDED (2025-12): 
-			if (_workerCount < 1) _workerCount = 1;                                 // ADDED (2025-12): 
+			_workerCount = configuration.GetValue<int>("Queue:Workers", 8);         
+			if (_workerCount < 1) _workerCount = 1;                                 
 		}
 
 		
 
 
-		//protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-		//{
-		//	_logger.LogInformationWithCaller("Queue Worker Service is running and listening.");
-
-		//	// The IMessageQueueService is registered as Singleton, so we can resolve it once
-		//	using var scope = _serviceProvider.CreateScope();
-		//	var queueService = scope.ServiceProvider.GetRequiredService<IMessageQueueService>();
-
-		//	// ** THIS IS THE CRITICAL CONSUMPTION LOOP **
-		//	await foreach (var rawPayload in queueService.GetMessagesAsync(stoppingToken))
-		//	{
-		//		if (stoppingToken.IsCancellationRequested) break;
-
-		//		// Log showing the message has been successfully retrieved from the channel
-		//		_logger.LogInformationWithCaller($"Worker received message payload: {rawPayload.Length} bytes. Starting processing...");
-
-		//		// 3. Create a scope for the WebhookProcessorService (which uses scoped services like ApplicationDbContext)
-		//		using (var processingScope = _serviceProvider.CreateScope())
-		//		{
-					
-
-		//			try
-		//			{
-		//				var processor = processingScope.ServiceProvider.GetRequiredService<IWebhookProcessorService>();
-		//				// 4. Pass the payload to the business logic handler
-		//				var res =await processor.ProcessWebhookMessageAsync(rawPayload);
-		//				if (res.Result)
-		//					_logger.LogInformationWithCaller("Message processing completed successfully.");
-		//				//else
-		//				//	_logger.LogErrorWithCaller($"Message processing failed. Error: {res.Message}");
-
-		//			}
-		//			catch (Exception ex)
-		//			{
-		//				// Handle errors during processing.
-		//				_logger.LogErrorWithCaller( $"Failed to process message from queue. Payload size: {rawPayload.Length}, {ex}");
-		//			}
-		//		}
-		//	}
-
-		//	_logger.LogInformationWithCaller("Queue Worker Service has stopped.");
-		//}
+		
 
 
 
@@ -151,7 +110,7 @@ namespace GameController.FBService.Services
 					// If you want to log failures, do it only when Result==false (keeps throughput).
 					if (!res.Result)
 					{
-						_logger.LogWarningWithCaller($"Worker #{workerId} message processing failed: {res.Message}");
+						//_logger.LogWarningWithCaller($"Worker #{workerId} message processing failed: {res.Message}");
 						if (res.Message == "Non-voteStart message ignored.")
 							_metrics.IncGarbageMessages();
 						else if (res.Message == "Vote denied due to rate limit.")

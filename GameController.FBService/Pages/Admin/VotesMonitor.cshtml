@@ -112,6 +112,59 @@
         </div>
     </div>
 
+    <!-- ADDED (2026-01): Clicker per-candidate / per-flag metrics -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-warning">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">🕵️ Clicker/Bot Hunter Metrics (per candidate according cummulative RiskScores) <span><small class="text-muted" id="m_clicker_metrics_last_reset"> Since: </small></span></span></h5>
+                        <small class="text-muted" id="m_clicker_metrics_hint">Live from in-memory counters</small>
+                    </div>
+                </div>
+                <div class="card-body">
+
+
+
+                    <div class="row g-3">
+
+                        <div class="col-lg-6">
+                            <div class="table-responsive">
+                                <table class="table table-sm table-striped align-middle mb-0">
+                                    <thead>
+
+
+                                        <tr>
+                                            <th style="width: 35%">Candidate</th>
+
+
+                                            <th class="text-end" style="width: 16%"><span class="badge bg-success" data-bs-toggle="tooltip" data-bs-title="ჩვეულებრივი აქტივობა">0–29 OK</span></th>
+                                            <th class="text-end" style="width: 16%"><span class="badge bg-warning text-dark" data-bs-toggle="tooltip" data-bs-title="საეჭვო ქცევა (დაკვირვება)">30–59 საეჭვო</span></th>
+                                            <th class="text-end" style="width: 16%"><span class="badge bg-dark" data-bs-toggle="tooltip" data-bs-title="ძალიან საეჭვო ქცევა (დიდი შანსი clicker/bot)">60–99 ძალიან საეჭვო</span></th>
+                                            <th class="text-end" style="width: 17%"><span class="badge bg-danger" data-bs-toggle="tooltip" data-bs-title="ბლოკირების ზღვარი (თუ BlockEnabled=true)">100+ დასაბლოკი</span></th>
+                                        </tr>
+
+                                    </thead>
+                                    <tbody id="m_clicker_candidates_tbody">
+                                        <tr><td colspan="5" class="text-muted">No data yet…</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-6">
+                            <div class="small text-muted mb-2">Top flags (per candidate)</div>
+                            <div id="m_clicker_flags_box" class="d-flex flex-column gap-2">
+                                <div class="text-muted">No data yet…</div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
 
     <!-- ADDED (2025-12): Metrics row -->
     <div class="row mb-3">
@@ -203,6 +256,12 @@
                                     <td class="text-end" style="width: 30%"><span><strong id="m_db_save_msg">-</strong></span></></td>
                                 </tr>
                                 <tr>
+                                    <td class="fw-bold" style="width: 70%">DB Err while save:</td>
+                                    <td class="text-end" style="width: 30%"><span><strong id="m_db_err_while_save">-</strong></span></></td>
+                                </tr>
+
+
+                                <tr>
                                     <td class="fw-bold" style="width: 70%">Within Time Range Messages:</td>
                                     <td class="text-end" style="width: 30%"><span><strong id="m_not_in_time_user_msg">-</strong></span></></td>
                                 </tr>
@@ -215,6 +274,10 @@
             </div>
         </div>
     </div>
+
+
+
+
 
 
 

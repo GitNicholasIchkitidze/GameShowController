@@ -1,6 +1,8 @@
 ﻿
+using GameController.FBService.AntiBotServices;
 using GameController.FBService.Heplers;
 using GameController.FBService.MiddleWares;
+using GameController.FBService.Models;
 using GameController.FBService.Services;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.EntityFrameworkCore;
@@ -8,6 +10,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.Extensions.Logging;
 using Microsoft.Identity.Client;
 using StackExchange.Redis;
+using static GameController.FBService.Heplers.RedisKeys;
 
 namespace GameController.FBService
 {
@@ -74,7 +77,7 @@ namespace GameController.FBService
 				var keeper = new RedisGlobalVarsKeeper(
 					redis,
 					logger,
-					prefix: "GameController:Vars",
+					prefix: RedisKeys.Vars.Prefix,// "GameController:Vars",
 					defaultTtl: null // null ნიშნავს: არ იწურება
 				);
 
@@ -95,11 +98,16 @@ namespace GameController.FBService
 
 			//builder.Services.AddSingleton<IFacebookSignatureValidator>(sp =>
 			//new FacebookSignatureValidator(sp.GetRequiredService<IConfiguration>().GetSection("Facebook:AppSecret").Value));
+
+
+			builder.Services.Configure<ClickerOptions>(builder.Configuration.GetSection("Clicker")); // ახალი დამატებული            
+
+            builder.Services.AddSingleton<IClickerDetectionService, RedisClickerDetectionService>(); // ახალი დამატებული
+
+            builder.Services.AddSingleton<ICommonHelper, CommonHelper>(); 
+            builder.Services.AddSingleton<IPayloadHelper, PayloadHelper>(); 
+
             
-			
-
-
-
             builder.Services.AddControllers();
 
 
@@ -125,6 +133,9 @@ namespace GameController.FBService
 
 			builder.Services.AddSingleton<ISignalRClient, SignalRClient>();
 
+
+			builder.Services.Configure<VotingOptions>(builder.Configuration.GetSection("Voting"));
+			builder.Services.AddSingleton<IRedisTtlProvider, RedisTtlProvider>();
 
 
 			builder.Services.AddRazorPages();

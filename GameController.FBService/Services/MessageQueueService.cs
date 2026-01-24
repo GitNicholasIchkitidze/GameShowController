@@ -78,21 +78,10 @@ namespace GameController.FBService.Services
 
 
 		
-		public Task EnqueueMessageAsync(string messagePayload)// ADDED (2025-12): 
+		public Task EnqueueMessageAsync(string messagePayload)
 		{
-			///// NOTE: We do NOT block here. If full, it drops (same as TryEnqueueMessage behavior).
 			_ = TryEnqueueMessage(messagePayload);
 			return Task.CompletedTask;
-
-
-			if (messagePayload == null) throw new ArgumentNullException(nameof(messagePayload));
-
-			//await _channel.Writer.WriteAsync(messagePayload);
-			Interlocked.Increment(ref _depth);
-
-			_logger.LogDebug("[QUEUE] EnqueueMessageAsync wrote payload. Bytes={Bytes}, Depth={Depth}", messagePayload.Length, CurrentDepth);
-
-
 		}
 
 		

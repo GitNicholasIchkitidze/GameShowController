@@ -1,47 +1,70 @@
 ﻿using Azure;
+using GameController.FBService.AntiBotServices;
 using GameController.FBService.Extensions;
 using GameController.FBService.Heplers;
+
 using GameController.FBService.Models;
 using GameController.Shared.Models;
 using Melanchall.DryWetMidi.Core;
 using Melanchall.DryWetMidi.Interaction;
 using Melanchall.DryWetMidi.MusicTheory;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.Identity.Client;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Net.WebSockets;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
+using System.Xml.Linq;
+using static Azure.Core.HttpHeader;
 using static StackExchange.Redis.Role;
 
 namespace GameController.FBService.Services
 {
-	public class WebhookProcessorService : IWebhookProcessorService
+	public class WebhookProcessorService : IWebhookProcessorService 
 	{
 		private readonly ILogger<WebhookProcessorService> _logger;
 		private readonly ApplicationDbContext _dbContext;
 		private readonly ICacheService _cacheService; // NEW: Redis service
 		private readonly IRateLimitingService _rateLimitingService; // Existing service, now Redis-backed
 		private readonly HttpClient _httpClient; // HttpClient from the original controller
-												 //ISignalRClient signalRClient,
+                                                 //ISignalRClient signalRClient,
 
+        private readonly VotingOptions _voting;
 
-		private readonly IAppMetrics _metrics;
+        private readonly IAppMetrics _metrics;
 		private readonly IDempotencyService _dempotencyService;
 
 		// Configuration fields moved from the controller
 		private readonly List<FBClientConfiguration> _registeredClients;
 		private readonly string _voteStartFlag;
-		private readonly string _pageAccessToken;
+        private readonly string _voteSession;
+        private readonly string _pageAccessToken;
 		private readonly string _imageFolderPath;
         private readonly string _defaultCandidateImageUrl;
+		private readonly string _defaultAskConfirmationImageUrl;
         private readonly int _voteMinuteRange;
-		private readonly IGlobalVarsKeeper _varsKeeper;
+		private readonly int _voteConfirmationDuration;
+        private readonly bool _checkForClickers;
+		private readonly bool _sendVoteConfirmationToBadUsers;
+        private readonly bool _sendVoteConfirmationToAllUsers;
+        private readonly IGlobalVarsKeeper _varsKeeper;
 
-		public WebhookProcessorService(ILogger<WebhookProcessorService> logger,
+		private readonly IConfiguration _configuration;
+		private readonly IClickerDetectionService _clickerDetection;
+
+		private readonly IRedisTtlProvider _ttl;
+
+
+        private readonly ICommonHelper _commonHelper;
+        private readonly IPayloadHelper _payloadHelper;
+
+        public WebhookProcessorService(ILogger<WebhookProcessorService> logger,
 			ApplicationDbContext dbContext,
 			ICacheService cacheService,
 			IRateLimitingService rateLimitingService,
@@ -49,8 +72,14 @@ namespace GameController.FBService.Services
 			IAppMetrics metrics,
 			IHttpClientFactory httpClientFactory,
 			IDempotencyService dempotencyService,
-			IGlobalVarsKeeper varsKeeper
-			)
+			IRedisTtlProvider ttl,
+			IClickerDetectionService clickerDetection,
+			IGlobalVarsKeeper varsKeeper,
+            IPayloadHelper payloadHelper,
+            IOptions<VotingOptions> voting,
+            ICommonHelper commonHelper
+
+            )
 		{
 			_logger = logger;
 			_dbContext = dbContext;
@@ -59,74 +88,40 @@ namespace GameController.FBService.Services
 			_dempotencyService = dempotencyService;
 			_varsKeeper = varsKeeper;
 			_metrics = metrics;
+            _voting = voting.Value;
 
-			// Initialization of configuration fields (moved from controller)
-			_registeredClients = configuration.GetSection("RegisteredClients").Get<List<FBClientConfiguration>>() ?? new List<FBClientConfiguration>();
+            // Initialization of configuration fields (moved from controller)
+            _registeredClients = configuration.GetSection("RegisteredClients").Get<List<FBClientConfiguration>>() ?? new List<FBClientConfiguration>();
 			_voteStartFlag = configuration.GetValue<string>("voteStartFlag") ?? "";
-			_imageFolderPath = configuration.GetValue<string>("imageFolderPath") ?? "";
+			_voteSession = configuration.GetValue<string>("VoteSessionPrefix") ?? "";
+            _imageFolderPath = configuration.GetValue<string>("imageFolderPath") ?? "";
 			_pageAccessToken = configuration.GetValue<string>("pageAccessToken") ?? "";
 			_voteMinuteRange = configuration.GetValue<int>("voteMinuteRange", 5);
+            _checkForClickers = configuration.GetValue<bool>("checkForClickers", false);
+            _sendVoteConfirmationToBadUsers = configuration.GetValue<bool>("sendVoteConfirmationToBadUsers", false);
+            _sendVoteConfirmationToAllUsers = configuration.GetValue<bool>("sendVoteConfirmationToAllUsers", false);
+            _voteConfirmationDuration = configuration.GetValue<int>("voteConfirmationDuration", 120);
             _defaultCandidateImageUrl = configuration.GetValue<string>("defaultCandidateImageUrl","");
+            _defaultAskConfirmationImageUrl = configuration.GetValue<string>("defaultAskConfirmationImageUrl", "");
 
             _httpClient = httpClientFactory.CreateClient();
 
+			_configuration = configuration;
+			_ttl = ttl;
+			_voteMinuteRange = _ttl.VoteCooldown.Minutes;
+			_clickerDetection = clickerDetection;
+            _payloadHelper = payloadHelper;
 
-		}
+            _commonHelper = commonHelper;
+
+        }
 
 		// ----------------------------------------------------
 		// CORE WEBHOOK PROCESSING METHOD
 		// ----------------------------------------------------
 
 
-		public async Task<OperationResult> ProcessWebhookMessageAsync_OLD(string rawPayload) // RENAMED (2025-12):
-		{
-			var res = new OperationResult(true);
-			var payload = JsonNode.Parse(rawPayload)?.AsObject();
-			var messageType = ExtractMessageType(payload);
-			var messageId = ExtractMessageId(payload, messageType);
-			
-			var senderId = ExtractMessageSenderOrRecipientId(payload, "sender");
-			var recipientId = ExtractMessageSenderOrRecipientId(payload, "recipient");
-			//var userName = await GetUserNameAsync(senderId, recipientId);
-			var gotName = await GetUserNameAsync(senderId, recipientId);
-			var userName = gotName.Result ? gotName.Message : "UNKNOWN";
-
-
-			if (senderId == recipientId)
-			{
-				_logger.LogWarningWithCaller("Sender ID is the same as Recipient ID. Ignoring self-sent message.");
-				res.Message = "Ignored self-sent message.";
-				return res;
-			}
-				
-
-			switch (messageType)
-			{
-				case "message":
-					if (string.IsNullOrEmpty(senderId)) break;
-					var messageText = ExtractMessageText(payload);
-					if (!string.IsNullOrEmpty(messageText))
-					{
-						res = await ProcessTextMessageAsync(senderId, recipientId, messageId, userName, messageText);
-					}
-					break;
-				case "postback":							
-
-					if (string.IsNullOrEmpty(senderId)) break;
-					var postbackPayload = ExtractMessagePostbackPayLoad(payload);
-					if (!string.IsNullOrEmpty(postbackPayload))
-					{
-						res = await ProcessPostbackAsync(senderId, recipientId, messageId, userName, postbackPayload);
-					}
-
-					break;
-				case "reaction":
-					res = await HandleReactionEvent(payload);
-					break;
-			}
-			return res;
-
-		}
+		
 
 
 
@@ -167,7 +162,7 @@ namespace GameController.FBService.Services
 			}
 
 			// 2) Determine type and apply cheap filters BEFORE any heavy work (DB/Graph/Send).
-			var messageType = ExtractMessageType(payload);
+			var messageType = _payloadHelper. ExtractMessageType(payload);
 			if (string.IsNullOrEmpty(messageType))
 			{
 				res.SetError("Message type missing. Ignored.");
@@ -177,7 +172,7 @@ namespace GameController.FBService.Services
 			// Only allow: voteStart text message OR postback OR reaction (optional)
 			if (messageType.Equals("message", StringComparison.OrdinalIgnoreCase))
 			{
-				var text = ExtractMessageText(payload);
+				var text =_payloadHelper.ExtractMessageText(payload);
 				if (!string.Equals(text, _voteStartFlag, StringComparison.OrdinalIgnoreCase))
 				{
 					// Not a voteStart request -> ignore silently (not an error)
@@ -193,7 +188,7 @@ namespace GameController.FBService.Services
 			}
 
 			// 3) Idempotency check (moved from controller).
-			var messageId = ExtractMessageId(payload, messageType);
+			var messageId = _payloadHelper.ExtractMessageId(payload, messageType);
 			if (string.IsNullOrEmpty(messageId))
 			{
 				res.SetError("MessageId missing. Ignored.");
@@ -207,13 +202,17 @@ namespace GameController.FBService.Services
 			}
 
 			// 4) Extract sender/recipient and basic validation
-			var senderId = ExtractMessageSenderOrRecipientId(payload, "sender");
-			var recipientId = ExtractMessageSenderOrRecipientId(payload, "recipient");
+			var senderId = _payloadHelper.ExtractMessageSenderOrRecipientId(payload, "sender");
+			var recipientId = _payloadHelper.ExtractMessageSenderOrRecipientId(payload, "recipient");
 
-			if (senderId=="7176465872405704")
-			{
-				var s = 1;
-			}
+			
+            if (!_commonHelper.IsThisMe(senderId))
+            {
+                res.SetError($"Halted by Debug purposes: 200");
+                return res;
+
+            }
+			
 
 
             if (string.IsNullOrEmpty(senderId) || string.IsNullOrEmpty(recipientId))
@@ -238,7 +237,7 @@ namespace GameController.FBService.Services
 			{
 				case "message":
 					{
-						var messageText = ExtractMessageText(payload);
+						var messageText = _payloadHelper.ExtractMessageText(payload);
 						if (!string.IsNullOrEmpty(messageText))
 						{
 							return await ProcessTextMessageAsync(senderId, recipientId, messageId, userName, messageText);
@@ -250,11 +249,47 @@ namespace GameController.FBService.Services
 
 				case "postback":
 					{
-						var postbackPayload = ExtractMessagePostbackPayLoad(payload);
+
+						var postbackPayload = _payloadHelper.ExtractMessagePostbackPayLoad(payload);
+
+						//if (!postbackPayload.StartsWith(_voteSession))
+						//{
+						//	return await ProcessTextMessageAsync(senderId, recipientId, messageId, userName, _voteStartFlag);
+                        //}
+						//else
+						//{
+                        //    postbackPayload = postbackPayload[_voteSession.Length..];
+						//
+                        //}
+
+
+
 						if (!string.IsNullOrEmpty(postbackPayload))
 						{
-							return await ProcessPostbackAsync(senderId, recipientId, messageId, userName, postbackPayload);
-						}
+							var postbackPayloadSplitted = postbackPayload.Split('_');
+
+                            if (postbackPayloadSplitted.Count() > 1)
+							{
+								DateTime.TryParse(postbackPayloadSplitted[1], out DateTime dateResult);
+                                
+								if (dateResult.AddSeconds(_voteConfirmationDuration) > DateTime.Now)
+								{
+                                    _logger.LogWarningWithCaller($"Vote CONFIRMATION TIME IS OK {dateResult.AddSeconds(_voteConfirmationDuration)} is more than  arrival {DateTime.Now}. ");
+                                    postbackPayload = postbackPayloadSplitted[0] + ":" + postbackPayloadSplitted[2] + "Confirmed";
+
+                                }
+								else
+								{
+                                    _logger.LogWarningWithCaller($"Vote CONFIRMATION TIME ELAPSED {dateResult.AddSeconds(_voteConfirmationDuration)} is less than  arrival {DateTime.Now}. ");
+                                    res.SetError("Vote Confirmation Time elapsed.");
+                                    return res;
+                                }
+
+                            }
+
+							
+                            return await ProcessPostbackAsync_TryCatchClicker_Alter(senderId, recipientId, messageId, userName, postbackPayload);
+                        }
 
 						res.SetError("Empty postback payload ignored.");
 						return res;
@@ -330,10 +365,15 @@ namespace GameController.FBService.Services
 			{
 
 
-				var lockKeyForVote = $"vote:{senderId}:{recipientId}";
-				var lockKeyForEnableVote = $"NeedForVote:{senderId}:{recipientId}";
-				var isLockedKeyForVote = await _cacheService.GetAcquiredLockAsync(lockKeyForVote, TimeSpan.FromMinutes(_voteMinuteRange));
-				var isLockedKeyForEnableVote = await _cacheService.GetAcquiredLockAsync(lockKeyForEnableVote, TimeSpan.FromMinutes(_voteMinuteRange));
+				//var lockKeyForVote = $"vote:{senderId}:{recipientId}";
+				//var lockKeyForEnableVote = $"NeedForVote:{senderId}:{recipientId}";
+				var lockKeyForVote = RedisKeys.FB.Native.VoteLock(recipientId, senderId);                 // ახალი დამატებული
+				var lockKeyForEnableVote = RedisKeys.FB.Native.NeedForVoteLock(recipientId, senderId);   //
+
+				//var isLockedKeyForVote = await _cacheService.GetAcquiredLockAsync(lockKeyForVote, TimeSpan.FromMinutes(_voteMinuteRange));
+				var isLockedKeyForVote = await _cacheService.GetAcquiredLockAsync(lockKeyForVote, _ttl.VoteCooldown);
+				//var isLockedKeyForEnableVote = await _cacheService.GetAcquiredLockAsync(lockKeyForEnableVote, TimeSpan.FromMinutes(_voteMinuteRange));
+				var isLockedKeyForEnableVote = await _cacheService.GetAcquiredLockAsync(lockKeyForEnableVote, _ttl.VoteCooldown);
 				if (!isLockedKeyForVote && !isLockedKeyForEnableVote)
 				{
 					// 1. Get image and name lists
@@ -386,18 +426,80 @@ namespace GameController.FBService.Services
 				return result;
 			}
 
-			// 2. Try to acquire the lock (Rate Limiting per user)
-			var lockKey = $"vote:{senderId}";
-			var success = await _cacheService.AcquireLockAsync(lockKey, TimeSpan.FromMinutes(_voteMinuteRange));
+			var lockKey = RedisKeys.FB.Native.VoteLock(recipientId, senderId); // ახალი დამატებული
+
+			
+			var success = await _cacheService.AcquireLockAsync(lockKey, _ttl.VoteCooldown);
+            _logger.LogWarningWithCaller($"VoteLock  {lockKey}  after AcquireLockAsync");
 
 			if (success)
 			{
-				var loggedInDB = await LogVoteRequestAsync(senderId, recipientId, msgId, userName, client.clientName, payload);
+				var decision = new ClickerDecision();
+
+				if (_checkForClickers)
+				{
+					decision = await _clickerDetection.EvaluateAsync(recipientId, senderId, userName, DateTime.UtcNow); // ახალი დამატებული
+
+					_metrics.IncRiskBandByCandidate(client.clientName, decision.RiskScore, 100, 160); // Blocked=RiskScore>=100
+					_metrics.IncCandidateFlags(client.clientName, decision.Flags);
+
+					//if (decision?.Flags != null)
+					//{
+					//	foreach (var f in decision.Flags)
+					//		_metrics.IncCandidateFlag(client.clientName, f);
+					//}
+
+					if (decision?.IsSuspicious == true)
+					{
+						_metrics.IncSuspiciousByCandidate(client.clientName);
+					}
+
+                    // ShouldBlock თუ გინდა
+                    //decision.ShouldBlock = true;
+
+
+
+					//if (decision?.ShouldBlock == true  )
+                    if (decision != null && !payload.EndsWith("Confirmed", StringComparison.Ordinal))
+                    {
+						_metrics.IncBlockedByCandidate(client.clientName);
+						await LogClickerAccountAsync(senderId, recipientId, msgId, userName, client.clientName, payload, decision);
+
+						if (_sendVoteConfirmationToBadUsers)
+						{
+
+							var names = new List<string>();
+							//foreach (var candidat in _registeredClients)
+							//{
+							//	names.Add(candidat.clientName);
+							//}
+
+                            names.Add(voteName);
+                            names.Add("-");
+                            names.Add("-");
+
+                            _logger.LogWarningWithCaller($"VoteLock  {lockKey} before ReleaseLockAsync");
+                            await _cacheService.ReleaseLockAsync(lockKey);
+                            var stillLocked = await _cacheService.GetAcquiredLockAsync(lockKey);
+                            _logger.LogWarningWithCaller($"[DEBUG] After ReleaseLockAsync: lockKey={lockKey}, stillLocked={stillLocked}");
+
+
+                            return await SendAskForVoteConfirmationAsyncWithButtons(senderId, new List<string> { _defaultAskConfirmationImageUrl }, names);
+
+
+						}
+					}
+				}
+				
+
+
+				var loggedInDB = await LogVoteRequestAsync(senderId, recipientId, msgId, userName, client.clientName, payload, decision);
 
 				
 				if (loggedInDB.Result)
 				{
-					_metrics.IncRecsSavedInDB();
+
+
 					var nextVoteTime = ((DateTime)loggedInDB.Results.GetType().GetProperty("Timestamp").GetValue(loggedInDB.Results)).AddMinutes(_voteMinuteRange);
                     // 4. Send Confirmation (Rate-limited, to prevent blocking)
                     var backMsg = $"თქვენი ხმა {client.clientName}-სთვის მიღებულია! მადლობა. ჩვენ კვლავ მივიღებთ თქვენს ხმას {_voteMinuteRange} წუთის მერე, {nextVoteTime} -დან";
@@ -446,18 +548,170 @@ namespace GameController.FBService.Services
 			
 		}
 
+        private async Task<OperationResult> ProcessPostbackAsync_TryCatchClicker(string senderId, string recipientId, string msgId, string userName, string payload)
+        {
+            var result = new OperationResult(true);
+            var voteName = payload.Split('_').Last();
+            voteName = payload.Split(':').First();
 
-		private string getCandidatePhone(string VoteName)
+            // 1. Check if the vote name corresponds to a registered client
+            var client = _registeredClients.FirstOrDefault(c => c.clientName.Equals(voteName, StringComparison.OrdinalIgnoreCase));
+            if (client == null)
+            {
+                _logger.LogWarningWithCaller($"Postback received for unknown client: {voteName}");
+                result.SetError($"Unknown client: {voteName}");
+                return result;
+            }
+
+            var lockKey = RedisKeys.FB.Native.VoteLock(recipientId, senderId); 
+
+
+            var success = await _cacheService.AcquireLockAsync(lockKey, _ttl.VoteCooldown);
+            _logger.LogWarningWithCaller($"VoteLock  {lockKey}  after AcquireLockAsync");
+
+            if (success)
+            {
+                var decision = new ClickerDecision();
+
+                if (_checkForClickers)
+                {
+                    decision = await _clickerDetection.EvaluateAsync(recipientId, senderId, userName, DateTime.UtcNow); // ახალი დამატებული
+
+					await _clickerDetection.ApplyClikerMetrics(client.clientName, decision);
+
+
+
+
+
+
+                    if (decision?.ShouldBlock == true  )                    
+                    {
+                        
+                        await LogClickerAccountAsync(senderId, recipientId, msgId, userName, client.clientName, payload, decision);
+
+                        if (_sendVoteConfirmationToBadUsers)
+                        {
+
+                            var names = new List<string>();
+
+                            names.Add(voteName);
+                            names.Add("-");
+                            names.Add("-");
+
+                            //_logger.LogWarningWithCaller($"VoteLock  {lockKey} before ReleaseLockAsync");
+                            await _cacheService.ReleaseLockAsync(lockKey);
+                            var stillLocked = await _cacheService.GetAcquiredLockAsync(lockKey);
+                            //_logger.LogWarningWithCaller($"[DEBUG] After ReleaseLockAsync: lockKey={lockKey}, stillLocked={stillLocked}");
+
+
+                            return await SendAskForVoteConfirmationAsyncWithButtons(senderId, new List<string> { _defaultAskConfirmationImageUrl }, names);
+
+
+                        }
+                    }
+                }
+
+
+
+                var loggedInDB = await LogVoteRequestAsync(senderId, recipientId, msgId, userName, client.clientName, payload, decision);
+
+
+                if (loggedInDB.Result)
+                {
+
+
+                    var nextVoteTime = ((DateTime)loggedInDB.Results.GetType().GetProperty("Timestamp").GetValue(loggedInDB.Results)).AddMinutes(_voteMinuteRange);
+                    // 4. Send Confirmation (Rate-limited, to prevent blocking)
+                    var backMsg = $"თქვენი ხმა {client.clientName}-სთვის მიღებულია! მადლობა. ჩვენ კვლავ მივიღებთ თქვენს ხმას {_voteMinuteRange} წუთის მერე, {nextVoteTime} -დან";
+                    //var backMsg = $"Thank you! you voted for {client.clientName}! You can vote again in {_voteMinuteRange} minutes from now! After {nextVoteTime}";
+                    result = await SendMessageAsync(senderId, userName, backMsg);
+                    if (result.Result)
+                    {
+                        // Log API Call
+                        //_rateLimitingService.LogApiCall();
+                        // 5. Signal the server (If SignalRClient dependency is available and needed)
+                        // await _signalRClient.SendVoteUpdateAsync(client.Name, userName); 
+                        //_logger.LogInformationWithCaller($"Vote from {senderId} for {client.clientName} recorded. Confirmation sent (if limit allows).");
+                        return result;
+                    }
+                    else
+                    {
+                        // TODO Delete from DataBase
+                        //result.SetError("Failed to send confirmation message.");
+                        return result;
+
+                    }
+
+                }
+                else
+                {
+                    // TODO DO NOthing
+                    result.SetError("Failed to log vote in database.");
+                    return result;
+                }
+
+            }
+            else
+            {
+                _logger.LogWarningWithCaller($"Vote from {senderId} for {voteName} NOT registered due to rate limit ({_voteMinuteRange} min). Confirmation skipped as per request.");
+
+                // ❌ მოთხოვნისამებრ: დავაკომენტარეთ უარყოფითი პასუხის გაგზავნა.
+
+                bool sendNotAcceptedVoteBackInfo = await _varsKeeper.GetValueAsync<bool>("fb_NotAcceptedVoteBackInfo");
+                if (sendNotAcceptedVoteBackInfo)
+                    await SendMessageAsync(senderId, userName, $"თქვენი ბოლო ხმის მიცემიდან არ გასულა {_voteMinuteRange} წუთი.");
+                //await SendMessageAsync(senderId, userName, $"It's been less than {_voteMinuteRange} minutes since your last vote. Please try again later.");
+
+                result.SetError("Vote denied due to rate limit.");
+                return result;
+            }
+
+
+        }
+
+
+
+
+
+        private async Task<OperationResult> LogClickerAccountAsync(string senderId, string recipientId, string MSGId, string userName, string voteName, string message, ClickerDecision decision = null)
 		{
-			var result = _registeredClients.Where(x=> x.clientName == VoteName).FirstOrDefault().phone;
-			return result;
-		}
+            var result = new OperationResult(false);
+			var accountForBan = new BanAccount
+			{
+                Id = $"{senderId}.{DateTime.Now.ToString("yyyyMMddHHmmssfff")}",
+                UserId = senderId,
+				UserProvider = "FB",
+				UserName = userName,
+				IsSuspicious = decision.IsSuspicious,
+				RiskScore = decision.RiskScore,
+				Flags = decision.Flags,
+				ShouldBlock = decision.ShouldBlock,
+				Banned = true,
+				BannedMsg = "BanMSG",
+				BannedDate = DateTime.Now
+			};
+
+            try
+            {
+                await _dbContext.BannedAcount.AddAsync(accountForBan);
+                await _dbContext.SaveChangesAsync();
+                result.SetSuccess();
+                result.Results = new { accountForBan.UserId, accountForBan.BannedDate};
+            }
+            catch (Exception ex)
+            {
+                result.SetError($"{ex}");
+            }
 
 
-		private async Task<OperationResult> LogVoteRequestAsync(string senderId, string recipientId, string MSGId, string userName, string voteName, string message)
+            return result;
+        }
+
+        private async Task<OperationResult> LogVoteRequestAsync(string senderId, string recipientId, string MSGId, string userName, string voteName, string message, ClickerDecision? decision = null)
 		{
 			var result = new OperationResult(false);
 
+			
 			var newVote = new Vote
 			{
 				Timestamp = DateTime.Now,
@@ -467,21 +721,33 @@ namespace GameController.FBService.Services
 				UserName = userName,
 				UserId = senderId,
 				CandidateName = voteName,
-				CandidatePhone = string.IsNullOrEmpty(voteName) ? "" : getCandidatePhone(voteName),
-				Message = message == _voteStartFlag ? message : message.IndexOf(':') > -1 ? message : message + ":YES"
+				CandidatePhone = string.IsNullOrEmpty(voteName) ? "" : _commonHelper.getCandidatePhone(voteName),
+				Message = message == _voteStartFlag ? message : message.IndexOf(':') > -1 ? message : message + ":YES",
+				
+
+				IsSuspicious = decision == null ? null: decision.IsSuspicious,
+				RiskScore = decision == null ? null : decision.RiskScore,
+				Flags = decision == null ? null : decision.Flags,
+				ShouldBlock = decision == null ? null : decision.ShouldBlock
+
 			};
 
 			try
 			{
 				await _dbContext.FaceBookVotes.AddAsync(newVote);
 				await _dbContext.SaveChangesAsync();
-				result.SetSuccess();
+
+                _metrics.IncRecsSavedInDB();
+                _metrics.IncSavedInDBByCandidate(newVote.CandidateName);
+
+                result.SetSuccess();
 				result.Results = new { newVote.Id, newVote.Timestamp};
 			}
 			catch (Exception ex)
 			{
-				result.SetError($"{ex}");				
-			}
+				result.SetError($"{ex}");
+                _metrics.IncErrorDBWhileSave();
+            }
 			return result;
 		
 		}
@@ -621,27 +887,139 @@ namespace GameController.FBService.Services
 				
 			}
 			return res;
+		
 		}
+        private static void ShuffleInPlace<T>(IList<T> list)
+        {
+            for (int i = list.Count - 1; i > 0; i--)
+            {
+                int j = Random.Shared.Next(i + 1);
+                (list[i], list[j]) = (list[j], list[i]);
+            }
+        }
 
-		/// <summary>
-		/// Sends a carousel/generic template message with candidate images and voting buttons.
-		/// </summary>
-		/// <param name="recipientId">The Facebook PSID (Page-Scoped User ID) of the recipient.</param>
-		/// <param name="imageUrls">List of image URLs for each gallery element.</param>
-		/// <param name="names">List of candidate names (used for postback payload and button title).</param>
-		private async Task<OperationResult> SendImageGalleryAsyncWithButtons(string senderId, string recipientId, string messageId, string userName, List<string> imageUrls, List<string> names)
+        private async Task<OperationResult> SendAskForVoteConfirmationAsyncWithButtons(string senderId, List<string> imageUrls, List<string> names)
+		{
+            var result = new OperationResult(true);
+
+
+            // ✅ Safety: ensure same count & at least 3
+            
+            if (names.Count < 1)
+            {
+                result.SetError("Not enough candidates for confirmation payload.");
+                return result;
+            }
+
+            // ✅ Pair (name, image) then shuffle order every time
+            var candidates = Enumerable.Range(0, names.Count)
+                .Select(i => new { Name = names[i]})
+                .ToList();
+
+            ShuffleInPlace(candidates); // <-- randomizes order
+
+
+
+            var elements = new List<object>();
+            var elements1 = new List<object>();
+            //_logger.LogWarningWithCaller($"image from  {imageUrls[0]}, Sending Vote Confimation Request ");
+            DateTime catchDateTime = DateTime.Now;
+            //var stamp = catchUtc.ToString("yyyyMMddHHmmss");
+
+            var buttonsList = new List<object>();
+
+            foreach (var candidate in candidates)
+            {
+                buttonsList.Add(new
+                {
+                    type = "postback",
+                    title = candidate.Name,
+                    payload = $"{candidate.Name}_{catchDateTime}_YES"
+                });
+            }
+
+            elements.Add(new
+            {
+                title = $"დაადასტურეთ არჩევანი მაქსიმუმ {_voteConfirmationDuration} წამში",
+                image_url = imageUrls[0],
+                // .ToArray() გადაიყვანს სიას იმ ფორმატში, რასაც API ელოდება
+                buttons = buttonsList.ToArray()
+            });
+
+            elements1.Add(new
+            {
+                
+                title = $"დაადასტურეთ არჩევანი მაქსიმუმ {_voteConfirmationDuration} წამში", //name,
+                image_url = imageUrls[0],
+                buttons = new[]
+                    {
+                    new
+                    {
+                        type = "postback",
+                        title = $"{candidates[0].Name}",						
+                        payload = $"{candidates[0].Name}_{catchDateTime}_YES" 
+                    },
+                    new
+                    {
+                        type = "postback",
+                        title = $"{candidates[1].Name}",						
+                        payload = $"{candidates[1].Name}_{catchDateTime}_YES"
+                    },
+                    new
+                    {
+                        type = "postback",
+                        title = $"{candidates[2].Name}",
+                        payload = $"{candidates[2].Name}_{catchDateTime}_YES"
+                    }
+                }
+            });
+
+
+            
+            var jsonPayload = new
+            {
+                recipient = new { id = senderId },
+                message = new
+                {
+                    attachment = new
+                    {
+                        type = "template",
+                        payload = new
+                        {
+                            template_type = "generic",
+                            elements = elements
+                        }
+                    }
+                }
+            };
+
+            result = await SendMessagePayLoadSafeAsync(senderId, jsonPayload);
+
+            return result;
+        }
+
+        /// <summary>
+        /// Sends a carousel/generic template message with candidate images and voting buttons.
+        /// </summary>
+        /// <param name="recipientId">The Facebook PSID (Page-Scoped User ID) of the recipient.</param>
+        /// <param name="imageUrls">List of image URLs for each gallery element.</param>
+        /// <param name="names">List of candidate names (used for postback payload and button title).</param>
+        private async Task<OperationResult> SendImageGalleryAsyncWithButtons(string senderId, string recipientId, string messageId, string userName, List<string> imageUrls, List<string> names)
 		{
 			var result = new OperationResult(true);
 
 
 
 
-			var lockKeyForEnableVote = $"NeedForVote:{senderId}";
-			var success = await _cacheService.AcquireLockAsync(lockKeyForEnableVote, TimeSpan.FromMinutes(_voteMinuteRange));
+			
+			var lockKeyForEnableVote = RedisKeys.FB.Native.NeedForVoteLock(recipientId, senderId); 
 
-            // 🛑 ლიმიტის შემოწმება - კრიტიკული ნაბიჯი!
-            // [RATE LIMIT CHECK] Check Rate Limit BEFORE making the API call (POST request)
-            if (!success )
+			
+			var success = await _cacheService.AcquireLockAsync(lockKeyForEnableVote, _ttl.VoteCooldown);
+
+			// 🛑 ლიმიტის შემოწმება - კრიტიკული ნაბიჯი!
+			// [RATE LIMIT CHECK] Check Rate Limit BEFORE making the API call (POST request)
+			if (!success )
 			{
 				_logger.LogWarningWithCaller($"[TIME LIMIT BLOCKED] Cannot send gallery to {senderId}. TIME Limit exceeded.");
 				result.SetError($"[TIME LIMIT BLOCKED] Cannot send gallery to {senderId}. TIME Limit exceeded.");
@@ -657,8 +1035,7 @@ namespace GameController.FBService.Services
 
 			}
 
-			// 1. Construct the API Endpoint URL
-			//var requestUrl = $"https://graph.facebook.com/v18.0/me/messages?access_token={_pageAccessToken}";
+
 
 			// 2. Build the Carousel Elements
 			var elements = new List<object>();
@@ -724,7 +1101,7 @@ namespace GameController.FBService.Services
 
 			if (loggedInDB.Result)
 			{
-				_metrics.IncRecsSavedInDB();
+				
 
 
 				result = await SendMessagePayLoadSafeAsync(senderId, jsonPayload);
@@ -752,112 +1129,10 @@ namespace GameController.FBService.Services
 
 		}
 
-		public string? ExtractMessagePostbackPayLoad(JsonObject payload)
-		{ 		
-			try
 
-			{
-				var entry = payload["entry"]?.AsArray()?.FirstOrDefault()?.AsObject();
-				var messaging = entry?["messaging"]?.AsArray()?.FirstOrDefault()?.AsObject();
-				var postback = messaging?["postback"]?.AsObject();
-				return postback?["payload"]?.GetValue<string>();
 
-			}
-			catch
-			{
-				return null;
-			}
-		}
 
-		public string? ExtractMessageText(JsonObject payload)
-		{
-			try
 
-			{
-				var entry = payload["entry"]?.AsArray()?.FirstOrDefault()?.AsObject();
-				var messaging = entry?["messaging"]?.AsArray()?.FirstOrDefault()?.AsObject();
-				var text = messaging?["message"]?.AsObject();
-				return text?["text"]?.GetValue<string>();
-
-			}
-			catch
-			{
-				return null;
-			}
-		}
-
-		public string? ExtractMessageSenderOrRecipientId(JsonObject payload, string type ="sender")
-		{
-			try
-			{
-				var entry = payload["entry"]?.AsArray()?.FirstOrDefault()?.AsObject();
-				var messaging = entry?["messaging"]?.AsArray()?.FirstOrDefault()?.AsObject();
-				var sender = messaging?[type]?.AsObject();
-				return sender?["id"]?.GetValue<string>();
-			}
-			catch
-			{
-				return null;
-			}
-		}
-		public string? ExtractMessageId(JsonObject payload, string? messageType = null)
-		{
-			try
-			{
-				var entry = payload["entry"]?.AsArray()?.FirstOrDefault()?.AsObject();
-				var messaging = entry?["messaging"]?.AsArray()?.FirstOrDefault()?.AsObject();
-				if (messageType != null && messageType == "postback")
-				{
-					var postback = messaging?["postback"]?.AsObject();
-					return postback?["mid"]?.GetValue<string>();
-				}
-				else
-				{
-					var message = messaging?["message"]?.AsObject();
-					return message?["mid"]?.GetValue<string>();
-				}
-			}
-			catch
-			{
-				return null;
-			}
-		}
-		public string? ExtractMessageType(JsonObject payload)
-		{
-			// Navigate to the core messaging event object
-			var messagingEvent = payload?["entry"]?.AsArray().FirstOrDefault()?
-										.AsObject()?["messaging"]?.AsArray().FirstOrDefault()?
-										.AsObject();
-
-			if (messagingEvent == null)
-			{
-				return null;
-			}
-
-			// Check for the presence of known event type keys
-			if (messagingEvent.ContainsKey("postback"))
-			{
-				return "postback";
-			}
-
-			if (messagingEvent.ContainsKey("message"))
-			{
-				return "message";
-			}
-
-			if (messagingEvent.ContainsKey("reaction"))
-			{
-				return "reaction";
-			}
-
-			if (messagingEvent.ContainsKey("read"))
-			{
-				return "read";
-			}
-
-			// Return null or "unknown" if no known type is found
-			return null;
-		}
 
 		/// <summary>
 		/// Retrieves the user's name, prioritizing the Redis cache to minimize Facebook Graph API calls.
@@ -992,6 +1267,370 @@ namespace GameController.FBService.Services
                 return false;
             }
         }
+
+
+
+
+
+        #region ProcessPostbackAsync_TryCatchClicker_Alter
+
+        // =========================================
+        // ProcessPostbackAsync_TryCatchClicker_Alter
+        // Refactor: readable + helper methods
+        // =========================================
+        //
+        // იდეა:
+        // 1) ProcessingLock (მოკლე) — concurrency/double-processing დაცვა (არ ანაცვლებს messageId idempotency-ს)
+        // 2) CooldownLock (გრძელი) — ირთვება მხოლოდ მაშინ, როცა vote რეალურად ჩაიწერა (Normal accept ან Confirm YES)
+        // 3) Confirmed payload-ზე clicker არ მოწმდება, მაგრამ PendingConfirm უნდა არსებობდეს (ანტი-forgery + expiry)
+        // 4) Suspicious შემთხვევაში — DB-ში არ ვწერთ, ვქმნით PendingConfirm-ს და ვუგზავნით confirmation UI-ს
+        //
+        // NOTE: აქ PendingConfirm key-ში მინიმუმად string ვინახავთ.
+        // უკეთესი: JSON (candidateId + createdUnix + riskScore + flags). სურვილისამებრ შემდეგ ეტაპზე დავამატოთ.
+
+        private async Task<OperationResult> ProcessPostbackAsync_TryCatchClicker_Alter(
+            string senderId,
+            string recipientId,
+            string msgId,
+            string userName,
+            string payload)
+        {
+            var result = new OperationResult(true);
+
+            // --- 0) Parse & Validate vote target ---
+            var voteName = _payloadHelper.ExtractVoteName(payload);
+            if (!TryResolveClient(voteName, out var client))
+            {
+                _logger.LogWarningWithCaller($"Postback received for unknown client: {voteName}");
+                result.SetError($"Unknown client: {voteName}");
+                return result;
+            }
+
+            // --- 1) Acquire SHORT processing lock (anti-parallel) ---
+            var processLockKey = RedisKeys.FB.Native.BuildProcessLockKey(recipientId, senderId);
+            if (!await TryAcquireProcessingLock(processLockKey))
+            {
+                _logger.LogWarningWithCaller($"ProcessLock busy. Ignored. key={processLockKey}");
+                result.SetError("Duplicate processing ignored.");
+                return result;
+            }
+
+            try
+            {
+                // Common keys used in both paths
+                var pendingKey = RedisKeys.FB.Native.BuildPendingConfirmKey(recipientId, senderId);
+                var cooldownLockKey = RedisKeys.FB.Native.VoteLock(recipientId, senderId); // Cooldown lock ONLY
+
+                // --- 2) Confirm path (payload already contains "Confirmed") ---
+                if (IsConfirmedPayload(payload))
+                {
+                    return await HandleConfirmedFlow(
+                        senderId, recipientId, msgId, userName,
+                        payload, voteName, client.clientName,
+                        pendingKey, cooldownLockKey);
+                }
+
+                // --- 3) Normal path: clicker evaluation / maybe ask confirmation ---
+                var decision = await EvaluateClickerCheckIfEnabled(recipientId, senderId, userName, client.clientName);
+
+                // Suspicious => ask confirmation (NO DB write, NO cooldown lock)
+                if (ShouldAskConfirmation(decision))
+                {
+                    return await HandleSuspiciousAskConfirmation(
+                        senderId, recipientId, msgId, userName,
+                        payload, voteName, client.clientName,
+                        decision, pendingKey);
+                }
+
+                // --- 4) Accept normal vote (cooldown -> DB -> message) ---
+                return await AcceptVoteWithCooldown(
+                    senderId, recipientId, msgId, userName,
+                    payload, voteName, client.clientName,
+                    decision, cooldownLockKey);
+            }
+            finally
+            {
+                await ReleaseProcessingLock(processLockKey);
+            }
+        }
+
+        // =====================================================
+        // Helpers
+        // =====================================================
+
+
+
+        /// <summary>
+        /// Finds registered client by voteName.
+        /// </summary>
+        private bool TryResolveClient(string voteName, out dynamic client)
+        {
+            client = _registeredClients.FirstOrDefault(c =>
+                c.clientName.Equals(voteName, StringComparison.OrdinalIgnoreCase));
+            return client != null;
+        }
+
+
+
+        /// <summary>
+        /// Acquire processing lock. TTL small because it only protects concurrent processing.
+        /// </summary>
+        private async Task<bool> TryAcquireProcessingLock(string processLockKey)
+        {
+            // 3 seconds is usually enough for one pipeline pass.
+            // If your processing may take longer, bump to 5 sec.
+            return await _cacheService.AcquireLockAsync(processLockKey, TimeSpan.FromSeconds(3));
+        }
+
+        private async Task ReleaseProcessingLock(string processLockKey)
+        {
+            await _cacheService.ReleaseLockAsync(processLockKey);
+        }
+
+        /// <summary>
+        /// Confirmed payload detection. You said you pass payload with "Confirmed" suffix.
+        /// </summary>
+        private bool IsConfirmedPayload(string payload)
+            => payload.Contains("Confirmed", StringComparison.OrdinalIgnoreCase);
+
+        /// <summary>
+        /// Evaluates clicker decision only when enabled. Also updates live metrics.
+        /// </summary>
+        private async Task<ClickerDecision> EvaluateClickerCheckIfEnabled(
+            string recipientId,
+            string senderId,
+            string userName,
+            string clientName)
+        {
+            var decision = new ClickerDecision();
+
+            if (!_checkForClickers)
+                return decision;
+
+            decision = await _clickerDetection.EvaluateAsync(recipientId, senderId, userName, DateTime.UtcNow);
+
+            // UI metrics update (already in your system)
+            await _clickerDetection.ApplyClikerMetrics(clientName, decision);
+
+
+			//decision.ShouldAskConfirmation = true;
+            return decision;
+        }
+
+        /// <summary>
+        /// In your current logic "ShouldBlock == true" is used to trigger confirmation flow.
+        /// Keep the same behavior here.
+        /// </summary>
+        private bool ShouldAskConfirmation(ClickerDecision decision)
+        {
+            return (decision?.ShouldAskConfirmation == true && _sendVoteConfirmationToBadUsers) || _sendVoteConfirmationToAllUsers;
+        }
+
+        /// <summary>
+        /// Handles suspicious user confirmation request:
+        /// - logs clicker
+        /// - stores pending confirmation for 120 sec
+        /// - sends confirm UI
+        /// IMPORTANT: no cooldown lock here, no DB write here.
+        /// </summary>
+        private async Task<OperationResult> HandleSuspiciousAskConfirmation(
+            string senderId,
+            string recipientId,
+            string msgId,
+            string userName,
+            string payload,
+            string voteName,
+            string clientName,
+            ClickerDecision decision,
+            string pendingKey)
+        {
+            // Log suspicious account (audit)
+			if (_checkForClickers)
+				await LogClickerAccountAsync(senderId, recipientId, msgId, userName, clientName, payload, decision);
+
+            // Store pending confirm (TTL = vote confirmation duration)
+            // NOTE: minimally store voteName. Better: store JSON with candidateId+flags+score.
+            await _cacheService.SetAsync(pendingKey, voteName, TimeSpan.FromSeconds(_voteConfirmationDuration));
+
+            // Send confirmation UI
+            var names = new List<string> { voteName, "-", "-" };
+            return await SendAskForVoteConfirmationAsyncWithButtons(
+                senderId,
+                new List<string> { _defaultAskConfirmationImageUrl },
+                names);
+        }
+
+        /// <summary>
+        /// Confirmed flow:
+        /// - must have pending confirmation
+        /// - YESConfirmed => acquire cooldown lock, write DB, delete pending, send message
+        /// - NOConfirmed  => delete pending, send cancelled message (no DB, no cooldown)
+        /// </summary>
+        private async Task<OperationResult> HandleConfirmedFlow(
+            string senderId,
+            string recipientId,
+            string msgId,
+            string userName,
+            string payload,
+            string voteName,
+            string clientName,
+            string pendingKey,
+            string cooldownLockKey)
+        {
+            var result = new OperationResult(true);
+
+            // 1) Pending must exist (anti-forgery + expiry check)
+            var pending = await _cacheService.GetAsync<string>(pendingKey);
+            if (string.IsNullOrEmpty(pending))
+            {
+                _logger.LogWarningWithCaller($"Confirmed vote but pending not found/expired. sender={senderId}, vote={voteName}");
+                result.SetError("Vote Confirmation expired (no pending).");
+                return result;
+            }
+
+            // 2) Parse YES/NO from payload: "ClientName:YESConfirmed" / "ClientName:NOConfirmed"
+            var action = ExtractConfirmAction(payload);
+
+            if (!action.IsYes)
+            {
+                // NO => delete pending, do not start cooldown, do not write DB
+                await SoftDeleteKey(pendingKey);
+                var cancelMsg = "გაუქმდა. თქვენი ხმა არ ჩაითვალა.";
+                result = await SendMessageAsync(senderId, userName, cancelMsg);
+                if (!result.Result) result.SetError("Failed to send cancellation message.");
+                return result;
+            }
+
+            // YES => now it becomes a real accepted vote => start cooldown
+            var gotCooldown = await _cacheService.AcquireLockAsync(cooldownLockKey, _ttl.VoteCooldown);
+            _logger.LogWarningWithCaller($"CooldownLock {cooldownLockKey} after AcquireLockAsync (CONFIRMED)");
+
+            if (!gotCooldown)
+            {
+                bool sendNotAcceptedVoteBackInfo = await _varsKeeper.GetValueAsync<bool>("fb_NotAcceptedVoteBackInfo");
+                if (sendNotAcceptedVoteBackInfo)
+                    await SendMessageAsync(senderId, userName, $"თქვენი ბოლო ხმის მიცემიდან არ გასულა {_voteMinuteRange} წუთი.");
+
+                result.SetError("Vote denied due to rate limit (cooldown).");
+                return result;
+            }
+
+            // Write to DB (flags already stored inside decision if your LogVoteRequestAsync persists them)
+            // If you want the *original* suspicious flags, store them in pending JSON and load here.
+            var decisionConfirmed = new ClickerDecision(); // optional marker/flag can be added
+            var loggedInDB = await LogVoteRequestAsync(senderId, recipientId, msgId, userName, clientName, payload, decisionConfirmed);
+
+            if (!loggedInDB.Result)
+            {
+                result.SetError("Failed to log confirmed vote in database.");
+                return result;
+            }
+
+            // Pending must be removed to prevent double-accept
+            await SoftDeleteKey(pendingKey);
+
+            // Send success msg
+            return await SendAcceptedVoteMessage(senderId, userName, clientName, loggedInDB);
+        }
+
+        /// <summary>
+        /// Normal accept flow:
+        /// - cooldown lock first
+        /// - then DB write
+        /// - then success message
+        /// </summary>
+        private async Task<OperationResult> AcceptVoteWithCooldown(
+            string senderId,
+            string recipientId,
+            string msgId,
+            string userName,
+            string payload,
+            string voteName,
+            string clientName,
+            ClickerDecision decision,
+            string cooldownLockKey)
+        {
+            var result = new OperationResult(true);
+
+            var gotCooldown = await _cacheService.AcquireLockAsync(cooldownLockKey, _ttl.VoteCooldown);
+            //_logger.LogWarningWithCaller($"CooldownLock {cooldownLockKey} after AcquireLockAsync (NORMAL)");
+
+            if (!gotCooldown)
+            {
+                _logger.LogWarningWithCaller($"Vote from {senderId} for {voteName} NOT registered due to rate limit ({_voteMinuteRange} min).");
+
+                bool sendNotAcceptedVoteBackInfo = await _varsKeeper.GetValueAsync<bool>("fb_NotAcceptedVoteBackInfo");
+                if (sendNotAcceptedVoteBackInfo)
+                    await SendMessageAsync(senderId, userName, $"თქვენი ბოლო ხმის მიცემიდან არ გასულა {_voteMinuteRange} წუთი.");
+
+                result.SetError("Vote denied due to rate limit.");
+                return result;
+            }
+
+            var loggedInDB = await LogVoteRequestAsync(senderId, recipientId, msgId, userName, clientName, payload, decision);
+            if (!loggedInDB.Result)
+            {
+                result.SetError("Failed to log vote in database.");
+                return result;
+            }
+
+            return await SendAcceptedVoteMessage(senderId, userName, clientName, loggedInDB);
+        }
+
+        /// <summary>
+        /// Extract YES/NO from "ClientName:YESConfirmed" payload.
+        /// </summary>
+        private (bool IsYes, string Raw) ExtractConfirmAction(string payload)
+        {
+            // payload: "ClientName:YESConfirmed"
+            var parts = payload.Split(':');
+            if (parts.Length < 2) return (false, "");
+
+            var actionPart = parts[1];
+            var isYes = actionPart.StartsWith("YES", StringComparison.OrdinalIgnoreCase);
+            return (isYes, actionPart);
+        }
+
+        /// <summary>
+        /// Because your cache service doesn't show DeleteAsync, we do a "soft delete":
+        /// write null with tiny TTL. If you can add Delete/Remove method, replace this.
+        /// </summary>
+        private async Task SoftDeleteKey(string key)
+        {
+            await _cacheService.SetAsync<string>(key, null, TimeSpan.FromSeconds(1));
+        }
+
+        /// <summary>
+        /// Creates and sends "vote accepted" message, based on DB timestamp returned by LogVoteRequestAsync.
+        /// </summary>
+        private async Task<OperationResult> SendAcceptedVoteMessage(
+            string senderId,
+            string userName,
+            string clientName,
+            OperationResult loggedInDB)
+        {
+            var result = new OperationResult(true);
+
+            // Expecting loggedInDB.Results.Timestamp
+            var tsProp = loggedInDB.Results?.GetType().GetProperty("Timestamp");
+            if (tsProp == null)
+            {
+                result.SetError("Logged vote result missing Timestamp.");
+                return result;
+            }
+
+            var timestamp = (DateTime)tsProp.GetValue(loggedInDB.Results);
+            var nextVoteTime = timestamp.AddMinutes(_voteMinuteRange);
+
+            var backMsg =
+                $"თქვენი ხმა {clientName}-სთვის მიღებულია! მადლობა. ჩვენ კვლავ მივიღებთ თქვენს ხმას {_voteMinuteRange} წუთის მერე, {nextVoteTime} -დან";
+
+            result = await SendMessageAsync(senderId, userName, backMsg);
+            return result;
+        }
+
+
+        #endregion
 
     }
 

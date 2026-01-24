@@ -229,7 +229,7 @@ namespace GameController.FBService.Pages.Admin
 		}
 
 
-        private object AnalyzeVotesWithYesAndNo(List<Vote> votes)
+        private object AnalyzeVotesWithYesAndNo_(List<Vote> votes)
         {
             var totalVotes = votes.Count;
 
@@ -291,6 +291,98 @@ namespace GameController.FBService.Pages.Admin
                 }).ToList()
             };
         }
+
+
+        private object AnalyzeVotesWithYesAndNo(List<Vote> votes)
+        {
+            const int PENALTY = 0;
+
+            var totalUniqueUsers = votes
+                .Select(v => v.UserId + "_" + v.UserName)
+                .Distinct()
+                .Count();
+
+            var groupedVotes = votes
+                .GroupBy(v =>
+                    (v.Message?.Split(':')[0].Trim().ToUpperInvariant() ?? "") +
+                    "\t" +
+                    (v.CandidatePhone?.Trim().ToUpperInvariant() ?? "")
+                )
+                .Select(g =>
+                {
+                    var yesCount = g.Count(v => ExtractChoice(v.Message) == "YES");
+                    var noCount = g.Count(v => ExtractChoice(v.Message) == "NO");
+                    var total = g.Count();
+
+                    // 🔴 სანქციის პირობა
+                    bool applyPenalty = g.Any(v => v.CandidatePhone == "903300302");
+
+                    int penalizedTotal = applyPenalty
+                        ? Math.Max(0, total - PENALTY)
+                        : total;
+
+                    int penalizedYes = applyPenalty
+                        ? Math.Max(0, yesCount - PENALTY)
+                        : yesCount;
+
+                    int penalizedNo = applyPenalty
+                        ? Math.Max(0, noCount - PENALTY)
+                        : noCount;
+
+                    return new
+                    {
+                        Option = g.Key,
+
+                        VoteCount = penalizedTotal,
+                        VoteCountYes = penalizedYes,
+                        VoteCountNo = penalizedNo,
+
+                        UniqueUsers = g
+                            .Select(v => v.UserId + "_" + v.UserName)
+                            .Distinct()
+                            .Count(),
+
+                        TopUsers = g
+                            .GroupBy(v => v.UserId + "_" + v.UserName)
+                            .Select(u => new
+                            {
+                                UserName = FormatReadableIdentifier(u.Key),
+                                UserVoteCount = applyPenalty
+                                    ? Math.Max(0, u.Count() - PENALTY)
+                                    : u.Count()
+                            })
+                            .OrderByDescending(u => u.UserVoteCount)
+                            .Take(3)
+                    };
+                })
+                .OrderByDescending(a => a.VoteCount)
+                .ToList();
+
+            var penalizedTotalVotes = groupedVotes.Sum(g => g.VoteCount);
+
+            return new
+            {
+                TotalVotes = penalizedTotalVotes,
+                TotalUniqueUsers = totalUniqueUsers,
+
+                Options = groupedVotes.Select(g => new
+                {
+                    g.Option,
+                    g.VoteCount,
+                    g.VoteCountYes,
+                    g.VoteCountNo,
+
+                    Percentage = penalizedTotalVotes > 0
+                        ? (double)g.VoteCount / penalizedTotalVotes * 100
+                        : 0,
+
+                    g.UniqueUsers,
+                    g.TopUsers
+                }).ToList()
+            };
+        }
+
+
 
 
         private static string ExtractChoice(string message)
