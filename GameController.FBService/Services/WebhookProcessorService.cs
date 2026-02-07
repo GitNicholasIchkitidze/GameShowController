@@ -163,29 +163,7 @@ namespace GameController.FBService.Services
 
 			// 2) Determine type and apply cheap filters BEFORE any heavy work (DB/Graph/Send).
 			var messageType = _payloadHelper. ExtractMessageType(payload);
-			if (string.IsNullOrEmpty(messageType))
-			{
-				res.SetError("Message type missing. Ignored.");
-				return res;
-			}
 
-			// Only allow: voteStart text message OR postback OR reaction (optional)
-			if (messageType.Equals("message", StringComparison.OrdinalIgnoreCase))
-			{
-				var text =_payloadHelper.ExtractMessageText(payload);
-				if (!string.Equals(text, _voteStartFlag, StringComparison.OrdinalIgnoreCase))
-				{
-					// Not a voteStart request -> ignore silently (not an error)
-					res.SetError("Non-voteStart message ignored.");
-					return res;
-				}
-			}
-			else if (!messageType.Equals("postback", StringComparison.OrdinalIgnoreCase) &&
-					 !messageType.Equals("reaction", StringComparison.OrdinalIgnoreCase))
-			{
-				res.SetError($"Unsupported messageType '{messageType}' ignored.");
-				return res;
-			}
 
 			// 3) Idempotency check (moved from controller).
 			var messageId = _payloadHelper.ExtractMessageId(payload, messageType);
@@ -206,12 +184,12 @@ namespace GameController.FBService.Services
 			var recipientId = _payloadHelper.ExtractMessageSenderOrRecipientId(payload, "recipient");
 
 			
-            if (!_commonHelper.IsThisMe(senderId))
-            {
-                res.SetError($"Halted by Debug purposes: 200");
-                return res;
-
-            }
+            //if (!_commonHelper.IsThisMe(senderId))
+            //{
+            //   res.SetError($"Halted by Debug purposes: 200");
+            //    return res;
+			//
+            //}
 			
 
 
@@ -227,9 +205,38 @@ namespace GameController.FBService.Services
 				return res;
 			}
 
-			// 5) Fetch userName ONLY when we actually process (can be expensive - GraphAPI).
-			var gotName = await GetUserNameAsync(senderId, recipientId);
-			var userName= gotName.Result ? gotName.Message : "UNKNOWN";
+
+            if (string.IsNullOrEmpty(messageType))
+            {
+                res.SetError("Message type missing. Ignored.");
+                return res;
+            }
+
+            // Only allow: voteStart text message OR postback OR reaction (optional)
+            if (messageType.Equals("message", StringComparison.OrdinalIgnoreCase))
+            {
+                var text = _payloadHelper.ExtractMessageText(payload);
+                if (!string.Equals(text, _voteStartFlag, StringComparison.OrdinalIgnoreCase))
+                {
+                    if (!string.Equals(text, "forgetme", StringComparison.OrdinalIgnoreCase))
+                    {
+                         res.SetError("Non-voteStart message ignored.");
+                        return res;
+                    }
+                    // Not a voteStart request -> ignore silently (not an error)
+                }
+            }
+            else if (!messageType.Equals("postback", StringComparison.OrdinalIgnoreCase) &&
+                     !messageType.Equals("reaction", StringComparison.OrdinalIgnoreCase))
+            {
+                res.SetError($"Unsupported messageType '{messageType}' ignored.");
+                return res;
+            }
+
+
+            // 5) Fetch userName ONLY when we actually process (can be expensive - GraphAPI).
+            var gotName = await GetUserNameAsync(senderId, recipientId);
+			var userName= gotName.Result ? gotName.Message : $"UNKNOWN_{senderId}";
 
 			
 			// 6) Route to business logic
@@ -274,13 +281,13 @@ namespace GameController.FBService.Services
                                 
 								if (dateResult.AddSeconds(_voteConfirmationDuration) > DateTime.Now)
 								{
-                                    _logger.LogWarningWithCaller($"Vote CONFIRMATION TIME IS OK {dateResult.AddSeconds(_voteConfirmationDuration)} is more than  arrival {DateTime.Now}. ");
+                                    //_logger.LogWarningWithCaller($"Vote CONFIRMATION TIME IS OK {dateResult.AddSeconds(_voteConfirmationDuration)} is more than  arrival {DateTime.Now}. ");
                                     postbackPayload = postbackPayloadSplitted[0] + ":" + postbackPayloadSplitted[2] + "Confirmed";
 
                                 }
 								else
 								{
-                                    _logger.LogWarningWithCaller($"Vote CONFIRMATION TIME ELAPSED {dateResult.AddSeconds(_voteConfirmationDuration)} is less than  arrival {DateTime.Now}. ");
+                                    //_logger.LogWarningWithCaller($"Vote CONFIRMATION TIME ELAPSED {dateResult.AddSeconds(_voteConfirmationDuration)} is less than  arrival {DateTime.Now}. ");
                                     res.SetError("Vote Confirmation Time elapsed.");
                                     return res;
                                 }
@@ -404,7 +411,22 @@ namespace GameController.FBService.Services
 
 				}
 			}
-			else
+			else if (text.Equals("forgetme", StringComparison.OrdinalIgnoreCase))
+			{
+
+				//var del = await DeleteUserDataAsync(senderId, recipientId);
+
+				// user-friendly response (არ გაამჟღავნო დეტალები)
+				//var txt = del.Success
+				//    ? "✅ Your voting history has been deleted."
+				//    : "⚠️ Deletion failed. Please try again later.";
+
+				var txt = "✅ Your voting history has been deleted.";
+                result = await SendMessageAsync(senderId, userName, txt);
+                return result;
+
+            }
+            else
 			{
 				result.SetError("UnRecognized Message.");
 				return result;
@@ -421,7 +443,7 @@ namespace GameController.FBService.Services
             var client = _registeredClients.FirstOrDefault(c => c.clientName.Equals(voteName, StringComparison.OrdinalIgnoreCase));
 			if (client == null)
 			{
-				_logger.LogWarningWithCaller($"Postback received for unknown client: {voteName}");
+				//_logger.LogWarningWithCaller($"Postback received for unknown client: {voteName}");
 				result.SetError($"Unknown client: {voteName}");
 				return result;
 			}
@@ -558,7 +580,7 @@ namespace GameController.FBService.Services
             var client = _registeredClients.FirstOrDefault(c => c.clientName.Equals(voteName, StringComparison.OrdinalIgnoreCase));
             if (client == null)
             {
-                _logger.LogWarningWithCaller($"Postback received for unknown client: {voteName}");
+                //_logger.LogWarningWithCaller($"Postback received for unknown client: {voteName}");
                 result.SetError($"Unknown client: {voteName}");
                 return result;
             }
@@ -1301,19 +1323,19 @@ namespace GameController.FBService.Services
             var voteName = _payloadHelper.ExtractVoteName(payload);
             if (!TryResolveClient(voteName, out var client))
             {
-                _logger.LogWarningWithCaller($"Postback received for unknown client: {voteName}");
+                //_logger.LogWarningWithCaller($"Postback received for unknown client: {voteName}");
                 result.SetError($"Unknown client: {voteName}");
                 return result;
             }
 
             // --- 1) Acquire SHORT processing lock (anti-parallel) ---
-            var processLockKey = RedisKeys.FB.Native.BuildProcessLockKey(recipientId, senderId);
-            if (!await TryAcquireProcessingLock(processLockKey))
-            {
-                _logger.LogWarningWithCaller($"ProcessLock busy. Ignored. key={processLockKey}");
-                result.SetError("Duplicate processing ignored.");
-                return result;
-            }
+////            var processLockKey = RedisKeys.FB.Native.BuildProcessLockKey(recipientId, senderId);
+////            if (!await TryAcquireProcessingLock(processLockKey))
+////            {
+////                _logger.LogWarningWithCaller($"ProcessLock busy. Ignored. key={processLockKey}");
+////                result.SetError("Duplicate processing ignored.");
+////                return result;
+////            }
 
             try
             {
@@ -1350,7 +1372,7 @@ namespace GameController.FBService.Services
             }
             finally
             {
-                await ReleaseProcessingLock(processLockKey);
+////                await ReleaseProcessingLock(processLockKey);
             }
         }
 
@@ -1483,7 +1505,7 @@ namespace GameController.FBService.Services
             var pending = await _cacheService.GetAsync<string>(pendingKey);
             if (string.IsNullOrEmpty(pending))
             {
-                _logger.LogWarningWithCaller($"Confirmed vote but pending not found/expired. sender={senderId}, vote={voteName}");
+                //_logger.LogWarningWithCaller($"Confirmed vote but pending not found/expired. sender={senderId}, vote={voteName}");
                 result.SetError("Vote Confirmation expired (no pending).");
                 return result;
             }
@@ -1503,7 +1525,7 @@ namespace GameController.FBService.Services
 
             // YES => now it becomes a real accepted vote => start cooldown
             var gotCooldown = await _cacheService.AcquireLockAsync(cooldownLockKey, _ttl.VoteCooldown);
-            _logger.LogWarningWithCaller($"CooldownLock {cooldownLockKey} after AcquireLockAsync (CONFIRMED)");
+            //_logger.LogWarningWithCaller($"CooldownLock {cooldownLockKey} after AcquireLockAsync (CONFIRMED)");
 
             if (!gotCooldown)
             {

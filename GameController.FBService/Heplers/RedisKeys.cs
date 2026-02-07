@@ -18,7 +18,7 @@ namespace GameController.FBService.Heplers
 
         // Must match Program.cs: options.InstanceName = "GameController:"
         public const string Root = "GameController:";
-        private static string Session = "L7:";
+        private static string Session = "L10:";
 
 
         public static class Vars

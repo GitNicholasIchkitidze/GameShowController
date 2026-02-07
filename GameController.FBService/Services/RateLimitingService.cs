@@ -66,7 +66,7 @@ namespace GameController.FBService.Services
 			var currentCount = await _cacheService.IncrementWithExpirationAsync(cacheKey, expiry);
 
 			// 5. Log for transparency (Using the passed apiEndpoint for debugging)
-			_logger.LogInformationWithCaller($"[{apiEndpoint}] Global API Count: {currentCount}. Dynamic Limit: {maxApiCallsPerHour}.");
+			//_logger.LogInformationWithCaller($"[{apiEndpoint}] Global API Count: {currentCount}. Dynamic Limit: {maxApiCallsPerHour}.");
 
 
 			// 6. Check the limit

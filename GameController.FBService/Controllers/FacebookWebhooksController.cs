@@ -10,8 +10,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Identity.Client;
 using System.Net.Http;
+using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 [Route("api/[controller]")]
@@ -36,11 +39,18 @@ public class FacebookWebhooksController : ControllerBase
 	private const string ListeningKey = "fb_listening_active";
 	private const string NotAcceptedVoteBackInfo = "fb_NotAcceptedVoteBackInfo";
 	private readonly string _voteStartFlag;
-	
 
 
 
-	public FacebookWebhooksController(
+    // =========================
+    // ✅ Meta Data Deletion Config
+    // =========================
+    private readonly string _metaAppSecret; // Meta App Secret (for signed_request validation)
+    private readonly string _baseUrl;       // https://your-domain.com (for status url)
+    private const string DeletionStatusPrefix = "fb_delete_status:";
+
+
+    public FacebookWebhooksController(
 		ILogger<FacebookWebhooksController> logger,
 		ApplicationDbContext dbContext,
 		IConfiguration configuration,
@@ -60,7 +70,21 @@ public class FacebookWebhooksController : ControllerBase
 		_webhookProcessorService = webhookProcessorService;
 		_verifyToken = configuration.GetValue<string>("verifyToken") ?? "myFbToken";
 		_voteStartFlag = configuration.GetValue<string>("voteStartFlag") ?? "";
-	}
+
+
+        _metaAppSecret =
+            configuration.GetValue<string>("Meta:AppSecret")
+            ?? configuration.GetValue<string>("Facebook:AppSecret")
+            ?? configuration.GetValue<string>("appSecret")
+            ?? "";
+
+        _baseUrl =
+            configuration.GetValue<string>("Meta:BaseUrl")
+            ?? configuration.GetValue<string>("Facebook:BaseUrl")
+            ?? configuration.GetValue<string>("baseUrl")
+            ?? "";
+
+    }
 
 	[HttpGet]
 	public IActionResult VerifyWebhook([FromQuery(Name = "hub.mode")] string mode,
@@ -254,6 +278,297 @@ public class FacebookWebhooksController : ControllerBase
 
 		
 	}
+
+
+
+
+    public class FbDataDeletionDto
+    {
+        public string signed_request { get; set; } = "";
+    }
+
+    // ==========================================================
+    // ✅ Meta User Data Deletion Callback (IMPORTANT)
+    // ==========================================================
+    // Configure this URL in Meta App Dashboard:
+    // Data Deletion Requests -> Data Deletion Callback URL:
+    // https://your-domain.com/api/facebookwebhooks/data-deletion
+    [HttpPost("data-deletion")]
+    //[Consumes("application/x-www-form-urlencoded", "application/json")]
+    //public async Task<IActionResult> DataDeletionCallback()
+
+    [Consumes("application/json")]
+
+    public async Task<IActionResult> DataDeletionCallback([FromBody] FbDataDeletionDto dto)
+    {
+        var signedRequest = dto?.signed_request;
+
+        if (string.IsNullOrWhiteSpace(signedRequest))
+        {
+            _logger.LogWarningWithCaller("DataDeletionCallback: signed_request missing.");
+            return BadRequest("signed_request is required.");
+        }
+
+        if (string.IsNullOrWhiteSpace(_metaAppSecret))
+        {
+            _logger.LogErrorWithCaller("DataDeletionCallback: Meta AppSecret is missing in configuration.");
+            return StatusCode(500, "AppSecret not configured.");
+        }
+
+        try
+        {
+            var payload = TryParseSignedRequest(signedRequest, _metaAppSecret, out var error);
+            if (payload == null)
+            {
+                _logger.LogWarningWithCaller($"DataDeletionCallback: invalid signed_request. Error={error}");
+                return BadRequest("invalid signed_request");
+            }
+
+            var userId = payload.UserId;
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                _logger.LogWarningWithCaller("DataDeletionCallback: user_id missing in payload.");
+                return BadRequest("user_id missing");
+            }
+
+            var confirmationCode = $"del_{userId}_{DateTimeOffset.UtcNow.ToUnixTimeSeconds()}";
+
+            await _varsKeeper.SetValueAsync(DeletionStatusPrefix + confirmationCode, "pending");
+
+            try
+            {
+                await DeleteUserDataByUserIdAsync(userId);
+                await _varsKeeper.SetValueAsync(DeletionStatusPrefix + confirmationCode, "completed");
+
+                _logger.LogInformationWithCaller(
+                    $"DataDeletionCallback: deletion completed. userId={userId}, code={confirmationCode}");
+            }
+            catch (Exception exDel)
+            {
+                await _varsKeeper.SetValueAsync(DeletionStatusPrefix + confirmationCode, "failed");
+                _logger.LogErrorWithCaller(
+                    $"DataDeletionCallback: deletion FAILED. userId={userId}, code={confirmationCode}, {exDel.Message}");
+            }
+
+            var baseUrl = _baseUrl?.TrimEnd('/') ?? "";
+            var statusUrl =
+                $"{baseUrl}/api/facebookwebhooks/data-deletion/status/{confirmationCode}";
+
+            return new JsonResult(new
+            {
+                url = statusUrl,
+                confirmation_code = confirmationCode
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogErrorWithCaller($"DataDeletionCallback: unexpected error, {ex.Message}");
+            return StatusCode(500, "Server error");
+        }
+    }
+
+
+    [HttpGet("data-deletion/status/{code}")]
+    public async Task<IActionResult> DataDeletionStatus([FromRoute] string code)
+    {
+        try
+        {
+            var status = await _varsKeeper.GetValueAsync<string>(DeletionStatusPrefix + code);
+
+            if (string.IsNullOrWhiteSpace(status))
+                status = "not_found";
+
+            return Ok(new
+            {
+                confirmation_code = code,
+                status
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogErrorWithCaller($"DataDeletionStatus failed for code={code}, {ex.Message}");
+            return StatusCode(500, "Server error");
+        }
+    }
+
+    // ✅ რეალური წაშლა DB-დან (UserId = AppScopedUserId)
+    private async Task DeleteUserDataByUserIdAsync(string userId)
+    {
+        // 1) FaceBookVotes table (your shown usage: _dbContext.FaceBookVotes)
+        // NOTE: assuming Vote entity has UserId column/property. If it differs, change here.
+        var votes = await _dbContext.FaceBookVotes
+            .Where(v => v.UserId == userId)
+            .ToListAsync();
+
+        if (votes.Count > 0)
+        {
+            _dbContext.FaceBookVotes.RemoveRange(votes);
+            await _dbContext.SaveChangesAsync();
+        }
+
+        // 2) TODO: delete from other tables that store user data (if you have them)
+        // Example:
+        // var msgs = await _dbContext.FaceBookMessages.Where(m => m.UserId == userId).ToListAsync();
+        // _dbContext.FaceBookMessages.RemoveRange(msgs);
+        // await _dbContext.SaveChangesAsync();
+
+        // 3) TODO: Redis/user-specific cache cleanup
+        // If you have user-bound Redis keys, delete them here via your cache service.
+        // (I didn't add new DI dependency to keep your controller compiling without extra changes.)
+    }
+
+    // Signed Request parsing (HMAC-SHA256)
+    private static SignedRequestPayload? TryParseSignedRequest(string signedRequest, string appSecret, out string error)
+    {
+        error = "";
+
+        var parts = signedRequest.Split('.', 2);
+        if (parts.Length != 2)
+        {
+            error = "signed_request format invalid";
+            return null;
+        }
+
+        var encodedSig = parts[0];
+        var encodedPayload = parts[1];
+
+        byte[] sig;
+        try
+        {
+            sig = Base64UrlDecode(encodedSig);
+        }
+        catch
+        {
+            error = "signature base64 invalid";
+            return null;
+        }
+
+        // IMPORTANT: signature is computed over the BASE64URL-encoded payload (the 2nd part as-is)
+        var payloadBytesForHmac = Encoding.UTF8.GetBytes(encodedPayload);
+
+        using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(appSecret));
+        var expected = hmac.ComputeHash(payloadBytesForHmac);
+
+        if (!CryptographicOperations.FixedTimeEquals(sig, expected))
+        {
+            error = "signature mismatch";
+            return null;
+        }
+
+        string json;
+        try
+        {
+            json = Encoding.UTF8.GetString(Base64UrlDecode(encodedPayload));
+        }
+        catch
+        {
+            error = "payload base64 invalid";
+            return null;
+        }
+
+        SignedRequestPayload? payload;
+        try
+        {
+            payload = JsonSerializer.Deserialize<SignedRequestPayload>(json);
+        }
+        catch
+        {
+            error = "payload json invalid";
+            return null;
+        }
+
+        if (!string.Equals(payload?.Algorithm, "HMAC-SHA256", StringComparison.OrdinalIgnoreCase))
+        {
+            error = "unexpected algorithm";
+            return null;
+        }
+
+        return payload;
+    }
+
+    private static byte[] Base64UrlDecode(string input)
+    {
+        input = input.Replace('-', '+').Replace('_', '/');
+        switch (input.Length % 4)
+        {
+            case 2: input += "=="; break;
+            case 3: input += "="; break;
+        }
+        return Convert.FromBase64String(input);
+    }
+
+    private class SignedRequestPayload
+    {
+        [JsonPropertyName("algorithm")]
+        public string? Algorithm { get; set; }
+
+        [JsonPropertyName("user_id")]
+        public string? UserId { get; set; }
+    }
+
+    // ==========================================================
+    // 🔧 DEV ONLY: Generate signed_request for Swagger testing
+    // ==========================================================
+    [HttpPost("data-deletion/dev-generate-signed-request")]
+    public IActionResult DevGenerateSignedRequest([FromQuery] string userId)
+    {
+        // ❌ უსაფრთხოება: PROD-ზე არ უნდა მუშაობდეს
+        if (!HttpContext.RequestServices
+            .GetService<IWebHostEnvironment>()!
+            .IsDevelopment())
+        {
+            return NotFound();
+        }
+
+        if (string.IsNullOrWhiteSpace(userId))
+            return BadRequest("userId is required.");
+
+        if (string.IsNullOrWhiteSpace(_metaAppSecret))
+            return StatusCode(500, "Meta AppSecret is not configured.");
+
+        var signedRequest = CreateSignedRequest(_metaAppSecret, userId);
+
+        return Ok(new
+        {
+            userId,
+            signed_request = signedRequest
+        });
+    }
+
+
+
+    private static string CreateSignedRequest(string appSecret, string userId)
+    {
+        var payload = new
+        {
+            algorithm = "HMAC-SHA256",
+            user_id = userId,
+            issued_at = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+        };
+
+        var payloadJson = JsonSerializer.Serialize(payload);
+        var payloadBase64 = Base64UrlEncode1(Encoding.UTF8.GetBytes(payloadJson));
+
+        using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(appSecret));
+        var signature = hmac.ComputeHash(Encoding.UTF8.GetBytes(payloadBase64));
+        var signatureBase64 = Base64UrlEncode1(signature);
+
+        return $"{signatureBase64}.{payloadBase64}";
+    }
+
+    private static string Base64UrlEncode1(byte[] input)
+    {
+        return Convert.ToBase64String(input)
+            .TrimEnd('=')
+            .Replace('+', '-')
+            .Replace('/', '_');
+    }
+    // ==========================================================
+    // Existing endpoints (unchanged)
+    // ==========================================================
+
+
+
 
 }
 
